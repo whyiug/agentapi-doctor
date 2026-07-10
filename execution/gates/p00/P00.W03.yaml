@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:gate-definition:v1",
+  "kind": "WorkUnitGateDefinitionCandidate",
+  "id": "gate://p00/P00.W03/v1",
+  "phase": "P00",
+  "workUnit": "P00.W03",
+  "contract": "execution/work-units/P00.W03.yaml",
+  "gateStatus": "candidate-unapproved",
+  "machineImplementationStatus": "planned-fail-closed",
+  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "networkPolicy": "offline",
+  "failClosed": true,
+  "criteria": [
+    {"id": "P00-M-PROVENANCE", "kind": "MACHINE", "evaluator": "evaluator://catalog/provenance-count/v1", "metric": "p00_provenance_candidate_count", "threshold": "execution/metrics/definitions.yaml#p00_provenance_candidate_count.threshold", "evidenceSchema": "evidence-schema://catalog/provenance-report/v1"},
+    {"id": "P00-M-REPRO", "kind": "MACHINE", "evaluator": "evaluator://corpus/reproduction/v1", "metric": "p00_reproduction_rate", "threshold": "execution/metrics/definitions.yaml#p00_reproduction_rate.threshold", "evidenceSchema": "evidence-schema://corpus/reproduction-report/v1"},
+    {"id": "P00-M-TAXONOMY", "kind": "MACHINE", "evaluator": "evaluator://corpus/taxonomy/v1", "metric": "p00_fault_domain_count", "threshold": "execution/metrics/definitions.yaml#p00_fault_domain_count.threshold", "evidenceSchema": "evidence-schema://corpus/taxonomy-report/v1"},
+    {"id": "P00-M-REPLAY", "kind": "MACHINE", "evaluator": "evaluator://corpus/replay/v1", "metric": "p00_deterministic_replay_count", "threshold": "execution/metrics/definitions.yaml#p00_deterministic_replay_count.threshold", "evidenceSchema": "evidence-schema://corpus/replay-report/v1"},
+    {"id": "P00-H-CORPUS-RIGHTS", "kind": "HUMAN", "evaluator": "attestation://review/corpus-rights/v1", "threshold": "independent provenance review confirms no private logs or content lacking reuse rights", "evidenceSchema": "evidence-schema://attestation/human-review/v1"}
+  ],
+  "protectedInputs": ["execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/corpus.yaml", "execution/metrics/definitions.yaml", "execution/evaluators/catalog.yaml", "execution/evidence-schemas/catalog.yaml"],
+  "datasetPolicy": {"status": "pending_protected_input", "digest": null, "missingOrUnfrozenResult": "insufficient_samples"},
+  "missingEvidencePolicy": {"MACHINE": "FAIL", "EXTERNAL": "WAITING_EXTERNAL", "HUMAN": "REVIEW_PENDING"},
+  "unknownOrPlannedEvaluatorResult": {"status": "ERROR", "reasonCode": "missing_evaluator", "mayPass": false}
+}

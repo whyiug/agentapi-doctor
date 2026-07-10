@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:gate-definition:v1",
+  "kind": "WorkUnitGateDefinitionCandidate",
+  "id": "gate://p00/P00.W01/v1",
+  "phase": "P00",
+  "workUnit": "P00.W01",
+  "contract": "execution/work-units/P00.W01.yaml",
+  "gateStatus": "candidate-unapproved",
+  "machineImplementationStatus": "implemented",
+  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "networkPolicy": "offline",
+  "failClosed": true,
+  "criteria": [
+    {"id": "P00-M-BOOTSTRAP-CONTROL", "kind": "MACHINE", "evaluator": "evaluator://bootstrap/control-plane/v1", "threshold": "all canonical control-plane, contract, input-closure, and forbidden-artifact assertions pass", "evidenceSchema": "evidence-schema://bootstrap/control-plane-report/v1"},
+    {"id": "P00-M-ANTI-PLACEHOLDER", "kind": "MACHINE", "evaluator": "evaluator://bootstrap/anti-placeholder/v1", "threshold": "all negative meta-tests prove missing, planned, unknown, existence-only, and hand-written metric inputs cannot PASS", "evidenceSchema": "evidence-schema://bootstrap/anti-placeholder-report/v1"},
+    {"id": "P00-X-CROSSPLATFORM", "kind": "EXTERNAL", "evaluator": "attestation://ci/cross-platform/v1", "threshold": "protected CI runs bootstrap successfully on Linux, macOS, and Windows for the same source and control-plane digest", "evidenceSchema": "evidence-schema://attestation/cross-platform/v1"},
+    {"id": "P00-H-CONTROL", "kind": "HUMAN", "evaluator": "attestation://review/bootstrap-control/v1", "threshold": "independent reviewer approves the commit-bound B00 control plane and protected workflow activates P00.W01", "evidenceSchema": "evidence-schema://attestation/human-review/v1"},
+    {"id": "P00-H-NO-PUBLIC-CLAIM", "kind": "HUMAN", "evaluator": "attestation://review/no-public-claim/v1", "threshold": "authorized reviewer confirms no public compatibility claim, badge, or Registry publication exists", "evidenceSchema": "evidence-schema://attestation/human-review/v1"}
+  ],
+  "protectedInputs": ["execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/bootstrap.yaml", "execution/evaluators/catalog.yaml", "execution/evidence-schemas/catalog.yaml", "test/bootstrap/test_phasegate.py"],
+  "missingEvidencePolicy": {"MACHINE": "FAIL", "EXTERNAL": "WAITING_EXTERNAL", "HUMAN": "REVIEW_PENDING"},
+  "unknownOrPlannedEvaluatorResult": {"status": "ERROR", "reasonCode": "missing_evaluator", "mayPass": false}
+}

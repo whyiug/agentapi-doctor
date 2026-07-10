@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:protected-catalog:v1",
+  "kind": "RiskExperimentAcceptanceDefinitionCandidate",
+  "id": "catalog://p00/risk-experiments/v1",
+  "catalogStatus": "candidate-unapproved",
+  "protected": true,
+  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "datasetStatus": "pending_protected_input",
+  "datasetDigest": null,
+  "activationRule": "Before P00.W04 activation an independent reviewer freezes ten eligible failure IDs and the dataset digest; until then every dataset-dependent metric is insufficient_samples.",
+  "experiments": [
+    {"id": "sse-source-faithful-capture", "question": "Can application-observed SSE bytes and line endings be captured without repairing target semantics?"},
+    {"id": "responses-typed-event-fsm", "question": "Can typed Responses events be validated as a state machine with unknown events preserved?"},
+    {"id": "sdk-forward-proxy-correlation", "question": "Can capture-layer and exact client observations be correlated without conflating them?"},
+    {"id": "multi-tool-fingerprint-minimization", "question": "Can multi-tool deltas be minimized while the real SDK failure fingerprint remains true?"}
+  ],
+  "dualView": {"eligibleMinimum": 10, "successMinimum": 8, "requiredViews": ["capture-layer", "client"], "correlationIdentityRequired": true},
+  "minimization": {"attemptMinimum": 10, "qualifyingMinimum": 5, "minimumReduction": 0.3, "bytesFormula": "canonical request bytes + required event bytes", "failureFingerprintMustBePreserved": true},
+  "secretCanary": {"syntheticOnly": true, "maximumPersistedOccurrences": 0, "requiredSinks": ["raw artifacts", "normalized artifacts", "reports", "logs", "temporary files", "crash output"]},
+  "unknownAttribution": {"eligibleMinimum": 1, "requiredOutcome": "unknown", "unsupportedAttributionMaximum": 0, "deterministic": true},
+  "spikeDisposition": {"allowed": ["retain", "rewrite", "delete"], "independentReviewRequired": true, "unreviewedProductionReuseForbidden": true}
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:evidence-schema-catalog:v1",
+  "kind": "EvidenceSchemaCatalogCandidate",
+  "catalogStatus": "candidate-unapproved",
+  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "schemas": [
+    {"id": "evidence-schema://bootstrap/control-plane-report/v1", "kind": "MACHINE", "status": "implemented", "requiredFields": ["schemaVersion", "criterionId", "evaluator", "evaluatorStatus", "evaluatorDigest", "result", "reasonCode", "sourceCommit", "controlPlaneDigest", "assertions", "artifactDigests"], "allowedResults": ["PASS", "FAIL", "ERROR"]},
+    {"id": "evidence-schema://bootstrap/anti-placeholder-report/v1", "kind": "MACHINE", "status": "implemented", "requiredFields": ["schemaVersion", "criterionId", "evaluator", "evaluatorStatus", "evaluatorDigest", "result", "reasonCode", "sourceCommit", "controlPlaneDigest", "negativeCases", "artifactDigests"], "allowedResults": ["PASS", "FAIL", "ERROR"]},
+    {"id": "evidence-schema://research/competitive-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["sourceCatalogDigest", "matrixRecordCount", "interviewRecordCount", "namingCandidateCount", "primarySourceChecks", "prohibitedClaimFindings", "evaluatorDigest"]},
+    {"id": "evidence-schema://catalog/provenance-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["datasetDigest", "eligibleCount", "rejectedCount", "records", "evaluatorDigest"]},
+    {"id": "evidence-schema://corpus/reproduction-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["datasetDigest", "attempted", "reproduced", "records", "evaluatorDigest"]},
+    {"id": "evidence-schema://corpus/taxonomy-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["datasetDigest", "classified", "unknown", "faultDomains", "records", "evaluatorDigest"]},
+    {"id": "evidence-schema://corpus/replay-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["datasetDigest", "eligible", "deterministicReplayCount", "records", "evaluatorDigest"]},
+    {"id": "evidence-schema://experiment/dual-view-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["datasetDigest", "eligible", "correlatedDualViewCount", "records", "evaluatorDigest"]},
+    {"id": "evidence-schema://experiment/minimization-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["datasetDigest", "attempted", "qualifyingReductionCount", "records", "evaluatorDigest"]},
+    {"id": "evidence-schema://redaction/secret-canary-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["datasetDigest", "canaryDigest", "scannedSinks", "persistedOccurrenceCount", "evaluatorDigest"]},
+    {"id": "evidence-schema://attribution/unknown-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["datasetDigest", "eligible", "correctUnknownCount", "unsupportedAttributionCount", "records", "evaluatorDigest"]},
+    {"id": "evidence-schema://docs/license-links-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["documentManifestDigest", "requiredDocuments", "validatedLinks", "licenseFindings", "stableClaimFindings", "evaluatorDigest"]},
+    {"id": "evidence-schema://phase/aggregate-report/v1", "kind": "MACHINE", "status": "planned", "requiredFields": ["phase", "workUnitEvidenceDigests", "criteria", "recomputedMetrics", "evaluatorSetDigest"]},
+    {"id": "evidence-schema://attestation/cross-platform/v1", "kind": "EXTERNAL", "status": "external-only", "requiredFields": ["schemaVersion", "sourceCommit", "controlPlaneDigest", "platformRuns", "actor", "timestamp", "signature"]},
+    {"id": "evidence-schema://attestation/external-review/v1", "kind": "EXTERNAL", "status": "external-only", "requiredFields": ["schemaVersion", "criterionId", "sourceCommit", "controlPlaneDigest", "subjectDigest", "actor", "timestamp", "signature"]},
+    {"id": "evidence-schema://attestation/design-partners/v1", "kind": "EXTERNAL", "status": "external-only", "requiredFields": ["schemaVersion", "sourceCommit", "controlPlaneDigest", "independentOrganizations", "statements", "actor", "timestamp", "signature"]},
+    {"id": "evidence-schema://attestation/human-review/v1", "kind": "HUMAN", "status": "human-only", "requiredFields": ["schemaVersion", "criterionId", "sourceCommit", "controlPlaneDigest", "subjectDigest", "decision", "actor", "actorRole", "timestamp", "signature"]}
+  ],
+  "verificationPolicy": {"machine": "schema validation plus evaluator recomputation", "external": "protected workflow signature and identity verification", "human": "protected workflow signature, role, independence, commit, and digest verification", "missingOrUnknownSchema": "ERROR"}
+}

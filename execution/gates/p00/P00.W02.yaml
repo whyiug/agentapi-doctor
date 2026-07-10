@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:gate-definition:v1",
+  "kind": "WorkUnitGateDefinitionCandidate",
+  "id": "gate://p00/P00.W02/v1",
+  "phase": "P00",
+  "workUnit": "P00.W02",
+  "contract": "execution/work-units/P00.W02.yaml",
+  "gateStatus": "candidate-unapproved",
+  "machineImplementationStatus": "planned-fail-closed",
+  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "networkPolicy": "offline",
+  "failClosed": true,
+  "criteria": [
+    {"id": "P00-M-COMPETITIVE", "kind": "MACHINE", "evaluator": "evaluator://research/competitive/v1", "threshold": "all four named-project matrix records, five interview records, three naming candidates, primary-source fields, and prohibited-claim checks are recomputed from the protected catalog", "evidenceSchema": "evidence-schema://research/competitive-report/v1"},
+    {"id": "P00-X-OUTREACH", "kind": "EXTERNAL", "evaluator": "attestation://upstream/outreach/v1", "threshold": "authorized human reviewed and sent scoped outreach and imported non-sensitive signed evidence", "evidenceSchema": "evidence-schema://attestation/external-review/v1"},
+    {"id": "P00-X-DESIGN-PARTNERS", "kind": "EXTERNAL", "evaluator": "attestation://review/design-partners/v1", "threshold": "at least three independent external maintainers explicitly agree to review or try the project", "evidenceSchema": "evidence-schema://attestation/design-partners/v1"}
+  ],
+  "protectedInputs": ["execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/competitor-research.yaml", "execution/evaluators/catalog.yaml", "execution/evidence-schemas/catalog.yaml"],
+  "missingEvidencePolicy": {"MACHINE": "FAIL", "EXTERNAL": "WAITING_EXTERNAL", "HUMAN": "REVIEW_PENDING"},
+  "unknownOrPlannedEvaluatorResult": {"status": "ERROR", "reasonCode": "missing_evaluator", "mayPass": false}
+}

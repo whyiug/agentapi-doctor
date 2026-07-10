@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:gate-definition:v1",
+  "kind": "WorkUnitGateDefinitionCandidate",
+  "id": "gate://p00/P00.W05/v1",
+  "phase": "P00",
+  "workUnit": "P00.W05",
+  "contract": "execution/work-units/P00.W05.yaml",
+  "gateStatus": "candidate-unapproved",
+  "machineImplementationStatus": "planned-fail-closed",
+  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "networkPolicy": "offline",
+  "failClosed": true,
+  "criteria": [
+    {"id": "P00-M-DOCS", "kind": "MACHINE", "evaluator": "evaluator://docs/license-links/v1", "threshold": "all required provisional documents pass structure, link, source-license, and no-stable-claim checks", "evidenceSchema": "evidence-schema://docs/license-links-report/v1"},
+    {"id": "P00-X-REVIEW", "kind": "EXTERNAL", "evaluator": "attestation://review/external-feedback/v1", "threshold": "independent external reviewer feedback is imported with provenance and signature", "evidenceSchema": "evidence-schema://attestation/external-review/v1"}
+  ],
+  "protectedInputs": ["execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/go-no-go.yaml", "execution/evaluators/catalog.yaml", "execution/evidence-schemas/catalog.yaml"],
+  "missingEvidencePolicy": {"MACHINE": "FAIL", "EXTERNAL": "WAITING_EXTERNAL", "HUMAN": "REVIEW_PENDING"},
+  "unknownOrPlannedEvaluatorResult": {"status": "ERROR", "reasonCode": "missing_evaluator", "mayPass": false},
+  "phaseFinalApprovalExcluded": true
+}

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:goal-contract:v1",
+  "kind": "PhaseAggregateContractCandidate",
+  "contractStatus": "candidate-unapproved",
+  "id": "P00",
+  "phase": "P00",
+  "title": "Validation and bootstrap",
+  "objective": "Validate that AgentAPI Doctor has a defensible differentiated scope and prove the evidence-first bootstrap, corpus, attribution, minimization, redaction, and governance assumptions before entering P01.",
+  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/README.md"],
+  "inScope": ["execution/**", "tools/phasegate/**", "test/bootstrap/**", "docs/**", "rfcs/**", "adrs/**", "research/**", "corpus/**", "experiments/**"],
+  "outOfScope": ["P01-P08 product implementation", "public compatibility claims or badges", "public Registry", "contacting external projects without human action", "approval or Genesis generation", "production-target scanning or exploitation"],
+  "protectedAcceptanceInputs": ["execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/bootstrap.yaml", "execution/catalogs/p00/competitor-research.yaml", "execution/catalogs/p00/corpus.yaml", "execution/catalogs/p00/risk-experiments.yaml", "execution/catalogs/p00/go-no-go.yaml", "execution/metrics/definitions.yaml"],
+  "mutableImplementationTests": ["test/regression/**", "test/unit/**", "internal/**/*_test.go"],
+  "prerequisites": [],
+  "workUnits": ["P00.W01", "P00.W02", "P00.W03", "P00.W04", "P00.W05"],
+  "deliverables": ["approved-gate validation evidence from all P00 work units", "differentiation and design-partner research", "30-candidate provenance corpus with 20 attempts", "risk-retirement experiment evidence", "provisional RFC, threat model, data policy, naming, and go/no-go evidence packet"],
+  "verification": ["make gate PHASE=P00"],
+  "convergence": [
+    {"id": "P00-M-AGGREGATE", "kind": "MACHINE", "evaluator": "evaluator://phase/aggregate/v1", "threshold": "all five work units CONVERGED and every applicable P00 MACHINE criterion PASS from recomputed evidence", "evidenceSchema": "evidence-schema://phase/aggregate-report/v1"},
+    {"id": "P00-H-GO-NOGO", "kind": "HUMAN", "evaluator": "attestation://review/go-no-go/v1", "threshold": "independent authorized reviewers record CONVERGED, BLOCKED, or PIVOT_REQUIRED with scope and naming decision", "evidenceSchema": "evidence-schema://attestation/human-review/v1"}
+  ],
+  "resourceBudget": {"wallTime": "8w", "commandTimeout": "30m", "fuzzCPUHours": 4, "diskBytes": 10737418240, "downloadBytes": 2147483648, "processLimit": 64},
+  "networkPolicy": {"gate": "offline", "researchAllowlist": ["github.com", "developers.openai.com", "platform.claude.com", "ai.google.dev", "modelcontextprotocol.io"], "dependencyFetch": "lockfile-only"},
+  "stopAndBlock": ["normative ambiguity without a cited decision", "three attempts with the same failure fingerprint", "protected acceptance or control-plane input changes after approval", "corpus rights or write-before-redaction cannot be established", "required external or human evidence is missing"],
+  "humanGate": "independent-go-no-go-review"
+}

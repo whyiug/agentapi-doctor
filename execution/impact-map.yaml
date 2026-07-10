@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:impact-map:v1",
+  "kind": "ImpactMapCandidate",
+  "mapStatus": "candidate-unapproved",
+  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "defaultImpact": "manual-review-required",
+  "stateEffects": {"ACTIVE": "BLOCKED", "READY": "REJECTED", "MACHINE_CONVERGED": "REJECTED", "WAITING_EXTERNAL": "REJECTED", "REVIEW_PENDING": "REJECTED", "CONVERGED": "REJECTED", "NOT_STARTED": "REJECTED_OR_SUPERSEDED"},
+  "mappings": [
+    {"id": "plan-or-agent-policy", "paths": ["agentapi-doctor-Plan.md", "AGENTS.md"], "affected": ["P00.W01", "P00.W02", "P00.W03", "P00.W04", "P00.W05", "P00"], "reason": "Plan and agent policy define every P00 contract and boundary."},
+    {"id": "control-plane-core", "paths": ["execution/control-plane-inputs.yaml", "execution/evaluators/catalog.yaml", "execution/evidence-schemas/catalog.yaml", "execution/catalogs/p00/acceptance.yaml", "execution/metrics/definitions.yaml", "execution/impact-map.yaml", "execution/product-stage-map.yaml"], "affected": ["P00.W01", "P00.W02", "P00.W03", "P00.W04", "P00.W05", "P00"], "reason": "Changes alter the approved exam or digest closure."},
+    {"id": "phase-contract", "paths": ["execution/phases/P00.yaml", "execution/gates/p00/aggregate.yaml", "execution/catalogs/p00/go-no-go.yaml"], "affected": ["P00"], "reason": "Changes alter the P00 aggregate contract or final decision gate."},
+    {"id": "w01-bootstrap", "paths": ["execution/work-units/P00.W01.yaml", "execution/gates/p00/P00.W01.yaml", "execution/catalogs/p00/bootstrap.yaml", "tools/phasegate/main.py", "tools/phasegate/digest.py", "tools/phasegate/validation.py", "tools/phasegate/__init__.py", "test/bootstrap/test_phasegate.py", "Makefile"], "affected": ["P00.W01", "P00.W02", "P00.W03", "P00.W04", "P00.W05", "P00"], "reason": "Bootstrap evaluator and protected meta-tests underpin all downstream evidence."},
+    {"id": "w02-research", "paths": ["execution/work-units/P00.W02.yaml", "execution/gates/p00/P00.W02.yaml", "execution/catalogs/p00/competitor-research.yaml", "research/competitive/**", "research/design-partners/**", "docs/COMPETITIVE-LANDSCAPE.md", "docs/naming/**"], "affected": ["P00.W02", "P00.W03", "P00.W04", "P00.W05", "P00"], "reason": "Differentiation, external evidence, and naming inform downstream P00 scope."},
+    {"id": "w03-corpus", "paths": ["execution/work-units/P00.W03.yaml", "execution/gates/p00/P00.W03.yaml", "execution/catalogs/p00/corpus.yaml", "corpus/**", "fixtures/p00/**", "research/provenance/**", "test/corpus/**"], "affected": ["P00.W03", "P00.W04", "P00.W05", "P00"], "reason": "Corpus identity, rights, denominator, and truth labels feed experiments and aggregate claims."},
+    {"id": "w04-experiments", "paths": ["execution/work-units/P00.W04.yaml", "execution/gates/p00/P00.W04.yaml", "execution/catalogs/p00/risk-experiments.yaml", "experiments/p00/**", "test/experiments/**", "adrs/experiments/**"], "affected": ["P00.W04", "P00.W05", "P00"], "reason": "Risk-retirement outputs and spike disposition feed the final evidence packet."},
+    {"id": "w05-design-evidence", "paths": ["execution/work-units/P00.W05.yaml", "execution/gates/p00/P00.W05.yaml", "rfcs/0001-*.md", "rfcs/0002-*.md", "rfcs/0003-*.md", "rfcs/0004-*.md", "rfcs/0005-*.md", "docs/THREAT-MODEL.md", "docs/DATA-POLICY.md", "docs/known-limitations/**", "research/external-review/**"], "affected": ["P00.W05", "P00"], "reason": "Design, security, data, limitation, and review evidence directly determine aggregate readiness."}
+  ],
+  "spellingOnlyPolicy": "An independent impact evaluator may decide that a semantics-preserving spelling-only change does not require rerun, but must preserve the decision and rationale."
+}

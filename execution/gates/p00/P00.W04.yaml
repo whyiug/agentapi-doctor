@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:gate-definition:v1",
+  "kind": "WorkUnitGateDefinitionCandidate",
+  "id": "gate://p00/P00.W04/v1",
+  "phase": "P00",
+  "workUnit": "P00.W04",
+  "contract": "execution/work-units/P00.W04.yaml",
+  "gateStatus": "candidate-unapproved",
+  "machineImplementationStatus": "planned-fail-closed",
+  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "networkPolicy": "offline",
+  "failClosed": true,
+  "criteria": [
+    {"id": "P00-M-DUAL-VIEW", "kind": "MACHINE", "evaluator": "evaluator://experiment/dual-view/v1", "metric": "p00_dual_view_rate", "threshold": "execution/metrics/definitions.yaml#p00_dual_view_rate.threshold", "evidenceSchema": "evidence-schema://experiment/dual-view-report/v1"},
+    {"id": "P00-M-REDUCTION", "kind": "MACHINE", "evaluator": "evaluator://experiment/minimization/v1", "metric": "p00_minimization_30pct_rate", "threshold": "execution/metrics/definitions.yaml#p00_minimization_30pct_rate.threshold", "evidenceSchema": "evidence-schema://experiment/minimization-report/v1"},
+    {"id": "P00-M-SECRET", "kind": "MACHINE", "evaluator": "evaluator://redaction/secret-canary/v1", "metric": "p00_secret_canary_persistence_rate", "threshold": "execution/metrics/definitions.yaml#p00_secret_canary_persistence_rate.threshold", "evidenceSchema": "evidence-schema://redaction/secret-canary-report/v1"},
+    {"id": "P00-M-UNKNOWN", "kind": "MACHINE", "evaluator": "evaluator://attribution/unknown/v1", "metric": "p00_unknown_attribution_consistency", "threshold": "execution/metrics/definitions.yaml#p00_unknown_attribution_consistency.threshold", "evidenceSchema": "evidence-schema://attribution/unknown-report/v1"},
+    {"id": "P00-H-SPIKE-ADR", "kind": "HUMAN", "evaluator": "attestation://review/spike-adr/v1", "threshold": "independent reviewer approves retain, rewrite, or delete disposition for every experiment", "evidenceSchema": "evidence-schema://attestation/human-review/v1"}
+  ],
+  "protectedInputs": ["execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/risk-experiments.yaml", "execution/metrics/definitions.yaml", "execution/evaluators/catalog.yaml", "execution/evidence-schemas/catalog.yaml"],
+  "datasetPolicy": {"status": "pending_protected_input", "digest": null, "missingOrUnfrozenResult": "insufficient_samples"},
+  "missingEvidencePolicy": {"MACHINE": "FAIL", "EXTERNAL": "WAITING_EXTERNAL", "HUMAN": "REVIEW_PENDING"},
+  "unknownOrPlannedEvaluatorResult": {"status": "ERROR", "reasonCode": "missing_evaluator", "mayPass": false}
+}
