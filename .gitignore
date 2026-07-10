@@ -1,0 +1,35 @@
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
+
+# Local build, test, and runtime output
+.cache/
+.doctor/
+bin/
+coverage/
+dist/
+node_modules/
+out/
+runs/
+tmp/
+
+# Python runner state
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# Logs and local databases
+*.log
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
