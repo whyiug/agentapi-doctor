@@ -1,0 +1,1140 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:bootstrap-request:v1alpha3",
+  "kind": "BootstrapControlPlaneReviewRequest",
+  "requestId": "P00.B00-R3",
+  "revision": 3,
+  "previousRequest": {
+    "requestId": "P00.B00-R2",
+    "revision": 2,
+    "requestDigest": "sha256:3fc6b9adfc077a2b3f78c2a811a8d61f9fb72c0e7a6c03ff269ff0ee4cc35ca0",
+    "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
+    "candidateSourceCommit": "5babc022f1a714024c903122eb150ed49c515e6d",
+    "requestCommit": "8faf45512ec5384e816390ad1a46a403c103c5dc"
+  },
+  "requestStatus": "pending_review",
+  "candidate": {
+    "baseCommit": "8faf45512ec5384e816390ad1a46a403c103c5dc",
+    "candidateSourceCommit": "863e92866b2410b8ad8917523cae44fba767d83c",
+    "gitObjectFormat": "sha1",
+    "canonicalPlanPath": "agentapi-doctor-Plan.md",
+    "controlPlaneDigest": "sha256:c81fcf3afc06458e805d8ae5dc3e6a16a2d93efea9d2bad1c9f3f42b30088ccd"
+  },
+  "componentDigests": {
+    ".gitattributes": "sha256:c29e00e53fb863ad25e5d0ded110d71ed1dc66af00c7221b46de6fe17412115a",
+    ".github/CODEOWNERS": "sha256:e2561fbb955e68c0240fc25eef1e8142785969909e3ce70d7c22d0ccd4534c53",
+    ".github/workflows/p00-bootstrap-cross-platform.yml": "sha256:e17a0b5da5ecd20720c2bd20508574bf0cd0e16bcab51e89805cb2680d714b71",
+    ".github/workflows/p00-protected-control-plane.yml": "sha256:f88c42c4a16772778c1dc3f0eb958da1777fcf9caf98048f3239369683f68b17",
+    ".github/workflows/p00-protected-state-writer.yml": "sha256:179ad4edbbe36691e03c5879fc575c2b16a18c6f0826d691ac1348fd8fdc989e",
+    ".github/workflows/p00-protected-verifier-candidate.yml": "sha256:bb0fafcb2f84f2153f231d367b1c3b927c046b2183f4c7bfbaa93f2f802edc88",
+    ".gitignore": "sha256:e8a8191b62f72a2d83c649e99ec41b688e15b224962144ae3f88988d26f258b7",
+    "AGENTS.md": "sha256:6c2e0670140e6b0e60f2b173e4d0467edb14f5aed6d24d228f165279d76f0c23",
+    "Makefile": "sha256:29ef4dd36ac70ef1141c6e0232c8253ef17c436aab4a13724dc4e0584252be2b",
+    "agentapi-doctor-Plan.md": "sha256:884e661a8d9e3820532add4ae424585583b6ec0bf41658032f1b2d31da643fad",
+    "execution/README.md": "sha256:cc3050820fdcbf76b521b741398cbf7ee72ce3154941fadda3bb80b1180899de",
+    "execution/catalogs/p00/acceptance.yaml": "sha256:16884cfb77fd7ee6eb0953a46eef6a491aa230d27b8b311cd0be11fbe42af1d6",
+    "execution/catalogs/p00/bootstrap.yaml": "sha256:36c42057cd133dbb07458cd03468081a2295ea6fafc99887c5cefafe9e3dfeaf",
+    "execution/catalogs/p00/competitor-research.yaml": "sha256:0fd05e93c71e7e1faafb9469a826bb4bc1f817d1da6fd5a220b0f4cd88263291",
+    "execution/catalogs/p00/corpus.yaml": "sha256:c06f6042930122ed6e47c860d0996784e3f77f3fe51e8d2f633790767d026ee4",
+    "execution/catalogs/p00/go-no-go.yaml": "sha256:f59f7ec9071ba99aa861e24c58677e2dc7d6ca9fe1630feab11f2dbe34a45942",
+    "execution/catalogs/p00/risk-experiments.yaml": "sha256:f9798e5914f3a169e6a8934d8232845640e2f50b7a667507ee3cc68ff53e40fb",
+    "execution/control-plane-inputs.yaml": "sha256:604910b0d31e558e435f0776dc1f762ad66886727931109b2e85111a32895b44",
+    "execution/evaluators/catalog.yaml": "sha256:951917bf9a04ee3dd21becfb1be1c3a8b4463ace616120ab0d6cff9a0cd54299",
+    "execution/evidence-schemas/catalog.yaml": "sha256:311e4091325fa0e14acde21f9c1bc5804d44e9627f01a440a218690f70382d82",
+    "execution/gates/p00/P00.W01.yaml": "sha256:597925f588361bff20121966e78732ab5eb5b4191753c6ffe96ae62206991886",
+    "execution/gates/p00/P00.W02.yaml": "sha256:f7f5a301ec9206086a5b21b2bd23f2f6db012464af8bcd266787406d7da6c6ff",
+    "execution/gates/p00/P00.W03.yaml": "sha256:11042bc5d1b07e5e5910e394d51e2045a62821ed227bba5dabe3c42cd77a22cc",
+    "execution/gates/p00/P00.W04.yaml": "sha256:9644d3969c8ef5c5736925708b2a6f2ac93f284722c79611f250d297f835d0f3",
+    "execution/gates/p00/P00.W05.yaml": "sha256:e281d92787dc82672825d5baf0e64c56186ce9235de5ad3d0926a62c4e7f8c05",
+    "execution/gates/p00/aggregate.yaml": "sha256:37beac426891196843626a6d6702bf39c262e251284f6887d1bb46210b8b81bd",
+    "execution/impact-map.yaml": "sha256:8c59c04b97a1c5b22c117b72b744e438e8067a434bc1b1e9ffcbb62eef183aef",
+    "execution/metrics/definitions.yaml": "sha256:bf49d0d183bb664424cf85e2a257bb147c0190aaaf89e9a502f40c8d541d049d",
+    "execution/phases/P00.yaml": "sha256:0b3875bf097b29080c8c2cc42f5cf1c09723de688c96e6fd67ae7583404cce3c",
+    "execution/product-stage-map.yaml": "sha256:76366c10e89934f52ac3cc36f3cea68a9cd23a9f8451036ad427090c50812e3a",
+    "execution/protected-verifier/ambiguities.yaml": "sha256:22fd6ff2a66b54479aeaff6415322b7b08ca70100a058fcf6bdd1f804fd64cbd",
+    "execution/protected-verifier/github-actions-oidc-jwks.json": "sha256:dd2f404882dd3e33f67c27112cdcb7cdca7d7d07302a51d096193ea49a7e85f0",
+    "execution/protected-verifier/trust-policy.yaml": "sha256:3d8a29d5a7b77db65de961648ea766aa1492a7e46f6a666a6010d18d587ca83a",
+    "execution/protected-verifier/workflow-contract.yaml": "sha256:0db3455a445b4f61e22a27bf1ca5f35e9f3891b1d3bd2bfa9974c9ce5c99fbd7",
+    "execution/work-units/P00.W01.yaml": "sha256:3d04d31242016269fca4a21ec0d97dcf1b3bb87c237a94317eb609edb1d67753",
+    "execution/work-units/P00.W02.yaml": "sha256:f2508e5bb7d95fc73e4bd5b9893150f2054691dc4cd7a37fa02b6c60bfa34e78",
+    "execution/work-units/P00.W03.yaml": "sha256:307edd3f2c9d4c1b0191e36d78234acfbee6e574c364169af53ecbc646674ba5",
+    "execution/work-units/P00.W04.yaml": "sha256:6d7ce04144b9e3addeed3f2ba908585d0eeff6622e562aa6ebe3621cdedc368b",
+    "execution/work-units/P00.W05.yaml": "sha256:92427145f627cad41c9895e53e54b47bdd65e6ee386cf13c5687e26e65204e91",
+    "test/bootstrap/__init__.py": "sha256:1f52b2a2043b4cc590d4ca28c604d8ed835ed4ae47bd2b49fb3ca3bba641be31",
+    "test/bootstrap/test_chain_artifact.py": "sha256:1b148088ba2772b5c0062325e47d53f14d79701dde9f7a7bb220e84ffad7fcde",
+    "test/bootstrap/test_chain_witness.py": "sha256:cea6651bf3d8a2a91dd65e9197bb709957b701977b75e54891a983215afffc7b",
+    "test/bootstrap/test_community_facts.py": "sha256:09a6bdd0ff3fc93b5683ab857c6bfbab2d9e94ffd9b9678b0372ea384c9170d2",
+    "test/bootstrap/test_control_context.py": "sha256:a0e9101c6bc4c1a531d7850630f03a13a9afb43339f65b008e40025573aa64dc",
+    "test/bootstrap/test_delegation.py": "sha256:2adda12b3f7a9dfe7b152050806c6cf45847ebc739438cecbecf136a26dd7204",
+    "test/bootstrap/test_execution_artifact.py": "sha256:30eff8b018ee6761d6f6c996e360561a43616c66776b99e4fb00db94402e96a4",
+    "test/bootstrap/test_external_facts.py": "sha256:9ce4614d9b08b9bddbea968732b211908d4cba5d30093dc32ab0db886eea50f9",
+    "test/bootstrap/test_gate_runner.py": "sha256:ad3313bbbae7dd8fc5c596a2991bcecef7fc81cbefaec4b7d0b33bac5103312b",
+    "test/bootstrap/test_lifecycle_evidence.py": "sha256:2dfa0db7ff7862cb9f0e7cf2d419ca33f272fdb54969e7be420f3ec95b22b642",
+    "test/bootstrap/test_oidc.py": "sha256:75a198d74633d0d117336daeb01dd3195c05095af369a3ff00ae11689abcaa2b",
+    "test/bootstrap/test_oidc_provenance.py": "sha256:086fd5422d7bb59fa9787a128d1b2086b7b3fb382852c3ad089170aff3ae0c75",
+    "test/bootstrap/test_p00_evaluators.py": "sha256:683676567a850792c1854759d4a5786844921af728beb428ca557da759ea01e9",
+    "test/bootstrap/test_phase_bundle.py": "sha256:fbf833aaaff893113a44e01e6feb6411fef4d711c0b6bea7ccb04fec51f02614",
+    "test/bootstrap/test_phase_evidence.py": "sha256:a199be00453d2645e532b4f77e38ba30143c4f7ba00076027e485c2525eed036",
+    "test/bootstrap/test_phasegate.py": "sha256:a673b176139555970537eff24d3dc7216025b59f6a2a596e7bd002ff1caf24b3",
+    "test/bootstrap/test_post_event_writer.py": "sha256:81d054cec275f2bd52412dac3d0f20672d6216448b599f1dccbd7c00a4db128f",
+    "test/bootstrap/test_protected_chain_cli.py": "sha256:94b4a34f1c5d003159115313e81dffd79427b17f2c55b7e7800a5d5ce3a478b6",
+    "test/bootstrap/test_protected_state_writer_workflow.py": "sha256:462a8cd4e1aa9d6bf3bda27eff947483a15b197693041e472efcc112066256c4",
+    "test/bootstrap/test_protected_v2.py": "sha256:9eee080f865494d7572ce332da5ef12affc1d9ac5d5531c8dcc2d3f9f345f89d",
+    "test/bootstrap/test_protected_verifier.py": "sha256:4d9bda54988e2ba68dc6115022a4bb52849d79bb59dfae36d9a4746208a69d75",
+    "test/bootstrap/test_provenance.py": "sha256:a06d485b7f9558438fa5f011dd14d357c09e8a7f0fd3bc4c24fa6847d6f98986",
+    "test/bootstrap/test_provenance_writer.py": "sha256:811d0df6fa5206447260ccfe22b29c5b9994619d055da18b7c34aa0f245756cc",
+    "test/bootstrap/test_run_executor.py": "sha256:9fd7505de0a6b1433107546fd6bd701c6b7f584a3154a18c794b3ee23a908415",
+    "test/bootstrap/test_serialized_bundle.py": "sha256:c0f3bd1d77bfac10c9b56d3e1dcec9b77342923d3f6bb40ea4c19369cb094e55",
+    "test/bootstrap/test_sshsig.py": "sha256:bb73524cf6fa94192cef4c3dc8575dfc4b1142d1ba9871450e85ca072491c158",
+    "test/bootstrap/test_state_chain_v2.py": "sha256:8a825d99555befee581088065b9029f312f75cab5b17fdfccef203e95dd89073",
+    "test/bootstrap/test_state_writer.py": "sha256:7b30cde313fe1f687cb6aaaff591f04c3b8ed652c7e26d5842c9e1b8db05d6e4",
+    "test/bootstrap/test_workflow_orchestrator.py": "sha256:f47f1255122e3c307282806b241bdc71fa212c4320bb0a08c27e6f32f4a2c541",
+    "tools/phasegate/__init__.py": "sha256:e2ec6b1ff7075856ca725d83f73f89fe2c2397abb4e6ea69347e0ffb8927fd71",
+    "tools/phasegate/chain_artifact.py": "sha256:c403d705e63c7b374edc7777664844a609c9dfcb457b6b771c0f874d0cad9348",
+    "tools/phasegate/chain_witness.py": "sha256:ba129dd33a7f884b8b7b9fdf3acfe68808e0d5d5ac638aaab0ba854a887cced2",
+    "tools/phasegate/community_facts.py": "sha256:595080816d4edcfe923d250ea4010c4e7eae61a9d9ced7cfa0870c7e8c9e325e",
+    "tools/phasegate/control_context.py": "sha256:e329d8bca419ad70530b5d633bb96e26069d965665e22d2bb8a0069e970e5cf5",
+    "tools/phasegate/delegation.py": "sha256:c78361c554b4abcaa0bfebc443df634570465bf564a53361176c488437979672",
+    "tools/phasegate/digest.py": "sha256:c4aefd68dee6b879d753c871cf3f36d934fec2eefc88456b6ca3f928cc2672d8",
+    "tools/phasegate/evidence_index.py": "sha256:e573c2b35f6154f04e85b92dcd28e6adbb641d3c5e8063ae6ec92efc17070dfe",
+    "tools/phasegate/execution_artifact.py": "sha256:fa6f670d3642fc3576b2c90d970d2042c14188f3c42c4ca59bb004bfb6ad38c5",
+    "tools/phasegate/external_facts.py": "sha256:69836f8de4e4e8ea5ab7b971540fca1f87f55b013850cb439f5ba044ef5bec61",
+    "tools/phasegate/gate_runner.py": "sha256:bfefe7df81105d44e8f9caa3bc7f72e9ac670c3f929838dc041ca3defb51d9bf",
+    "tools/phasegate/lifecycle_bundle.py": "sha256:73bdb9e6dbe3d16e9e2a971ecb0a2027250049e1e7b3731516ba8f1a4ee24ca7",
+    "tools/phasegate/lifecycle_evidence.py": "sha256:251d1e29f03ea2e898781a2db41b80982e6129bd306c93f895a896a08a155ef2",
+    "tools/phasegate/main.py": "sha256:d5e0480a3f969ced54ff0da71dd8d8ada6434d8fa1b58cb2dabc05a6fe43bf09",
+    "tools/phasegate/oidc.py": "sha256:cdf531376b44e87cfae9fe31c92a457c2207209e6a0de3e7df189c0710640ee7",
+    "tools/phasegate/oidc_provenance.py": "sha256:921c0ae3257936846877f71e380cb404d9584226854c8bc25334c9d1437dd1ad",
+    "tools/phasegate/p00_evaluators.py": "sha256:2616d8afdea28bf6130d649405b120cf0a957c94ce82149835b860db7b7fc0dc",
+    "tools/phasegate/phase_bundle.py": "sha256:6c3fa848eed55035f8feabf7b6c66eb309766f087c97eaa0631a89d9e415f6d4",
+    "tools/phasegate/phase_evidence.py": "sha256:f199f3f6c6e9e85398781a780ed06f23074ca851eb36c7ae5dd63e4efdb33fc0",
+    "tools/phasegate/post_event_writer.py": "sha256:7534786f30f3151d83f23d38433d40f3fe24f8c9cae54b47e3f97ba5fe0d197c",
+    "tools/phasegate/prepare_request.py": "sha256:10d9f5448886d416b5c46aa34d9a6806a924f5f50b388abd7339d43e15b81178",
+    "tools/phasegate/protected.py": "sha256:23a976980d864722fcd5b8cd6b2120adbc4617fd5a728ab5a0ba2f998ad88fb8",
+    "tools/phasegate/protected_v2.py": "sha256:eb1f2ad3cd7b0c3b245d83892de231c681036ec7d42a49ac10b25be40e7e85c2",
+    "tools/phasegate/provenance.py": "sha256:d5c621698e8164bbe75592be745a77bb14394b664e73d12952deb83e1d6a9b55",
+    "tools/phasegate/provenance_writer.py": "sha256:5041fb4fc890868415cd7d60db6b6a60fd34b489d2eb9334c6153462eb925207",
+    "tools/phasegate/run_executor.py": "sha256:0b2b2f8ec4b205bec7d31db848a319bc9b03afdc3a78a7b9964e23425f81cfc9",
+    "tools/phasegate/serialized_bundle.py": "sha256:e3c446a16faabe2f303cbdedc7f4e346477708ea3a5b3fe2a390e608bb5064bc",
+    "tools/phasegate/sshsig.py": "sha256:0301d2357721a0abb248a472a0580720ce74f1b4fcf365c4011e5ae38612942a",
+    "tools/phasegate/state_chain_v2.py": "sha256:b37c5a4f28bf1cf560f5cfa5afbf42744381fb91feb412bceca7f1019639109b",
+    "tools/phasegate/state_writer.py": "sha256:56e61566313c9c723158fd70530333a81dbe60a748cfaea662fb164ac791951d",
+    "tools/phasegate/validation.py": "sha256:b6ff74c9a7618f3f444ef42c551b0bae2aa8b3b52746f62ead31bbda29c1c943",
+    "tools/phasegate/workflow_orchestrator.py": "sha256:3050453d4cad1ae36041061b922eef0ba785872e939a5b2d8f36123546fa6a99"
+  },
+  "digestGroups": {
+    "planDigest": "sha256:884e661a8d9e3820532add4ae424585583b6ec0bf41658032f1b2d31da643fad",
+    "agentInstructionsDigest": "sha256:6c2e0670140e6b0e60f2b173e4d0467edb14f5aed6d24d228f165279d76f0c23",
+    "aggregateContractDigest": "sha256:0b3875bf097b29080c8c2cc42f5cf1c09723de688c96e6fd67ae7583404cce3c",
+    "gateRunnerDigest": "sha256:4569619331db98d6b8530d495e89f915145de5b33610bd17e3141f5cb7653fd7",
+    "workUnitContractSetDigest": "sha256:f11174db0ab4959e63e6cffea739674b498c7db95773a026f4a7a5dff53259f4",
+    "gateDefinitionSetDigest": "sha256:4654ff17a0d1f3a666b93d457d639e43e0cbb1414a6ca8610e6e5fd577750e85",
+    "evaluatorCatalogDigest": "sha256:951917bf9a04ee3dd21becfb1be1c3a8b4463ace616120ab0d6cff9a0cd54299",
+    "evidenceSchemaCatalogDigest": "sha256:311e4091325fa0e14acde21f9c1bc5804d44e9627f01a440a218690f70382d82",
+    "metricDefinitionsDigest": "sha256:bf49d0d183bb664424cf85e2a257bb147c0190aaaf89e9a502f40c8d541d049d",
+    "protectedCatalogSetDigest": "sha256:cb5fd04cac840ed53b6c9ab164b0b153d8dc2788b47114ad01e8a691a6abffe1",
+    "impactMapDigest": "sha256:8c59c04b97a1c5b22c117b72b744e438e8067a434bc1b1e9ffcbb62eef183aef",
+    "productStageMapDigest": "sha256:76366c10e89934f52ac3cc36f3cea68a9cd23a9f8451036ad427090c50812e3a",
+    "antiPlaceholderTestDigest": "sha256:a673b176139555970537eff24d3dc7216025b59f6a2a596e7bd002ff1caf24b3",
+    "protectedVerifierTestDigest": "sha256:4d9bda54988e2ba68dc6115022a4bb52849d79bb59dfae36d9a4746208a69d75",
+    "protectedVerifierPolicySetDigest": "sha256:948f29860a558b347d88818210f32f0581d3b75d33d64cfec8914eaa3e36e50f",
+    "protectedWorkflowDigest": "sha256:bb0fafcb2f84f2153f231d367b1c3b927c046b2183f4c7bfbaa93f2f802edc88",
+    "protectedControlPlaneWorkflowDigest": "sha256:f88c42c4a16772778c1dc3f0eb958da1777fcf9caf98048f3239369683f68b17",
+    "protectedStateWriterWorkflowDigest": "sha256:179ad4edbbe36691e03c5879fc575c2b16a18c6f0826d691ac1348fd8fdc989e",
+    "crossPlatformWorkflowDigest": "sha256:e17a0b5da5ecd20720c2bd20508574bf0cd0e16bcab51e89805cb2680d714b71"
+  },
+  "testSuites": {
+    "bootstrap": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_phasegate.py'",
+      "protectedFile": "test/bootstrap/test_phasegate.py",
+      "cases": [
+        "test_agent_authored_reviewer_identity_cannot_pass",
+        "test_agent_cannot_configure_trust_roots_after_rebind",
+        "test_bootstrap_catalog_cannot_be_emptied_after_rebind",
+        "test_cli_bootstrap_reports_computed_digest",
+        "test_codeowners_cannot_be_weakened_after_rebind",
+        "test_constant_pass_evaluator_cannot_pass",
+        "test_contract_references_and_verification_cannot_be_replaced_after_rebind",
+        "test_contract_without_phase_cannot_pass_after_rebind",
+        "test_control_plane_digest_drift_cannot_pass",
+        "test_criterion_kind_and_threshold_drift_cannot_pass_after_rebind",
+        "test_cross_platform_workflow_cannot_use_shallow_history_after_rebind",
+        "test_current_candidate_is_semantically_valid",
+        "test_duplicate_json_key_cannot_pass",
+        "test_empty_fail_open_gate_cannot_pass_after_rebind",
+        "test_external_fact_schema_must_bind_subject_and_fact_digest",
+        "test_external_fact_verifier_cannot_be_removed_after_rebind",
+        "test_gate_digest_mismatch_cannot_pass_after_rebind",
+        "test_genesis_request_checkout_cannot_use_shallow_history_after_rebind",
+        "test_hand_entered_metric_result_cannot_pass",
+        "test_hosted_runner_namespace_bootstrap_cannot_drift_after_rebind",
+        "test_human_attestation_schema_cannot_be_weakened_after_rebind",
+        "test_incomplete_contract_cannot_pass",
+        "test_input_kind_cannot_hide_non_json_gate",
+        "test_late_bound_dataset_cannot_be_prefilled_after_rebind",
+        "test_line_ending_policy_cannot_be_weakened_after_rebind",
+        "test_missing_approval_request_cannot_pass",
+        "test_missing_declared_input_cannot_pass",
+        "test_non_finite_number_cannot_pass",
+        "test_p00_evaluator_cannot_be_downgraded_after_rebind",
+        "test_phase_state_before_genesis_cannot_pass",
+        "test_planned_evaluator_cannot_reuse_bootstrap_handler_after_rebind",
+        "test_planned_machine_evaluator_is_not_executable",
+        "test_prerequisite_and_network_policy_cannot_be_relaxed_after_rebind",
+        "test_previous_request_revision_cannot_be_rewritten",
+        "test_protected_acceptance_catalog_cannot_be_emptied_after_rebind",
+        "test_protected_v2_contract_cannot_be_downgraded_after_rebind",
+        "test_protected_workflow_cannot_gain_write_permission_after_rebind",
+        "test_r3_request_identity_and_ambiguity_projection_cannot_drift",
+        "test_request_cannot_bind_a_nonexistent_source_commit",
+        "test_request_integrity_fields_cannot_be_forged",
+        "test_required_status_check_job_names_cannot_drift_after_rebind",
+        "test_runtime_logs_are_forbidden_pre_genesis_and_excluded_afterward",
+        "test_state_transition_policy_cannot_be_weakened_after_rebind",
+        "test_transition_chain_before_genesis_cannot_pass",
+        "test_undeclared_control_plane_file_cannot_escape_digest",
+        "test_unit_gate_fails_before_independent_approval_and_genesis",
+        "test_unknown_evaluator_is_not_executable",
+        "test_workflow_job_env_cannot_use_runner_context_after_rebind"
+      ]
+    },
+    "chainArtifact": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_chain_artifact.py'",
+      "protectedFile": "test/bootstrap/test_chain_artifact.py",
+      "cases": [
+        "test_encode_does_not_mutate_callers",
+        "test_event_tamper_is_rejected_even_if_outer_digest_is_recomputed",
+        "test_extra_or_missing_fields_are_rejected",
+        "test_noncanonical_and_duplicate_input_fail_before_transport",
+        "test_reordered_or_relinked_events_are_rejected",
+        "test_roundtrip_preserves_raw_chain_and_authorization_bytes",
+        "test_truncated_or_forged_head_and_count_are_rejected"
+      ]
+    },
+    "chainWitness": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_chain_witness.py'",
+      "protectedFile": "test/bootstrap/test_chain_witness.py",
+      "cases": [
+        "test_expired_or_overlong_witness_is_rejected",
+        "test_head_state_source_and_position_replay_are_rejected",
+        "test_payload_tamper_and_signature_replay_are_rejected",
+        "test_valid_witness_is_identity_sealed",
+        "test_wrong_role_organization_or_revocation_is_rejected"
+      ]
+    },
+    "communityFacts": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_community_facts.py'",
+      "protectedFile": "test/bootstrap/test_community_facts.py",
+      "cases": [
+        "test_design_partner_principal_and_organization_duplicates_fail",
+        "test_draft_insufficient_partners_and_empty_feedback_fail",
+        "test_outer_roster_revocation_cannot_be_omitted_by_community_evidence",
+        "test_same_key_alias_copy_digest_and_review_self_attestation_fail",
+        "test_source_freeze_coi_namespace_and_tamper_fail",
+        "test_three_reference_models_return_exact_fact_mapping"
+      ]
+    },
+    "controlContext": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_control_context.py'",
+      "protectedFile": "test/bootstrap/test_control_context.py",
+      "cases": [
+        "test_context_is_mechanically_derived_and_identity_sealed",
+        "test_full_component_map_rejects_extra_missing_and_digest_drift",
+        "test_late_bound_dataset_is_explicitly_non_convergent_slot",
+        "test_later_transition_approval_does_not_replace_contract_approval",
+        "test_phase_context_uses_real_aggregate_contract_and_unit_set",
+        "test_raw_dataset_reviewer_delegation_and_revocation_are_enforced",
+        "test_signed_dataset_selection_finalizes_phase_aggregate_context",
+        "test_signed_raw_dataset_selection_finalizes_shared_catalog_once",
+        "test_threshold_evaluator_schema_and_dataset_mutants_fail_closed"
+      ]
+    },
+    "delegation": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_delegation.py'",
+      "protectedFile": "test/bootstrap/test_delegation.py",
+      "cases": [
+        "test_delegates_cannot_redelegate_and_go_no_go_stays_multisignature",
+        "test_effective_roster_and_adapter_preserve_real_role",
+        "test_policy_control_source_chain_namespace_and_body_replay_fail",
+        "test_revocation_is_exact_signed_and_removes_authority",
+        "test_scope_capability_and_criterion_expansion_fail_closed",
+        "test_self_delegation_and_key_identity_aliases_are_rejected"
+      ]
+    },
+    "executionArtifact": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_execution_artifact.py'",
+      "protectedFile": "test/bootstrap/test_execution_artifact.py",
+      "cases": [
+        "test_a_b_toolchain_identity_and_freeze_digest_are_closed",
+        "test_copied_in_memory_pair_seal_cannot_be_serialized",
+        "test_cross_process_canonical_roundtrip_recomputes_same_sealed_pair",
+        "test_forged_run_pair_summary_is_rejected_by_raw_recomputation",
+        "test_fresh_verified_freeze_can_import_cross_process_bundle",
+        "test_log_manifest_and_artifact_digest_mutations_are_rejected",
+        "test_missing_raw_stderr_and_unknown_field_are_rejected",
+        "test_noncanonical_json_and_duplicate_keys_are_rejected",
+        "test_p00_evaluator_dataset_freeze_comes_from_recomputed_input",
+        "test_phase_bundle_roundtrip_uses_disjoint_schema_and_pair_seal",
+        "test_raw_byte_tamper_is_detected_before_serialized_summary_is_trusted",
+        "test_synthetic_canary_and_host_path_are_never_serialized",
+        "test_timeout_truncation_and_false_destruction_proof_are_rejected",
+        "test_wrong_freeze_source_commit_and_checkout_identity_are_rejected"
+      ]
+    },
+    "externalFacts": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_external_facts.py'",
+      "protectedFile": "test/bootstrap/test_external_facts.py",
+      "cases": [
+        "test_arbitrary_endpoint_redirect_pagination_and_oversize_fail_closed",
+        "test_canonical_copied_digest_subject_and_attestation_mutants_fail",
+        "test_duplicate_missing_cancelled_skipped_and_wrong_jobs_fail",
+        "test_fixed_https_get_uses_environment_token_and_bounded_read",
+        "test_other_p00_external_fact_models_are_explicitly_unsupported",
+        "test_reference_observation_recomputes_exact_fact_mapping",
+        "test_repo_source_workflow_attempt_fork_and_pr_mutants_fail",
+        "test_spec_cites_exact_current_attempt_endpoints",
+        "test_token_is_required_and_never_copied_into_errors"
+      ]
+    },
+    "gateRunner": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_gate_runner.py'",
+      "protectedFile": "test/bootstrap/test_gate_runner.py",
+      "cases": [
+        "test_a_b_deterministic_drift_is_rejected",
+        "test_both_bootstrap_builtins_are_supported",
+        "test_deepcopied_or_cross_criterion_runs_and_pairs_are_rejected",
+        "test_dirty_wrong_checkout_and_handwritten_summary_are_rejected",
+        "test_fixed_command_table_covers_two_bootstrap_and_all_p00_builtins",
+        "test_forged_evidence_and_cross_bound_input_are_rejected",
+        "test_module_has_no_io_network_or_process_capability",
+        "test_phase_and_work_unit_pair_seals_cannot_cross_or_be_copied",
+        "test_phase_pair_uses_aggregate_contract_and_strict_projection",
+        "test_unverified_handmade_or_copied_freeze_is_rejected",
+        "test_valid_pass_pair_is_direct_signed_criterion_projection",
+        "test_valid_threshold_failure_produces_fail_pair"
+      ]
+    },
+    "lifecycleEvidence": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_lifecycle_evidence.py'",
+      "protectedFile": "test/bootstrap/test_lifecycle_evidence.py",
+      "cases": [
+        "test_blocker_rejects_tamper_wrong_state_role_and_empty_manifest",
+        "test_blocker_resolution_is_ssh_verified_state_bound_and_identity_sealed",
+        "test_bundle_rejects_noncanonical_tamper_replay_coi_source_and_digest_only",
+        "test_bundle_rejects_stale_cross_head_and_copied_chain_witness",
+        "test_bundle_structurally_rejects_control_and_supersession",
+        "test_impact_bundle_and_writer_fail_closed_without_atomic_batch",
+        "test_invalidation_mechanically_distinguishes_impact_and_control",
+        "test_invalidation_non_active_evidence_state_becomes_rejected",
+        "test_invalidation_rejects_caller_paths_wrong_head_role_and_reconstruction",
+        "test_resume_canonical_bundle_freshly_verifies_to_authorized_transition",
+        "test_supersession_is_explicit_ssh_approved_and_identity_sealed",
+        "test_supersession_rejects_silent_swap_wrong_decision_and_coi"
+      ]
+    },
+    "phaseBundle": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_phase_bundle.py'",
+      "protectedFile": "test/bootstrap/test_phase_bundle.py",
+      "cases": [
+        "test_exact_raw_bundle_builds_fresh_phase_transition",
+        "test_final_transition_requires_exact_two_role_go_nogo",
+        "test_noncanonical_summary_and_aggregate_input_mutants_reject"
+      ]
+    },
+    "phaseEvidence": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_phase_evidence.py'",
+      "protectedFile": "test/bootstrap/test_phase_evidence.py",
+      "cases": [
+        "test_exact_duplicate_result_deduplicates_but_conflict_rejects",
+        "test_exact_twelve_records_recompute_reference_pass",
+        "test_historical_source_records_are_ignored",
+        "test_late_bound_work_context_uses_reverified_machine_dataset",
+        "test_missing_fail_source_evaluator_contract_and_unit_mutants_reject",
+        "test_shared_catalog_slot_dataset_fork_rejects"
+      ]
+    },
+    "protectedChainCli": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_protected_chain_cli.py'",
+      "protectedFile": "test/bootstrap/test_protected_chain_cli.py",
+      "cases": [
+        "test_append_rejects_commit_bundle_digest_and_canonical_mutants_before_oidc",
+        "test_append_uses_injected_oidc_and_writes_exact_chain_event_view_summary",
+        "test_phase_append_cli_uses_phase_scope_without_fake_work_unit",
+        "test_protected_input_fd_reader_rejects_symlink_and_in_place_replacement",
+        "test_replay_requires_all_pins_and_atomically_writes_derived_outputs"
+      ]
+    },
+    "protectedStateWriterWorkflow": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_protected_state_writer_workflow.py'",
+      "protectedFile": "test/bootstrap/test_protected_state_writer_workflow.py",
+      "cases": [
+        "test_append_downloads_only_immutable_ids_from_same_repository",
+        "test_artifact_bytes_are_data_only_and_cli_receives_every_pin",
+        "test_contract_and_makefile_expose_the_same_append_boundary",
+        "test_permissions_are_read_only_and_modes_are_exact"
+      ]
+    },
+    "protectedV1Historical": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_protected_verifier.py'",
+      "protectedFile": "test/bootstrap/test_protected_verifier.py",
+      "cases": [
+        "test_active_rejection_clears_pointers_without_false_conflict",
+        "test_approval_bundle_cannot_hide_state_artifacts",
+        "test_approval_namespace_replay_is_rejected",
+        "test_candidate_source_commit_pin_is_required",
+        "test_claimed_reviewer_role_must_match_policy",
+        "test_event_chain_reordering_is_rejected",
+        "test_evidence_attachment_is_bound_and_does_not_change_state",
+        "test_expired_approval_is_rejected",
+        "test_external_chain_head_detects_signed_tail_truncation",
+        "test_external_policy_pin_rejects_replaced_roster",
+        "test_hand_edited_phase_state_view_is_rejected",
+        "test_illegal_state_transition_is_rejected",
+        "test_machine_transition_requires_approved_evidence_result",
+        "test_one_key_cannot_approve_and_sign_state",
+        "test_parent_directory_symlink_input_is_rejected",
+        "test_path_substitution_cannot_replace_ssh_keygen",
+        "test_pending_policy_cannot_authorize",
+        "test_prior_chain_prefix_cannot_be_rewritten",
+        "test_request_digest_pin_is_required",
+        "test_second_genesis_is_rejected",
+        "test_signed_approval_tamper_is_rejected",
+        "test_state_transition_cannot_consume_random_approval_digest",
+        "test_unlisted_approval_signer_is_rejected",
+        "test_valid_approval_is_verified_without_state_write",
+        "test_valid_signed_genesis_replays_to_unique_active_unit"
+      ]
+    },
+    "protectedV2": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_protected_v2.py'",
+      "protectedFile": "test/bootstrap/test_protected_v2.py",
+      "cases": [
+        "test_delegation_and_go_no_go_policy_drift_fail_closed",
+        "test_policy_request_approval_and_coi_tamper_fail_closed",
+        "test_repository_protection_observation_is_strictly_verified",
+        "test_valid_r3_approval_and_oidc_genesis_verify_end_to_end",
+        "test_workflow_source_or_oidc_protection_claim_drift_is_rejected"
+      ]
+    },
+    "oidc": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_oidc.py'",
+      "protectedFile": "test/bootstrap/test_oidc.py",
+      "cases": [
+        "test_algorithm_confusion_is_rejected",
+        "test_audience_array_is_rejected",
+        "test_audience_cannot_be_replayed_for_another_statement",
+        "test_duplicate_header_key_is_rejected",
+        "test_embedded_or_remote_key_selection_is_rejected",
+        "test_historical_token_does_not_require_current_unexpired_bearer",
+        "test_padded_base64url_is_rejected",
+        "test_repository_jwks_snapshot_is_strict_and_content_pinned",
+        "test_repository_or_workflow_claim_drift_is_rejected",
+        "test_rerun_and_excessive_lifetime_are_rejected",
+        "test_short_modulus_and_nonstandard_exponent_are_rejected",
+        "test_signature_bit_flip_is_rejected",
+        "test_statement_must_precede_token_issue_by_a_small_bound",
+        "test_unknown_and_duplicate_kid_fail_closed",
+        "test_valid_digest_bound_token_verifies_offline"
+      ]
+    },
+    "oidcProvenance": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_oidc_provenance.py'",
+      "protectedFile": "test/bootstrap/test_oidc_provenance.py",
+      "cases": [
+        "test_actor_authority_source_control_and_component_bindings_are_exact",
+        "test_default_provider_is_actions_only_fixed_endpoint_and_secret_safe",
+        "test_forged_freeze_pair_and_verifier_fail_before_token_acquisition",
+        "test_generic_callback_supports_every_approved_machine_proof_namespace",
+        "test_machine_writer_consumes_seals_and_self_verifies",
+        "test_product_descendant_succeeds_but_component_change_and_fork_fail",
+        "test_token_namespace_result_commit_and_pull_request_replay_fail"
+      ]
+    },
+    "postEventWriter": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_post_event_writer.py'",
+      "protectedFile": "test/bootstrap/test_post_event_writer.py",
+      "cases": [
+        "test_bootstrap_trust_jwks_and_component_blob_substitution_are_rejected",
+        "test_every_stale_witness_binding_is_rejected",
+        "test_forged_or_copied_current_input_and_witness_fail_before_token",
+        "test_nonmonotonic_time_and_stale_replay_are_rejected",
+        "test_payload_and_event_digest_mutation_fail_incremental_verification",
+        "test_pr_ref_and_current_commit_oidc_mismatch_are_rejected",
+        "test_valid_transition_and_attachment_are_projected_and_self_verified",
+        "test_workflow_run_replay_is_rejected_incrementally"
+      ]
+    },
+    "runExecutor": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_run_executor.py'",
+      "protectedFile": "test/bootstrap/test_run_executor.py",
+      "cases": [
+        "test_a_b_checkout_root_reuse_and_aliases_are_rejected",
+        "test_bootstrap_cannot_reach_host_loopback_or_external_route",
+        "test_command_injection_cannot_select_an_executable",
+        "test_dirty_source_is_rejected_before_execution",
+        "test_fixed_bootstrap_command_runs_twice_with_isolated_environment",
+        "test_fixed_command_timeout_terminates_and_rejects_run",
+        "test_forged_isolated_evaluator_output_cannot_bypass_parent_recompute",
+        "test_output_ceiling_rejects_fixed_command",
+        "test_p00_evaluator_is_dispatched_in_isolated_subprocess_and_sealed",
+        "test_run_a_is_sealed_and_destroyed_before_run_b_is_created",
+        "test_unavailable_network_namespace_fails_closed",
+        "test_wrong_head_is_rejected_before_execution"
+      ]
+    },
+    "serializedBundle": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_serialized_bundle.py'",
+      "protectedFile": "test/bootstrap/test_serialized_bundle.py",
+      "cases": [
+        "test_attachment_roundtrip_reverifies_freeze_result_and_witness",
+        "test_canonical_schema_digest_head_namespace_and_commit_mutants_fail",
+        "test_duplicate_key_random_documents_wrong_role_and_unsupported_phase_fail",
+        "test_raw_execution_and_external_fact_evidence_sets_are_closed",
+        "test_real_sshsig_and_rsa_w01_machine_convergence_roundtrip",
+        "test_real_sshsig_and_rsa_w02_readiness_and_activation_roundtrips"
+      ]
+    },
+    "sshsig": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_sshsig.py'",
+      "protectedFile": "test/bootstrap/test_sshsig.py",
+      "cases": [
+        "test_embedded_key_must_equal_approved_key",
+        "test_key_comments_and_non_ed25519_keys_are_rejected",
+        "test_noncanonical_armor_and_invalid_namespace_policy_fail",
+        "test_payload_or_namespace_replay_is_rejected",
+        "test_reference_openssh_sha256_signature_verifies",
+        "test_reference_openssh_sha512_signature_verifies",
+        "test_signature_mutation_and_trailing_armor_are_rejected"
+      ]
+    },
+    "stateChainV2": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_state_chain_v2.py'",
+      "protectedFile": "test/bootstrap/test_state_chain_v2.py",
+      "cases": [
+        "test_attachment_cannot_mutate_state_or_consume_unverified_bundle",
+        "test_converged_phase_cannot_retain_a_rejected_work_unit",
+        "test_evidence_authorization_rejects_copied_provenance",
+        "test_external_head_pin_detects_truncation_and_is_required",
+        "test_genesis_trust_substitution_and_nested_state_mutation_are_rejected",
+        "test_lifecycle_block_and_resume_replay_updates_only_sealed_pointers",
+        "test_main_forward_with_changed_workflow_or_component_is_rejected",
+        "test_main_forward_with_unchanged_components_activates_unique_pointer",
+        "test_nonempty_head_or_base_ref_claim_is_rejected",
+        "test_oidc_statement_tamper_and_workflow_run_replay_are_rejected",
+        "test_phase_aggregate_replay_never_creates_a_work_unit_pointer",
+        "test_reorder_and_cross_kind_event_inputs_are_rejected",
+        "test_transition_payload_source_and_proof_replay_are_rejected",
+        "test_valid_transition_and_attachment_replay"
+      ]
+    },
+    "stateWriter": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_state_writer.py'",
+      "protectedFile": "test/bootstrap/test_state_writer.py",
+      "cases": [
+        "test_audience_exactly_binds_canonical_statement",
+        "test_construction_performs_no_file_io",
+        "test_correct_state_digest_and_v1alpha2_envelope",
+        "test_default_provider_refuses_non_actions_environment_without_network",
+        "test_read_only_github_api_provider_uses_fixed_get_endpoints",
+        "test_repository_protection_weaknesses_fail_before_oidc_token",
+        "test_tampered_token_is_rejected_before_event_is_returned",
+        "test_unverified_approval_and_unbound_workflow_fail_before_provider",
+        "test_wrong_protected_claim_is_rejected"
+      ]
+    },
+    "workflowOrchestrator": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_workflow_orchestrator.py'",
+      "protectedFile": "test/bootstrap/test_workflow_orchestrator.py",
+      "cases": [
+        "test_cross_process_replay_uses_only_raw_artifact_and_git_objects",
+        "test_head_request_commit_and_component_mutants_fail_closed",
+        "test_machine_raw_artifact_stdout_summary_and_missing_mutants_fail",
+        "test_phase_and_unsupported_lifecycle_entries_fail_before_bundle_import",
+        "test_phase_append_orchestrator_e2e_and_duplicate_event_reject",
+        "test_raw_chain_append_e2e_reaches_w02_active",
+        "test_real_crypto_phase_bundle_fresh_import_and_inner_mutant",
+        "test_real_sshsig_oidc_genesis_replay_recomputes_full_control_map"
+      ]
+    },
+    "provenance": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_provenance.py'",
+      "protectedFile": "test/bootstrap/test_provenance.py",
+      "cases": [
+        "test_activation_binds_prerequisite_state_contract_source_and_control",
+        "test_activation_proof_and_approval_cannot_replay_on_new_chain_head",
+        "test_activation_state_context_rejects_random_digest_and_unmet_prerequisite",
+        "test_convergence_authorization_consumes_exact_internal_results",
+        "test_criterion_authorization_preserves_real_human_role",
+        "test_cross_unit_source_and_control_replay_are_rejected",
+        "test_evaluator_and_dataset_are_exactly_contract_bound",
+        "test_forged_registry_or_copied_verified_objects_cannot_authorize",
+        "test_freeze_replacement_invalidates_prior_results",
+        "test_generic_external_signature_does_not_establish_external_fact",
+        "test_generic_time_signature_also_remains_fact_unverified",
+        "test_human_result_is_complete_only_with_reviewer_signature",
+        "test_machine_pass_requires_real_successful_run_commands",
+        "test_missing_and_duplicate_criterion_results_fail_closed",
+        "test_phase_aggregate_requires_five_units_and_two_role_go_nogo",
+        "test_planned_evaluator_cannot_be_frozen",
+        "test_proof_and_approval_cannot_be_replayed",
+        "test_random_run_digest_is_rejected_even_when_statement_is_resigned",
+        "test_resume_invalidation_and_supersession_have_distinct_evidence",
+        "test_run_a_b_identity_and_deterministic_bindings_are_recomputed",
+        "test_transition_approval_requires_reviewer_role_and_namespace",
+        "test_valid_activation_consumes_verified_state_proof_and_approval",
+        "test_valid_freeze_machine_pair_proof_and_reviewer_approval",
+        "test_w01_to_w02_readiness_then_activation_is_fully_authorized",
+        "test_wrong_role_and_namespace_are_rejected"
+      ]
+    },
+    "provenanceWriter": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_provenance_writer.py'",
+      "protectedFile": "test/bootstrap/test_provenance_writer.py",
+      "cases": [
+        "test_copied_phase_pair_is_rejected_before_oidc",
+        "test_forged_inputs_namespace_and_commit_fail_before_token",
+        "test_lifecycle_generation_fails_closed_without_dedicated_evidence",
+        "test_oidc_token_cannot_replay_across_statement_or_pr_context",
+        "test_phase_machine_result_and_transition_proof_are_self_verified",
+        "test_resume_writer_consumes_only_exact_blocker_resolution_seal",
+        "test_tampered_envelope_fails_normal_provenance_verifier",
+        "test_work_transition_activation_and_readiness_are_self_verified"
+      ]
+    },
+    "p00Evaluators": {
+      "command": "python3 -m unittest discover -s test/bootstrap -p 'test_p00_evaluators.py'",
+      "protectedFile": "test/bootstrap/test_p00_evaluators.py",
+      "cases": [
+        "test_aggregate_child_failure_blocks_pass",
+        "test_aggregate_child_subject_mismatch_is_error",
+        "test_aggregate_missing_or_extra_criterion_fails",
+        "test_aggregate_rejects_reused_child_evidence",
+        "test_competitive_duplicate_project_is_error",
+        "test_competitive_prohibited_claim_fails",
+        "test_competitive_recomputed",
+        "test_docs_recomputed_from_content",
+        "test_docs_reject_stable_claim_from_raw_content",
+        "test_dual_view_recomputed",
+        "test_dual_view_requires_ten_denominator_records",
+        "test_duplicate_json_key_is_error",
+        "test_duplicate_record_id_is_error",
+        "test_every_catalog_planned_evaluator_has_an_implementation",
+        "test_extra_record_field_is_error",
+        "test_extra_top_level_handwritten_aggregate_is_error",
+        "test_freeze_digest_drift_is_error",
+        "test_minimization_recomputed_from_bytes",
+        "test_minimization_requires_preserved_fingerprint_and_inputs",
+        "test_missing_top_level_or_record_field_is_error",
+        "test_module_has_no_network_or_process_imports",
+        "test_non_finite_number_is_error",
+        "test_phase_aggregate_requires_exact_machine_criterion_set",
+        "test_provenance_does_not_count_duplicate_source",
+        "test_provenance_recomputed",
+        "test_replay_recomputed",
+        "test_replay_requires_raw_equal_repetitions",
+        "test_reproduction_never_trusts_attempted_count",
+        "test_reproduction_recomputed",
+        "test_run_b_record_drift_is_error",
+        "test_run_identity_drift_is_error",
+        "test_secret_canary_raw_match_fails",
+        "test_secret_canary_recomputed_from_locations",
+        "test_taxonomy_recomputed",
+        "test_taxonomy_rejects_family_mismatch",
+        "test_unknown_consistency_recomputed",
+        "test_unknown_evaluator_and_missing_fields_are_errors",
+        "test_unknown_evaluator_rejects_unsupported_attribution"
+      ]
+    }
+  },
+  "diff": {
+    "baseCommit": "8faf45512ec5384e816390ad1a46a403c103c5dc",
+    "entries": [
+      {
+        "status": "A",
+        "path": ".gitattributes"
+      },
+      {
+        "status": "A",
+        "path": ".github/CODEOWNERS"
+      },
+      {
+        "status": "A",
+        "path": ".github/workflows/p00-bootstrap-cross-platform.yml"
+      },
+      {
+        "status": "A",
+        "path": ".github/workflows/p00-protected-control-plane.yml"
+      },
+      {
+        "status": "A",
+        "path": ".github/workflows/p00-protected-state-writer.yml"
+      },
+      {
+        "status": "M",
+        "path": ".github/workflows/p00-protected-verifier-candidate.yml"
+      },
+      {
+        "status": "M",
+        "path": "Makefile"
+      },
+      {
+        "status": "M",
+        "path": "execution/README.md"
+      },
+      {
+        "status": "A",
+        "path": "execution/approval-requests/P00.B00-R3.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/catalogs/p00/acceptance.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/catalogs/p00/bootstrap.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/catalogs/p00/competitor-research.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/catalogs/p00/corpus.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/catalogs/p00/go-no-go.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/catalogs/p00/risk-experiments.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/control-plane-inputs.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/evaluators/catalog.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/evidence-schemas/catalog.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/gates/p00/P00.W01.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/gates/p00/P00.W02.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/gates/p00/P00.W03.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/gates/p00/P00.W04.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/gates/p00/P00.W05.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/gates/p00/aggregate.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/impact-map.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/metrics/definitions.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/phases/P00.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/product-stage-map.yaml"
+      },
+      {
+        "status": "A",
+        "path": "execution/protected-verifier/ambiguities.yaml"
+      },
+      {
+        "status": "A",
+        "path": "execution/protected-verifier/github-actions-oidc-jwks.json"
+      },
+      {
+        "status": "M",
+        "path": "execution/protected-verifier/trust-policy.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/protected-verifier/workflow-contract.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/work-units/P00.W01.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/work-units/P00.W02.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/work-units/P00.W03.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/work-units/P00.W04.yaml"
+      },
+      {
+        "status": "M",
+        "path": "execution/work-units/P00.W05.yaml"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_chain_artifact.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_chain_witness.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_community_facts.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_control_context.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_delegation.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_execution_artifact.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_external_facts.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_gate_runner.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_lifecycle_evidence.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_oidc.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_oidc_provenance.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_p00_evaluators.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_phase_bundle.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_phase_evidence.py"
+      },
+      {
+        "status": "M",
+        "path": "test/bootstrap/test_phasegate.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_post_event_writer.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_protected_chain_cli.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_protected_state_writer_workflow.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_protected_v2.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_provenance.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_provenance_writer.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_run_executor.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_serialized_bundle.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_sshsig.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_state_chain_v2.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_state_writer.py"
+      },
+      {
+        "status": "A",
+        "path": "test/bootstrap/test_workflow_orchestrator.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/chain_artifact.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/chain_witness.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/community_facts.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/control_context.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/delegation.py"
+      },
+      {
+        "status": "M",
+        "path": "tools/phasegate/digest.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/evidence_index.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/execution_artifact.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/external_facts.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/gate_runner.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/lifecycle_bundle.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/lifecycle_evidence.py"
+      },
+      {
+        "status": "M",
+        "path": "tools/phasegate/main.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/oidc.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/oidc_provenance.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/p00_evaluators.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/phase_bundle.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/phase_evidence.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/post_event_writer.py"
+      },
+      {
+        "status": "M",
+        "path": "tools/phasegate/prepare_request.py"
+      },
+      {
+        "status": "M",
+        "path": "tools/phasegate/protected.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/protected_v2.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/provenance.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/provenance_writer.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/run_executor.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/serialized_bundle.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/sshsig.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/state_chain_v2.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/state_writer.py"
+      },
+      {
+        "status": "M",
+        "path": "tools/phasegate/validation.py"
+      },
+      {
+        "status": "A",
+        "path": "tools/phasegate/workflow_orchestrator.py"
+      }
+    ],
+    "scope": [
+      "portable dependency-free OpenSSH SSHSIG verification",
+      "offline digest-bound GitHub Actions OIDC verification",
+      "public protected-main artifact-only Genesis writer",
+      "strict protected input, criterion, transition proof, and approval provenance",
+      "implemented paired P00 machine evaluators",
+      "fixed-command network-isolated P00 Run A/B executor",
+      "chain-witness-bound post-Genesis event projection and replay verifier",
+      "late-bound independently signed dataset freeze",
+      "versioned P00.B00-R3 review request"
+    ],
+    "forbiddenArtifactsVerifiedAbsent": [
+      "execution/phase-state.yaml",
+      "execution/transitions",
+      "execution/approvals",
+      "execution/progress.md",
+      "execution/decisions.md",
+      "execution/blockers.md",
+      "execution/waivers.yaml",
+      "Genesis or StateTransition events",
+      "valid P00 completion evidence",
+      "product implementation"
+    ]
+  },
+  "decisionsRequested": [
+    {
+      "id": "canonical-plan-path",
+      "question": "Continue to use agentapi-doctor-Plan.md as the canonical P00 plan path."
+    },
+    {
+      "id": "digest-projection",
+      "question": "Approve bootstrap-canonical-json-v1 and controlPlaneDigest-only self-reference normalization for R3."
+    },
+    {
+      "id": "external-actions",
+      "question": "Keep outreach, public claims, publication, visibility changes, and third-party facts human-authorized and independently attested."
+    },
+    {
+      "id": "externally-pinned-trust-roots",
+      "question": "Approve the exact SSH principal, historical GitHub OIDC JWK snapshot, validity windows, policy digest, source/request/workflow commits, and chain-head pins."
+    },
+    {
+      "id": "p00-contracts-and-gates",
+      "question": "Approve the exact P00 contracts, catalogs, thresholds, paired evaluators, provenance objects, and fail-closed gates."
+    },
+    {
+      "id": "post-genesis-verifier",
+      "question": "Approve portable SSHSIG, offline historical-JWKS OIDC verification, protected result provenance, and transition replay semantics."
+    },
+    {
+      "id": "protected-dataset-freeze",
+      "question": "Approve late-bound SignedProtectedInputFreeze semantics; an unfrozen dataset can never satisfy a criterion."
+    },
+    {
+      "id": "protected-genesis",
+      "question": "Allow one OIDC-signed Genesis artifact only after exact SSHSIG approval and live public protected-main proof; do not write repository state automatically."
+    },
+    {
+      "id": "protected-verifier-format",
+      "question": "Approve detached OpenSSH SSHSIG v1 human statements and digest-bound GitHub Actions OIDC StateEvent statements."
+    },
+    {
+      "id": "read-only-protected-workflow",
+      "question": "Approve artifact-only protected workflows with contents read, no repository write, no candidate code execution, and separately reviewed import."
+    },
+    {
+      "id": "request-revision-chain",
+      "question": "Accept P00.B00-R3 as the immutable successor to committed R2 while preserving both earlier request files byte-for-byte."
+    },
+    {
+      "id": "working-name-and-license-direction",
+      "question": "Continue the AgentAPI Doctor working name and provisional Apache-2.0 plus DCO direction pending P00 governance evidence."
+    }
+  ],
+  "ambiguities": [
+    {
+      "id": "P00-A-OIDC-PROTECTED-WORKFLOW",
+      "decisionCandidate": "Only when the JWT binds the exact canonical statement, immutable repository/owner IDs, exact approved workflow source, a protected main ref, a GitHub-hosted runner, first run attempt, an independently approved historical JWK snapshot, and an external current chain-head anchor. OIDC from ref_protected=false proves provenance only and cannot authorize Genesis.",
+      "currentEffect": "blocks authoritative Genesis until repository protection or an independently approved external witness is established"
+    },
+    {
+      "id": "P00-A-LATE-BOUND-DATASET-FREEZE",
+      "decisionCandidate": "The control plane approves an immutable dataset slot, selection rules, schema, and metric denominator semantics. P00.W03 may collect candidate records while ACTIVE, but every dataset-dependent criterion remains INSUFFICIENT_SAMPLES until an independent SignedProtectedInputFreeze binds the final manifest, eligible ID set, count, dataset digest, source commit, control-plane digest, contract, and applicable criteria. Replacing the freeze invalidates all dependent results.",
+      "currentEffect": "requires explicit R3 approval and a contract amendment before P00.W03 activation"
+    },
+    {
+      "id": "P00-A-CONTROL-PLANE-REVISION",
+      "decisionCandidate": "R3 freezes and implements every P00 evaluator before Genesis. A separately approved ControlPlaneRevision event and historical revision map are mandatory before any P01 control-plane activation; ordinary StateEvent replay may not silently swap digests.",
+      "currentEffect": "all P00 evaluators must be implemented and reviewed in R3; P01 remains blocked until revision semantics exist"
+    },
+    {
+      "id": "P00-A-GO-NOGO-THRESHOLD",
+      "decisionCandidate": "Require two distinct human principals and two distinct organizations for P00-H-GO-NOGO, at least one of whom is an independent external reviewer; both signatures bind the same aggregate evidence, source commit, control-plane digest, scope/name decision, and conflict-of-interest statements.",
+      "currentEffect": "blocks P00 aggregate CONVERGED until independently approved"
+    }
+  ],
+  "limitations": [
+    "This request is not an approval, signature, repository-protection fact, state transition, gate result, or completion claim.",
+    "The repository is currently private and unprotected; authoritative Genesis remains blocked until an explicitly authorized public protected main exists and live protection is captured.",
+    "The committed SSH principal is a candidate trust root; only a matching detached signature over the exact R3 envelope can authorize the reviewed decision.",
+    "The historical GitHub OIDC JWK snapshot is approval-bound and replay is offline; online key refresh cannot silently authorize old events.",
+    "The GitHub-hosted job retains platform network access; only fixed Run A/B child commands are isolated by a capability-probed Linux user/network namespace.",
+    "EXTERNAL, TIME, and HUMAN criteria remain incomplete without their independent fact verifiers and required signatures.",
+    "The checked-in state-writer has separate Genesis and append modes. Append mode can replay and append raw authorization bundles for P00 work-unit readiness, activation, convergence, evidence attachment, and the P00 phase aggregate, but this request records no execution result and cannot itself produce convergence evidence.",
+    "Witness-bound lifecycle RESUME verification exists only as a library boundary in this revision; the protected workflow does not append it. Impact/control invalidation and control-plane supersession fail closed pending separately approved batch and state-revision semantics.",
+    "P01 and later control-plane changes remain blocked until separately approved ControlPlaneRevision replay semantics are implemented."
+  ],
+  "nextAuthorizedAction": "independent review and detached SSHSIG decision over the exact R3 request, candidate source commit, future protected-main workflow execution commit, control-plane/policy/JWKS digests, all decisions, and all ambiguities; no Genesis may be created until public branch protection is independently proven"
+}
