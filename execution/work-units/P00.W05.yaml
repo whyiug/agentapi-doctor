@@ -6,7 +6,7 @@
   "phase": "P00",
   "title": "Provisional RFC, threat, and go/no-go evidence",
   "objective": "Assemble accurate provisional design, security, data, naming, limitation, and external-review evidence for the separate P00 aggregate go/no-go decision without making that decision inside the work unit.",
-  "controlPlaneDigest": "sha256:e730fa2a325bccee2197c1c20f3996faa1009b0528362f877f6fb0c258a7dfff",
+  "controlPlaneDigest": "sha256:c81fcf3afc06458e805d8ae5dc3e6a16a2d93efea9d2bad1c9f3f42b30088ccd",
   "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/phase-state.yaml", "execution/catalogs/p00/go-no-go.yaml"],
   "inScope": ["rfcs/0001-*.md", "rfcs/0002-*.md", "rfcs/0003-*.md", "rfcs/0004-*.md", "rfcs/0005-*.md", "docs/THREAT-MODEL.md", "docs/DATA-POLICY.md", "docs/naming/**", "docs/known-limitations/**", "research/external-review/**"],
   "outOfScope": ["approving RFCs as final", "P00 aggregate decision", "phase CONVERGED transition", "stable compatibility claims", "P01 implementation"],

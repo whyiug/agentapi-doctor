@@ -677,9 +677,14 @@ class BootstrapCandidateTests(CandidateCopy):
                 "--user --map-root-user --",
             ),
             (
+                "namespace-subprocess-status",
+                'if ! child_namespace="$(\n',
+                'child_namespace="$(\n',
+            ),
+            (
                 "namespace-proof",
-                'test "$parent_namespace" != "$child_namespace"',
-                'test "$parent_namespace" = "$child_namespace"',
+                '"$parent_namespace" != "$child_namespace" ]]',
+                '"$parent_namespace" = "$child_namespace" ]]',
             ),
             (
                 "restore-trap",

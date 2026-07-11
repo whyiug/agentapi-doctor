@@ -5,7 +5,7 @@
   "contractStatus": "candidate-unapproved",
   "authoritative": "conditional-after-independent-R3-approval-and-live-protection-proof",
   "controlPlaneIncluded": true,
-  "controlPlaneDigest": "sha256:e730fa2a325bccee2197c1c20f3996faa1009b0528362f877f6fb0c258a7dfff",
+  "controlPlaneDigest": "sha256:c81fcf3afc06458e805d8ae5dc3e6a16a2d93efea9d2bad1c9f3f42b30088ccd",
   "workflows": {
     "controlPlane": ".github/workflows/p00-protected-control-plane.yml",
     "crossPlatform": ".github/workflows/p00-bootstrap-cross-platform.yml",

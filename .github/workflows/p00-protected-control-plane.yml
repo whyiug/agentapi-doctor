@@ -39,12 +39,18 @@ jobs:
 
           probe_namespace() {
             local parent_namespace child_namespace
-            parent_namespace="$(/usr/bin/stat -Lc '%i' /proc/self/ns/net)"
-            child_namespace="$(
+            if ! parent_namespace="$(/usr/bin/stat -Lc '%i' /proc/self/ns/net)"; then
+              return 1
+            fi
+            if ! child_namespace="$(
               /usr/bin/unshare --user --map-root-user --net -- \
                 /usr/bin/stat -Lc '%i' /proc/self/ns/net
-            )"
-            test "$parent_namespace" != "$child_namespace"
+            )"; then
+              return 1
+            fi
+            [[ "$parent_namespace" =~ ^[0-9]+$ &&
+              "$child_namespace" =~ ^[0-9]+$ &&
+              "$parent_namespace" != "$child_namespace" ]]
           }
 
           restore_restriction() {

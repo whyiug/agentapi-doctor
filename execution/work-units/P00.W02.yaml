@@ -6,7 +6,7 @@
   "phase": "P00",
   "title": "Competitor and design-partner research",
   "objective": "Establish a source-backed differentiation case, candidate naming constraints, and independently verifiable upstream and design-partner interest without letting the agent contact or speak for external parties.",
-  "controlPlaneDigest": "sha256:e730fa2a325bccee2197c1c20f3996faa1009b0528362f877f6fb0c258a7dfff",
+  "controlPlaneDigest": "sha256:c81fcf3afc06458e805d8ae5dc3e6a16a2d93efea9d2bad1c9f3f42b30088ccd",
   "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/phase-state.yaml", "execution/catalogs/p00/competitor-research.yaml"],
   "inScope": ["research/competitive/**", "research/design-partners/**", "docs/COMPETITIVE-LANDSCAPE.md", "docs/naming/**"],
   "outOfScope": ["agent-sent outreach", "fabricated interviews or willingness", "public launch or compatibility claim", "corpus reproduction", "product code"],

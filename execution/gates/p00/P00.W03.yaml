@@ -7,7 +7,7 @@
   "contract": "execution/work-units/P00.W03.yaml",
   "gateStatus": "candidate-unapproved",
   "machineImplementationStatus": "implemented-protected-paired",
-  "controlPlaneDigest": "sha256:e730fa2a325bccee2197c1c20f3996faa1009b0528362f877f6fb0c258a7dfff",
+  "controlPlaneDigest": "sha256:c81fcf3afc06458e805d8ae5dc3e6a16a2d93efea9d2bad1c9f3f42b30088ccd",
   "networkPolicy": "offline",
   "failClosed": true,
   "criteria": [
