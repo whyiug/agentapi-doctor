@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:protected-catalog:v1",
+  "kind": "CompetitorResearchAcceptanceDefinitionCandidate",
+  "id": "catalog://p00/competitor-research/v1",
+  "catalogStatus": "candidate-unapproved",
+  "protected": true,
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
+  "namedProjects": ["am-i-openai-compatible", "octest", "FauxpenAI-conformance", "Open Responses"],
+  "requiredMatrixDimensions": ["capability overlap", "architecture", "evidence model", "client-observed behavior", "governance", "reuse or collaboration opportunity", "independent-project justification"],
+  "sourcePolicy": {"primarySourcesRequired": true, "recordResolvedURL": true, "recordRetrievedAt": true, "recordRevision": true, "recordDigest": true, "recordLicenseOrReuseStatus": true},
+  "outreachPolicy": {"agentMaySend": false, "humanReviewBeforeSend": true, "importNonSensitiveEvidenceOnly": true, "signatureRequired": true},
+  "interviewMinimum": 5,
+  "designPartnerMinimum": 3,
+  "designPartnerIndependence": "external maintainers independent of the author; identity and organization overlap must be disclosed",
+  "namingCandidateMinimum": 3,
+  "namingChecks": ["GitHub repository and organization", "Go module", "Python package", "npm package", "OCI namespace", "domain", "obvious trademark conflict"],
+  "prohibitedClaims": ["willingness inferred from silence", "agent-authored statement represented as external feedback", "public compatibility ranking or badge", "differentiation based only on interface quality"]
+}

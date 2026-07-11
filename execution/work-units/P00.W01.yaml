@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:goal-contract:v1",
+  "kind": "WorkUnitContractCandidate",
+  "contractStatus": "candidate-unapproved",
+  "id": "P00.W01",
+  "phase": "P00",
+  "title": "Approved bootstrap gate validation",
+  "objective": "After protected Genesis activation, prove that the frozen bootstrap control plane and anti-placeholder gate fail closed and execute the real validation path.",
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
+  "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/phase-state.yaml", "execution/README.md"],
+  "inScope": ["Makefile", "tools/phasegate/**", "test/bootstrap/**", "execution/**"],
+  "outOfScope": ["competitor outreach", "corpus collection", "risk experiments", "P00 aggregate approval", "phase activation or state transitions", "product implementation"],
+  "protectedAcceptanceInputs": ["execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/bootstrap.yaml", "execution/gates/p00/P00.W01.yaml", "test/bootstrap/test_phasegate.py"],
+  "mutableImplementationTests": ["test/bootstrap/regression/**"],
+  "prerequisites": ["P00.B00: independently approved", "Genesis: verified and P00.W01 ACTIVE"],
+  "deliverables": ["real control-plane validation result", "anti-placeholder negative-test result", "fail-closed diagnostics for unavailable or unknown evaluators"],
+  "verification": ["make bootstrap", "make test-bootstrap", "make gate-unit UNIT=P00.W01"],
+  "convergence": [
+    {"id": "P00-M-BOOTSTRAP-CONTROL", "kind": "MACHINE", "evaluator": "evaluator://bootstrap/control-plane/v1", "threshold": "all canonical control-plane, contract, input-closure, and forbidden-artifact assertions pass", "evidenceSchema": "evidence-schema://bootstrap/control-plane-report/v1"},
+    {"id": "P00-M-ANTI-PLACEHOLDER", "kind": "MACHINE", "evaluator": "evaluator://bootstrap/anti-placeholder/v1", "threshold": "all negative meta-tests prove missing, planned, unknown, existence-only, and hand-written metric inputs cannot PASS", "evidenceSchema": "evidence-schema://bootstrap/anti-placeholder-report/v1"},
+    {"id": "P00-X-CROSSPLATFORM", "kind": "EXTERNAL", "evaluator": "attestation://ci/cross-platform/v1", "threshold": "protected CI runs bootstrap successfully on Linux, macOS, and Windows for the same source and control-plane digest", "evidenceSchema": "evidence-schema://attestation/cross-platform/v1"},
+    {"id": "P00-H-CONTROL", "kind": "HUMAN", "evaluator": "attestation://review/bootstrap-control/v1", "threshold": "independent reviewer approves the commit-bound B00 control plane and protected workflow activates P00.W01", "evidenceSchema": "evidence-schema://attestation/human-review/v1"},
+    {"id": "P00-H-NO-PUBLIC-CLAIM", "kind": "HUMAN", "evaluator": "attestation://review/no-public-claim/v1", "threshold": "authorized reviewer confirms no public compatibility claim, badge, or Registry publication exists", "evidenceSchema": "evidence-schema://attestation/human-review/v1"}
+  ],
+  "resourceBudget": {"wallTime": "1w", "commandTimeout": "15m", "fuzzCPUHours": 0, "diskBytes": 1073741824, "downloadBytes": 0, "processLimit": 16},
+  "networkPolicy": {"gate": "offline", "researchAllowlist": [], "dependencyFetch": "lockfile-only"},
+  "stopAndBlock": ["Genesis or independent control-plane approval is absent", "trusted signature or state-replay verifier is unavailable", "frozen evaluator or protected meta-test digest changes", "three attempts have the same failure fingerprint", "gate can pass an unimplemented evaluator"],
+  "humanGate": "bootstrap-control-review"
+}

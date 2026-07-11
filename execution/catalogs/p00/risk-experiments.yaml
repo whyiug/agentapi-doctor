@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:protected-catalog:v1",
+  "kind": "RiskExperimentAcceptanceDefinitionCandidate",
+  "id": "catalog://p00/risk-experiments/v1",
+  "catalogStatus": "candidate-unapproved",
+  "protected": true,
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
+  "datasetStatus": "pending_protected_input",
+  "datasetDigest": null,
+  "activationRule": "P00.W04 may activate against this approved empty dataset slot and construct bounded experiment records from P00.W03 outputs. Before any dataset-dependent evaluator may PASS or P00.W04 may enter MACHINE_CONVERGED, an independent reviewer must sign a SignedProtectedInputFreeze for the ten final eligible IDs, manifest, dataset digest, source commit, contract, and applicable criteria; until then every dataset-dependent metric is insufficient_samples.",
+  "experiments": [
+    {"id": "sse-source-faithful-capture", "question": "Can application-observed SSE bytes and line endings be captured without repairing target semantics?"},
+    {"id": "responses-typed-event-fsm", "question": "Can typed Responses events be validated as a state machine with unknown events preserved?"},
+    {"id": "sdk-forward-proxy-correlation", "question": "Can capture-layer and exact client observations be correlated without conflating them?"},
+    {"id": "multi-tool-fingerprint-minimization", "question": "Can multi-tool deltas be minimized while the real SDK failure fingerprint remains true?"}
+  ],
+  "dualView": {"eligibleMinimum": 10, "successMinimum": 8, "requiredViews": ["capture-layer", "client"], "correlationIdentityRequired": true},
+  "minimization": {"attemptMinimum": 10, "qualifyingMinimum": 5, "minimumReduction": 0.3, "bytesFormula": "canonical request bytes + required event bytes", "failureFingerprintMustBePreserved": true},
+  "secretCanary": {"syntheticOnly": true, "maximumPersistedOccurrences": 0, "requiredSinks": ["raw artifacts", "normalized artifacts", "reports", "logs", "temporary files", "crash output"]},
+  "unknownAttribution": {"eligibleMinimum": 1, "requiredOutcome": "unknown", "unsupportedAttributionMaximum": 0, "deterministic": true},
+  "spikeDisposition": {"allowed": ["retain", "rewrite", "delete"], "independentReviewRequired": true, "unreviewedProductionReuseForbidden": true}
+}

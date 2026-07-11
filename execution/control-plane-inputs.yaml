@@ -1,0 +1,558 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:control-plane-inputs:v1",
+  "kind": "ControlPlaneInputManifestCandidate",
+  "manifestStatus": "candidate-unapproved",
+  "digestAlgorithm": "sha256",
+  "canonicalization": "bootstrap-canonical-json-v1",
+  "controlPlaneDigestPlaceholder": "sha256:__CONTROL_PLANE_DIGEST__",
+  "normalization": {
+    "jsonCompatibleYaml": "parse as strict JSON, reject duplicate keys and non-finite numbers",
+    "controlPlaneDigest": "replace every field named controlPlaneDigest with the fixed placeholder before component hashing",
+    "text": "normalize CRLF and CR to LF",
+    "aggregate": "sort component path/digest records by UTF-8 path bytes and hash canonical JSON"
+  },
+  "inputs": [
+    {
+      "path": ".gitattributes",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": ".github/CODEOWNERS",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": ".github/workflows/p00-bootstrap-cross-platform.yml",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": ".github/workflows/p00-protected-control-plane.yml",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": ".github/workflows/p00-protected-state-writer.yml",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": ".github/workflows/p00-protected-verifier-candidate.yml",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": ".gitignore",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "AGENTS.md",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "Makefile",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "agentapi-doctor-Plan.md",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "execution/README.md",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "execution/catalogs/p00/acceptance.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/catalogs/p00/bootstrap.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/catalogs/p00/competitor-research.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/catalogs/p00/corpus.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/catalogs/p00/go-no-go.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/catalogs/p00/risk-experiments.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/control-plane-inputs.yaml",
+      "kind": "manifest",
+      "required": true
+    },
+    {
+      "path": "execution/evaluators/catalog.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/evidence-schemas/catalog.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/gates/p00/P00.W01.yaml",
+      "kind": "gate",
+      "required": true
+    },
+    {
+      "path": "execution/gates/p00/P00.W02.yaml",
+      "kind": "gate",
+      "required": true
+    },
+    {
+      "path": "execution/gates/p00/P00.W03.yaml",
+      "kind": "gate",
+      "required": true
+    },
+    {
+      "path": "execution/gates/p00/P00.W04.yaml",
+      "kind": "gate",
+      "required": true
+    },
+    {
+      "path": "execution/gates/p00/P00.W05.yaml",
+      "kind": "gate",
+      "required": true
+    },
+    {
+      "path": "execution/gates/p00/aggregate.yaml",
+      "kind": "gate",
+      "required": true
+    },
+    {
+      "path": "execution/impact-map.yaml",
+      "kind": "manifest",
+      "required": true
+    },
+    {
+      "path": "execution/metrics/definitions.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/phases/P00.yaml",
+      "kind": "contract",
+      "required": true
+    },
+    {
+      "path": "execution/product-stage-map.yaml",
+      "kind": "manifest",
+      "required": true
+    },
+    {
+      "path": "execution/protected-verifier/ambiguities.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/protected-verifier/github-actions-oidc-jwks.json",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/protected-verifier/trust-policy.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/protected-verifier/workflow-contract.yaml",
+      "kind": "catalog",
+      "required": true
+    },
+    {
+      "path": "execution/work-units/P00.W01.yaml",
+      "kind": "contract",
+      "required": true
+    },
+    {
+      "path": "execution/work-units/P00.W02.yaml",
+      "kind": "contract",
+      "required": true
+    },
+    {
+      "path": "execution/work-units/P00.W03.yaml",
+      "kind": "contract",
+      "required": true
+    },
+    {
+      "path": "execution/work-units/P00.W04.yaml",
+      "kind": "contract",
+      "required": true
+    },
+    {
+      "path": "execution/work-units/P00.W05.yaml",
+      "kind": "contract",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/__init__.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_chain_artifact.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_chain_witness.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_community_facts.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_control_context.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_delegation.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_execution_artifact.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_external_facts.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_gate_runner.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_lifecycle_evidence.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_oidc.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_oidc_provenance.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_p00_evaluators.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_phase_bundle.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_phase_evidence.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_phasegate.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_post_event_writer.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_protected_chain_cli.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_protected_state_writer_workflow.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_protected_v2.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_protected_verifier.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_provenance.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_provenance_writer.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_run_executor.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_serialized_bundle.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_sshsig.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_state_chain_v2.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_state_writer.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "test/bootstrap/test_workflow_orchestrator.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/__init__.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/chain_artifact.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/chain_witness.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/community_facts.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/control_context.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/delegation.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/digest.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/evidence_index.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/execution_artifact.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/external_facts.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/gate_runner.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/lifecycle_bundle.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/lifecycle_evidence.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/main.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/oidc.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/oidc_provenance.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/p00_evaluators.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/phase_bundle.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/phase_evidence.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/post_event_writer.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/prepare_request.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/protected.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/protected_v2.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/provenance.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/provenance_writer.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/run_executor.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/serialized_bundle.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/sshsig.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/state_chain_v2.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/state_writer.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/validation.py",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "path": "tools/phasegate/workflow_orchestrator.py",
+      "kind": "text",
+      "required": true
+    }
+  ],
+  "excluded": [
+    {
+      "path": "execution/approval-requests/**",
+      "reason": "review request binds the already computed digest and cannot be a self-referential exam input"
+    },
+    {
+      "path": "execution/approvals/**",
+      "reason": "independent approval evidence is not agent-authored control plane"
+    },
+    {
+      "path": "execution/blockers.md",
+      "reason": "append-only runtime blocker log is execution evidence, not a protected evaluator input"
+    },
+    {
+      "path": "execution/decisions.md",
+      "reason": "append-only implementation decision log is execution evidence; normative decisions still require approved RFC/control-plane inputs"
+    },
+    {
+      "path": "execution/phase-state.yaml",
+      "reason": "forbidden before protected Genesis and generated afterward"
+    },
+    {
+      "path": "execution/progress.md",
+      "reason": "append-only runtime checkpoint log is execution evidence, not a protected evaluator input"
+    },
+    {
+      "path": "execution/transitions/**",
+      "reason": "forbidden before protected Genesis; append-only state evidence afterward"
+    },
+    {
+      "path": "execution/gates/p00/evidence/**",
+      "reason": "completion evidence is an output and forbidden in B00"
+    },
+    {
+      "path": "execution/gates/p00/latest.json",
+      "reason": "completion pointer is an output and forbidden in B00"
+    },
+    {
+      "path": "execution/waivers.yaml",
+      "reason": "human-signed development waiver data never changes a criterion result and is not agent-authored control plane"
+    }
+  ]
+}

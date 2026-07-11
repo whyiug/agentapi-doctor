@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:gate-definition:v1",
+  "kind": "WorkUnitGateDefinitionCandidate",
+  "id": "gate://p00/P00.W02/v1",
+  "phase": "P00",
+  "workUnit": "P00.W02",
+  "contract": "execution/work-units/P00.W02.yaml",
+  "gateStatus": "candidate-unapproved",
+  "machineImplementationStatus": "implemented-protected-paired",
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
+  "networkPolicy": "offline",
+  "failClosed": true,
+  "criteria": [
+    {
+      "id": "P00-M-COMPETITIVE",
+      "kind": "MACHINE",
+      "evaluator": "evaluator://research/competitive/v1",
+      "threshold": "all four named-project matrix records, five interview records, three naming candidates, primary-source fields, and prohibited-claim checks are recomputed from the protected catalog",
+      "evidenceSchema": "evidence-schema://research/competitive-report/v1"
+    },
+    {
+      "id": "P00-X-OUTREACH",
+      "kind": "EXTERNAL",
+      "evaluator": "attestation://upstream/outreach/v1",
+      "threshold": "authorized human reviewed and sent scoped outreach and imported non-sensitive signed evidence",
+      "evidenceSchema": "evidence-schema://attestation/external-review/v1"
+    },
+    {
+      "id": "P00-X-DESIGN-PARTNERS",
+      "kind": "EXTERNAL",
+      "evaluator": "attestation://review/design-partners/v1",
+      "threshold": "at least three independent external maintainers explicitly agree to review or try the project",
+      "evidenceSchema": "evidence-schema://attestation/design-partners/v1"
+    }
+  ],
+  "protectedInputs": [
+    "execution/catalogs/p00/acceptance.yaml",
+    "execution/catalogs/p00/competitor-research.yaml",
+    "execution/evaluators/catalog.yaml",
+    "execution/evidence-schemas/catalog.yaml"
+  ],
+  "missingEvidencePolicy": {
+    "MACHINE": "FAIL",
+    "EXTERNAL": "WAITING_EXTERNAL",
+    "HUMAN": "REVIEW_PENDING"
+  },
+  "unknownOrPlannedEvaluatorResult": {
+    "status": "ERROR",
+    "reasonCode": "unknown_or_unapproved_evaluator",
+    "mayPass": false
+  },
+  "datasetPolicy": {
+    "status": "late_bound_requires_signed_freeze",
+    "digest": null,
+    "missingOrUnfrozenResult": "insufficient_samples"
+  }
+}

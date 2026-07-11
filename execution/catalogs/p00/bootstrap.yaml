@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:protected-catalog:v1",
+  "kind": "BootstrapAcceptanceDefinitionCandidate",
+  "id": "catalog://p00/bootstrap/v1",
+  "catalogStatus": "candidate-unapproved",
+  "protected": true,
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
+  "requiredAssertions": [
+    {"id": "json-compatible-yaml", "semantic": "Every execution YAML parses as JSON and has no YAML-only types."},
+    {"id": "contract-shape", "semantic": "Every phase and work-unit contract has every Plan 29.3 required field with semantically valid values; every criterion has id, kind, evaluator, threshold, and evidenceSchema."},
+    {"id": "input-closure", "semantic": "Every protected contract, gate, evaluator, evidence schema, metric, catalog, runner, and protected meta-test is explicitly present in control-plane-inputs.yaml."},
+    {"id": "evaluator-status", "semantic": "All P00 machine evaluators are implemented by approved offline handlers with protected tests; any unknown, unapproved, digest-mismatched, or future-phase evaluator remains fail-closed."},
+    {"id": "anti-placeholder", "semantic": "Unknown or planned evaluators, hand-written metrics, file existence, empty assertions, and missing evidence cannot produce PASS."},
+    {"id": "genesis-boundary", "semantic": "No phase-state, transitions, approvals, completion evidence, activation, or valid convergence evidence exists before protected Genesis."},
+    {"id": "digest-normalization", "semantic": "All controlPlaneDigest fields normalize to the fixed placeholder before provisional bootstrap-canonical-json-v1 component hashing and aggregate SHA-256; P01 owns RFC 8785 conformance."}
+  ],
+  "protectedNegativeCases": ["unknown evaluator", "planned evaluator", "missing evaluator", "missing evidence schema", "missing protected input", "existence-only assertion", "hand-written metric", "unfrozen dataset", "forbidden pre-Genesis state artifact"],
+  "forbiddenPreGenesisPaths": ["execution/phase-state.yaml", "execution/transitions/**", "execution/approvals/**", "execution/gates/p00/evidence/**", "execution/gates/p00/latest.json"]
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:protected-verifier-ambiguities:v1alpha1",
+  "kind": "ProtectedVerifierAmbiguityRegisterCandidate",
+  "registerStatus": "candidate-unapproved",
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
+  "entries": [
+    {
+      "id": "P00-A-OIDC-PROTECTED-WORKFLOW",
+      "planSections": ["29.2", "29.11", "34.5"],
+      "question": "When GitHub private/free cannot enforce branch or Environment protection, can a commit-pinned GitHub Actions OIDC statement count as the protected StateEvent writer?",
+      "decisionCandidate": "Only when the JWT binds the exact canonical statement, immutable repository/owner IDs, exact approved workflow source, a protected main ref, a GitHub-hosted runner, first run attempt, an independently approved historical JWK snapshot, and an external current chain-head anchor. OIDC from ref_protected=false proves provenance only and cannot authorize Genesis.",
+      "currentEnvironment": "private GitHub Free; ref protection and required-reviewer Environment are unavailable",
+      "currentEffect": "blocks authoritative Genesis until repository protection or an independently approved external witness is established",
+      "silentDowngradeForbidden": true
+    },
+    {
+      "id": "P00-A-LATE-BOUND-DATASET-FREEZE",
+      "planSections": ["29.3", "29.4.1", "31"],
+      "question": "How can P00.W03 create a corpus when its original prerequisite requires the not-yet-created corpus digest to be frozen before activation?",
+      "decisionCandidate": "The control plane approves an immutable dataset slot, selection rules, schema, and metric denominator semantics. P00.W03 may collect candidate records while ACTIVE, but every dataset-dependent criterion remains INSUFFICIENT_SAMPLES until an independent SignedProtectedInputFreeze binds the final manifest, eligible ID set, count, dataset digest, source commit, control-plane digest, contract, and applicable criteria. Replacing the freeze invalidates all dependent results.",
+      "currentEnvironment": "corpus and experiment dataset digest slots are null candidates",
+      "currentEffect": "requires explicit R3 approval and a contract amendment before P00.W03 activation",
+      "silentDowngradeForbidden": true
+    },
+    {
+      "id": "P00-A-CONTROL-PLANE-REVISION",
+      "planSections": ["29.2", "29.3", "29.4"],
+      "question": "How are verifier/evaluator updates replayed after Genesis when the R2 chain assumes one controlPlaneDigest forever?",
+      "decisionCandidate": "R3 freezes and implements every P00 evaluator before Genesis. A separately approved ControlPlaneRevision event and historical revision map are mandatory before any P01 control-plane activation; ordinary StateEvent replay may not silently swap digests.",
+      "currentEnvironment": "only bootstrap evaluators are implemented in R2",
+      "currentEffect": "all P00 evaluators must be implemented and reviewed in R3; P01 remains blocked until revision semantics exist",
+      "silentDowngradeForbidden": true
+    },
+    {
+      "id": "P00-A-GO-NOGO-THRESHOLD",
+      "planSections": ["24.3", "29.8", "31"],
+      "question": "The P00 aggregate names authorized reviewers in the plural but does not specify an exact signature threshold.",
+      "decisionCandidate": "Require two distinct human principals and two distinct organizations for P00-H-GO-NOGO, at least one of whom is an independent external reviewer; both signatures bind the same aggregate evidence, source commit, control-plane digest, scope/name decision, and conflict-of-interest statements.",
+      "currentEnvironment": "no external reviewer trust root or feedback exists",
+      "currentEffect": "blocks P00 aggregate CONVERGED until independently approved",
+      "silentDowngradeForbidden": true
+    }
+  ]
+}

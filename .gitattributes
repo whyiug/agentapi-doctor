@@ -1,0 +1,2 @@
+# Keep evidence-bearing source bytes identical across supported checkouts.
+* text=auto eol=lf

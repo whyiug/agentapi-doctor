@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:goal-contract:v1",
+  "kind": "WorkUnitContractCandidate",
+  "contractStatus": "candidate-unapproved",
+  "id": "P00.W05",
+  "phase": "P00",
+  "title": "Provisional RFC, threat, and go/no-go evidence",
+  "objective": "Assemble accurate provisional design, security, data, naming, limitation, and external-review evidence for the separate P00 aggregate go/no-go decision without making that decision inside the work unit.",
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
+  "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/phase-state.yaml", "execution/catalogs/p00/go-no-go.yaml"],
+  "inScope": ["rfcs/0001-*.md", "rfcs/0002-*.md", "rfcs/0003-*.md", "rfcs/0004-*.md", "rfcs/0005-*.md", "docs/THREAT-MODEL.md", "docs/DATA-POLICY.md", "docs/naming/**", "docs/known-limitations/**", "research/external-review/**"],
+  "outOfScope": ["approving RFCs as final", "P00 aggregate decision", "phase CONVERGED transition", "stable compatibility claims", "P01 implementation"],
+  "protectedAcceptanceInputs": ["execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/go-no-go.yaml", "execution/gates/p00/P00.W05.yaml"],
+  "mutableImplementationTests": ["test/docs/**"],
+  "prerequisites": ["P00.W04: CONVERGED"],
+  "deliverables": ["RFC-0001 through RFC-0005 provisional drafts", "Threat Model v1 candidate", "Data Policy v1 candidate", "three naming candidates and conflict evidence", "known limitations and P00 evidence index", "external reviewer feedback packet", "go/no-go packet with no embedded decision"],
+  "verification": ["make gate-unit UNIT=P00.W05"],
+  "convergence": [
+    {"id": "P00-M-DOCS", "kind": "MACHINE", "evaluator": "evaluator://docs/license-links/v1", "threshold": "all required provisional documents pass structure, link, source-license, and no-stable-claim checks", "evidenceSchema": "evidence-schema://docs/license-links-report/v1"},
+    {"id": "P00-X-REVIEW", "kind": "EXTERNAL", "evaluator": "attestation://review/external-feedback/v1", "threshold": "independent external reviewer feedback is imported with provenance and signature", "evidenceSchema": "evidence-schema://attestation/external-review/v1"}
+  ],
+  "resourceBudget": {"wallTime": "1w", "commandTimeout": "15m", "fuzzCPUHours": 0, "diskBytes": 1073741824, "downloadBytes": 268435456, "processLimit": 16},
+  "networkPolicy": {"gate": "offline", "researchAllowlist": ["github.com", "developers.openai.com", "platform.claude.com", "ai.google.dev", "modelcontextprotocol.io"], "dependencyFetch": "lockfile-only"},
+  "stopAndBlock": ["external feedback provenance is missing", "a provisional draft is represented as approved or stable", "go/no-go decision would be self-approved inside this work unit", "required source license is ambiguous", "docs evaluator implementation remains planned"],
+  "humanGate": "none; P00-H-GO-NOGO belongs only to the separate phase aggregate"
+}
