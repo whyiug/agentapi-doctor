@@ -34,7 +34,46 @@ jobs:
 
       - name: Validate the complete P00 control plane and adversarial suite
         run: |
+          restriction=/proc/sys/kernel/apparmor_restrict_unprivileged_userns
+          original_restriction=
+
+          probe_namespace() {
+            local parent_namespace child_namespace
+            parent_namespace="$(/usr/bin/stat -Lc '%i' /proc/self/ns/net)"
+            child_namespace="$(
+              /usr/bin/unshare --user --map-root-user --net -- \
+                /usr/bin/stat -Lc '%i' /proc/self/ns/net
+            )"
+            test "$parent_namespace" != "$child_namespace"
+          }
+
+          restore_restriction() {
+            local prior_status=$? restored
+            trap - EXIT
+            if ! printf '%s\n' "$original_restriction" |
+              /usr/bin/sudo /usr/bin/tee "$restriction" >/dev/null; then
+              prior_status=1
+            fi
+            if ! restored="$(/usr/bin/sudo /usr/bin/cat "$restriction")"; then
+              prior_status=1
+            elif test "$restored" != "$original_restriction"; then
+              prior_status=1
+            fi
+            exit "$prior_status"
+          }
+
+          if ! probe_namespace; then
+            original_restriction="$(/usr/bin/sudo /usr/bin/cat "$restriction")"
+            test "$original_restriction" = 1
+            trap restore_restriction EXIT
+            printf '0\n' | /usr/bin/sudo /usr/bin/tee "$restriction" >/dev/null
+            test "$(/usr/bin/sudo /usr/bin/cat "$restriction")" = 0
+            probe_namespace
+          fi
+
           mkdir -p "$HOME"
+          PYTHONPATH=test/bootstrap python3 -m unittest \
+            test_run_executor.RunExecutorTests.test_bootstrap_cannot_reach_host_loopback_or_external_route
           make verify
 
       - name: Confirm PRE_GENESIS remains fail closed

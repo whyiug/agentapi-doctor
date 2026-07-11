@@ -182,6 +182,7 @@ REQUIRED_ANTI_PLACEHOLDER_TESTS = (
     "test_cross_platform_workflow_cannot_use_shallow_history_after_rebind",
     "test_line_ending_policy_cannot_be_weakened_after_rebind",
     "test_workflow_job_env_cannot_use_runner_context_after_rebind",
+    "test_hosted_runner_namespace_bootstrap_cannot_drift_after_rebind",
     "test_genesis_request_checkout_cannot_use_shallow_history_after_rebind",
     "test_required_status_check_job_names_cannot_drift_after_rebind",
     "test_gate_digest_mismatch_cannot_pass_after_rebind",
@@ -2347,6 +2348,47 @@ def _validate_protected_verifier_candidate(
     checkout = "actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5"
     upload = "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
     download = "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093"
+    control_plane_namespace_bootstrap = "\n".join(
+        (
+            "          restriction=/proc/sys/kernel/apparmor_restrict_unprivileged_userns",
+            "          original_restriction=",
+            "",
+            "          probe_namespace() {",
+            "            local parent_namespace child_namespace",
+            "            parent_namespace=\"$(/usr/bin/stat -Lc '%i' /proc/self/ns/net)\"",
+            "            child_namespace=\"$(",
+            "              /usr/bin/unshare --user --map-root-user --net -- \\",
+            "                /usr/bin/stat -Lc '%i' /proc/self/ns/net",
+            "            )\"",
+            "            test \"$parent_namespace\" != \"$child_namespace\"",
+            "          }",
+            "",
+            "          restore_restriction() {",
+            "            local prior_status=$? restored",
+            "            trap - EXIT",
+            "            if ! printf '%s\\n' \"$original_restriction\" |",
+            "              /usr/bin/sudo /usr/bin/tee \"$restriction\" >/dev/null; then",
+            "              prior_status=1",
+            "            fi",
+            "            if ! restored=\"$(/usr/bin/sudo /usr/bin/cat \"$restriction\")\"; then",
+            "              prior_status=1",
+            "            elif test \"$restored\" != \"$original_restriction\"; then",
+            "              prior_status=1",
+            "            fi",
+            "            exit \"$prior_status\"",
+            "          }",
+            "",
+            "          if ! probe_namespace; then",
+            "            original_restriction=\"$(/usr/bin/sudo /usr/bin/cat \"$restriction\")\"",
+            "            test \"$original_restriction\" = 1",
+            "            trap restore_restriction EXIT",
+            "            printf '0\\n' | /usr/bin/sudo /usr/bin/tee \"$restriction\" >/dev/null",
+            "            test \"$(/usr/bin/sudo /usr/bin/cat \"$restriction\")\" = 0",
+            "            probe_namespace",
+            "          fi",
+            "",
+        )
+    )
     workflow_contracts = {
         ".github/workflows/p00-protected-control-plane.yml": {
             "actions": {checkout},
@@ -2467,11 +2509,19 @@ def _validate_protected_verifier_candidate(
                 not in genesis_checkout.group(0)
             )
         )
+        control_plane_namespace_guard_drift = (
+            relative == ".github/workflows/p00-protected-control-plane.yml"
+            and (
+                workflow.count(control_plane_namespace_bootstrap) != 1
+                or workflow.count("/usr/bin/sudo ") != 5
+            )
+        )
         if (
             any(fragment not in workflow for fragment in source_contract["required"])
             or any(fragment in workflow for fragment in forbidden)
             or action_uses != source_contract["actions"]
             or writer_job_guard_drift
+            or control_plane_namespace_guard_drift
         ):
             issues.append(
                 Issue(

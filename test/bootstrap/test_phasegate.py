@@ -660,6 +660,50 @@ class BootstrapCandidateTests(CandidateCopy):
         self.rebind_candidate()
         self.assert_candidate_fails_with("unsafe_protected_workflow_candidate")
 
+    def test_hosted_runner_namespace_bootstrap_cannot_drift_after_rebind(
+        self,
+    ) -> None:
+        path = self.root / ".github/workflows/p00-protected-control-plane.yml"
+        workflow = path.read_text(encoding="utf-8")
+        mutations = (
+            (
+                "system-wide-persistence",
+                "/proc/sys/kernel/apparmor_restrict_unprivileged_userns",
+                "/etc/sysctl.d/60-agentapi-doctor-userns.conf",
+            ),
+            (
+                "namespace-flag",
+                "--user --map-root-user --net --",
+                "--user --map-root-user --",
+            ),
+            (
+                "namespace-proof",
+                'test "$parent_namespace" != "$child_namespace"',
+                'test "$parent_namespace" = "$child_namespace"',
+            ),
+            (
+                "restore-trap",
+                "trap restore_restriction EXIT",
+                ": # omitted restore trap",
+            ),
+            (
+                "additional-privilege",
+                "          make verify\n",
+                "          /usr/bin/sudo true\n          make verify\n",
+            ),
+        )
+        for name, original, replacement in mutations:
+            with self.subTest(mutation=name):
+                self.assertIn(original, workflow)
+                path.write_text(
+                    workflow.replace(original, replacement, 1),
+                    encoding="utf-8",
+                )
+                self.rebind_candidate()
+                self.assert_candidate_fails_with(
+                    "unsafe_protected_workflow_candidate"
+                )
+
     def test_genesis_request_checkout_cannot_use_shallow_history_after_rebind(
         self,
     ) -> None:

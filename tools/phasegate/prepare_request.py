@@ -322,7 +322,7 @@ def build_request(
             "The repository is currently private and unprotected; authoritative Genesis remains blocked until an explicitly authorized public protected main exists and live protection is captured.",
             "The committed SSH principal is a candidate trust root; only a matching detached signature over the exact R3 envelope can authorize the reviewed decision.",
             "The historical GitHub OIDC JWK snapshot is approval-bound and replay is offline; online key refresh cannot silently authorize old events.",
-            "Hosted-runner outbound network isolation is not claimed.",
+            "The GitHub-hosted job retains platform network access; only fixed Run A/B child commands are isolated by a capability-probed Linux user/network namespace.",
             "EXTERNAL, TIME, and HUMAN criteria remain incomplete without their independent fact verifiers and required signatures.",
             "The checked-in state-writer has separate Genesis and append modes. Append mode can replay and append raw authorization bundles for P00 work-unit readiness, activation, convergence, evidence attachment, and the P00 phase aggregate, but this request records no execution result and cannot itself produce convergence evidence.",
             "Witness-bound lifecycle RESUME verification exists only as a library boundary in this revision; the protected workflow does not append it. Impact/control invalidation and control-plane supersession fail closed pending separately approved batch and state-revision semantics.",
