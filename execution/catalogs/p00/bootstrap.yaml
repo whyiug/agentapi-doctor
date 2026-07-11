@@ -4,7 +4,7 @@
   "id": "catalog://p00/bootstrap/v1",
   "catalogStatus": "candidate-unapproved",
   "protected": true,
-  "controlPlaneDigest": "sha256:0d1cdeae46ee9d5e96b7106935f93cc43afb96c3fc708505d2a0f459d95fb62d",
+  "controlPlaneDigest": "sha256:f0ac1c6ac9648d4a6a4b4298fe959601a0a7b38da5ef61dab24aa1e812ebb8c0",
   "requiredAssertions": [
     {"id": "json-compatible-yaml", "semantic": "Every execution YAML parses as JSON and has no YAML-only types."},
     {"id": "contract-shape", "semantic": "Every phase and work-unit contract has every Plan 29.3 required field with semantically valid values; every criterion has id, kind, evaluator, threshold, and evidenceSchema."},

@@ -7,7 +7,7 @@
   "contract": "execution/phases/P00.yaml",
   "gateStatus": "candidate-unapproved",
   "machineImplementationStatus": "implemented-protected-paired",
-  "controlPlaneDigest": "sha256:0d1cdeae46ee9d5e96b7106935f93cc43afb96c3fc708505d2a0f459d95fb62d",
+  "controlPlaneDigest": "sha256:f0ac1c6ac9648d4a6a4b4298fe959601a0a7b38da5ef61dab24aa1e812ebb8c0",
   "networkPolicy": "offline",
   "failClosed": true,
   "requiredUnitGates": [

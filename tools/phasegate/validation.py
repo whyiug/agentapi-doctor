@@ -181,6 +181,8 @@ REQUIRED_ANTI_PLACEHOLDER_TESTS = (
     "test_protected_workflow_cannot_gain_write_permission_after_rebind",
     "test_cross_platform_workflow_cannot_use_shallow_history_after_rebind",
     "test_line_ending_policy_cannot_be_weakened_after_rebind",
+    "test_workflow_job_env_cannot_use_runner_context_after_rebind",
+    "test_genesis_request_checkout_cannot_use_shallow_history_after_rebind",
     "test_gate_digest_mismatch_cannot_pass_after_rebind",
     "test_request_integrity_fields_cannot_be_forged",
     "test_empty_fail_open_gate_cannot_pass_after_rebind",
@@ -2414,6 +2416,7 @@ def _validate_protected_verifier_candidate(
         "curl ",
         "wget ",
         "pip install",
+        "HOME: ${{ runner.temp }}",
         "python3 candidate-input",
         "bash candidate-input",
         "make -C candidate-input",
@@ -2440,6 +2443,15 @@ def _validate_protected_verifier_candidate(
             forbidden.append("id-token: write")
         if relative == ".github/workflows/p00-protected-state-writer.yml":
             forbidden.extend(("PYTHONPATH: trusted", "cd trusted", "python3 trusted"))
+        genesis_checkout = (
+            re.search(
+                r"(?ms)^      - name: Checkout exact request/workflow commit as data and Git proof\n"
+                r".*?(?=^      - name:)",
+                workflow,
+            )
+            if relative == ".github/workflows/p00-protected-state-writer.yml"
+            else None
+        )
         writer_job_guard_drift = (
             relative == ".github/workflows/p00-protected-state-writer.yml"
             and (
@@ -2447,6 +2459,9 @@ def _validate_protected_verifier_candidate(
                 or workflow.count("github.run_attempt == 1") != 2
                 or workflow.count("inputs.mode == 'genesis'") != 1
                 or workflow.count("inputs.mode == 'append'") != 1
+                or genesis_checkout is None
+                or "path: request-input\n          fetch-depth: 0"
+                not in genesis_checkout.group(0)
             )
         )
         if (

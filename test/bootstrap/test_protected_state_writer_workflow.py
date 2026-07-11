@@ -29,9 +29,18 @@ class ProtectedStateWriterWorkflowTests(unittest.TestCase):
         self.assertIn("  id-token: write\n", self.workflow)
         self.assertNotIn("contents: write", self.workflow)
         self.assertNotIn("actions: write", self.workflow)
+        self.assertNotIn("HOME: ${{ runner.temp }}", self.workflow)
+        self.assertEqual(
+            self.workflow.count("HOME: /tmp/agentapi-doctor-p00-home"), 2
+        )
         self.assertRegex(
             self.workflow,
             r"(?s)mode:.*?type: choice.*?options:\s+- genesis\s+- append",
+        )
+        self.assertRegex(
+            self.workflow,
+            r"(?s)Checkout exact request/workflow commit as data and Git proof.*?"
+            r"path: request-input\s+fetch-depth: 0\s+persist-credentials: false",
         )
         self.assertIn("inputs.mode == 'genesis'", self.workflow)
         self.assertIn("inputs.mode == 'append'", self.workflow)

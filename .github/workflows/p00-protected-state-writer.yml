@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
-      HOME: ${{ runner.temp }}/isolated-home
+      HOME: /tmp/agentapi-doctor-p00-home
       LC_ALL: C.UTF-8
       TZ: UTC
       CANDIDATE_SHA: ${{ inputs.candidate_sha }}
@@ -147,7 +147,7 @@ jobs:
         with:
           ref: ${{ inputs.workflow_execution_sha }}
           path: request-input
-          fetch-depth: 1
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Decode only the detached approval data
@@ -354,7 +354,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
-      HOME: ${{ runner.temp }}/isolated-home
+      HOME: /tmp/agentapi-doctor-p00-home
       LC_ALL: C.UTF-8
       TZ: UTC
       CANDIDATE_SHA: ${{ inputs.candidate_sha }}

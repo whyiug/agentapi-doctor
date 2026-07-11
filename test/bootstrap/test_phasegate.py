@@ -645,6 +645,46 @@ class BootstrapCandidateTests(CandidateCopy):
         self.rebind_candidate()
         self.assert_candidate_fails_with("unsafe_checkout_line_endings")
 
+    def test_workflow_job_env_cannot_use_runner_context_after_rebind(self) -> None:
+        path = self.root / ".github/workflows/p00-protected-control-plane.yml"
+        workflow = path.read_text(encoding="utf-8")
+        self.assertIn("HOME: /tmp/agentapi-doctor-p00-home", workflow)
+        path.write_text(
+            workflow.replace(
+                "HOME: /tmp/agentapi-doctor-p00-home",
+                "HOME: ${{ runner.temp }}/isolated-home",
+                1,
+            ),
+            encoding="utf-8",
+        )
+        self.rebind_candidate()
+        self.assert_candidate_fails_with("unsafe_protected_workflow_candidate")
+
+    def test_genesis_request_checkout_cannot_use_shallow_history_after_rebind(
+        self,
+    ) -> None:
+        path = self.root / ".github/workflows/p00-protected-state-writer.yml"
+        workflow = path.read_text(encoding="utf-8")
+        marker = (
+            "      - name: Checkout exact request/workflow commit as data and Git proof\n"
+            "        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1\n"
+            "        with:\n"
+            "          ref: ${{ inputs.workflow_execution_sha }}\n"
+            "          path: request-input\n"
+            "          fetch-depth: 0\n"
+        )
+        self.assertIn(marker, workflow)
+        path.write_text(
+            workflow.replace(
+                marker,
+                marker.replace("fetch-depth: 0", "fetch-depth: 1"),
+                1,
+            ),
+            encoding="utf-8",
+        )
+        self.rebind_candidate()
+        self.assert_candidate_fails_with("unsafe_protected_workflow_candidate")
+
 
 class GateExecutionTests(CandidateCopy):
     def test_planned_machine_evaluator_is_not_executable(self) -> None:

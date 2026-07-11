@@ -40,7 +40,7 @@ jobs:
     environment:
       name: p00-control-plane-review
     env:
-      HOME: ${{ runner.temp }}/isolated-home
+      HOME: /tmp/agentapi-doctor-p00-home
       LC_ALL: C.UTF-8
       TZ: UTC
     defaults:
