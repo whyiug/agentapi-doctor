@@ -85,7 +85,7 @@ PENDING_STATUSES = {
 }
 
 
-@dataclass(frozen=True)
+@dataclass
 class ProtectedVerificationError(ValueError):
     """A stable, fail-closed verifier error suitable for CLI JSON output."""
 
@@ -1022,6 +1022,15 @@ def _validate_state_invariants(core: Mapping[str, Any]) -> None:
     active_units: list[tuple[str, str]] = []
     pending_units: list[tuple[str, str]] = []
     for phase_id, phase in phases.items():
+        if (
+            not isinstance(phase, dict)
+            or phase.get("status") not in ALLOWED_TRANSITIONS
+        ):
+            _fail(
+                "invalid_state",
+                f"state.phases.{phase_id}.status",
+                "phase status is not recognized",
+            )
         units = phase.get("workUnits") if isinstance(phase, dict) else None
         if not isinstance(units, dict):
             _fail(
@@ -1029,11 +1038,33 @@ def _validate_state_invariants(core: Mapping[str, Any]) -> None:
                 f"state.phases.{phase_id}.workUnits",
                 "must be an object",
             )
+        unit_statuses: list[str] = []
         for unit_id, unit in units.items():
-            if isinstance(unit, dict) and unit.get("status") == "ACTIVE":
+            if (
+                not isinstance(unit, dict)
+                or unit.get("status") not in ALLOWED_TRANSITIONS
+            ):
+                _fail(
+                    "invalid_state",
+                    f"state.phases.{phase_id}.workUnits.{unit_id}.status",
+                    "work-unit status is not recognized",
+                )
+            unit_statuses.append(unit["status"])
+            if unit.get("status") == "ACTIVE":
                 active_units.append((phase_id, unit_id))
-            if isinstance(unit, dict) and unit.get("status") in PENDING_STATUSES:
+            if unit.get("status") in PENDING_STATUSES:
                 pending_units.append((phase_id, unit_id))
+        if phase["status"] in {
+            "MACHINE_CONVERGED",
+            "WAITING_EXTERNAL",
+            "REVIEW_PENDING",
+            "CONVERGED",
+        } and any(status != "CONVERGED" for status in unit_statuses):
+            _fail(
+                "phase_unit_convergence_mismatch",
+                f"state.phases.{phase_id}",
+                "a converged-or-later phase requires every work unit to remain CONVERGED",
+            )
     if len(active_phases) > 1 or len(active_units) > 1:
         _fail(
             "multiple_active_pointers",

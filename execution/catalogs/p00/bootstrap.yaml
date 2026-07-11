@@ -4,12 +4,12 @@
   "id": "catalog://p00/bootstrap/v1",
   "catalogStatus": "candidate-unapproved",
   "protected": true,
-  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
+  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
   "requiredAssertions": [
     {"id": "json-compatible-yaml", "semantic": "Every execution YAML parses as JSON and has no YAML-only types."},
     {"id": "contract-shape", "semantic": "Every phase and work-unit contract has every Plan 29.3 required field with semantically valid values; every criterion has id, kind, evaluator, threshold, and evidenceSchema."},
     {"id": "input-closure", "semantic": "Every protected contract, gate, evaluator, evidence schema, metric, catalog, runner, and protected meta-test is explicitly present in control-plane-inputs.yaml."},
-    {"id": "evaluator-status", "semantic": "The only implemented machine evaluators are the two bootstrap evaluators; every other machine evaluator is planned and fail-closed."},
+    {"id": "evaluator-status", "semantic": "All P00 machine evaluators are implemented by approved offline handlers with protected tests; any unknown, unapproved, digest-mismatched, or future-phase evaluator remains fail-closed."},
     {"id": "anti-placeholder", "semantic": "Unknown or planned evaluators, hand-written metrics, file existence, empty assertions, and missing evidence cannot produce PASS."},
     {"id": "genesis-boundary", "semantic": "No phase-state, transitions, approvals, completion evidence, activation, or valid convergence evidence exists before protected Genesis."},
     {"id": "digest-normalization", "semantic": "All controlPlaneDigest fields normalize to the fixed placeholder before provisional bootstrap-canonical-json-v1 component hashing and aggregate SHA-256; P01 owns RFC 8785 conformance."}

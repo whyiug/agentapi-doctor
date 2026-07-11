@@ -6,17 +6,55 @@
   "workUnit": null,
   "contract": "execution/phases/P00.yaml",
   "gateStatus": "candidate-unapproved",
-  "machineImplementationStatus": "planned-fail-closed",
-  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
+  "machineImplementationStatus": "implemented-protected-paired",
+  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
   "networkPolicy": "offline",
   "failClosed": true,
-  "requiredUnitGates": ["gate://p00/P00.W01/v1", "gate://p00/P00.W02/v1", "gate://p00/P00.W03/v1", "gate://p00/P00.W04/v1", "gate://p00/P00.W05/v1"],
-  "criteria": [
-    {"id": "P00-M-AGGREGATE", "kind": "MACHINE", "evaluator": "evaluator://phase/aggregate/v1", "threshold": "all five work units CONVERGED and every applicable P00 MACHINE criterion PASS from recomputed evidence", "evidenceSchema": "evidence-schema://phase/aggregate-report/v1"},
-    {"id": "P00-H-GO-NOGO", "kind": "HUMAN", "evaluator": "attestation://review/go-no-go/v1", "threshold": "independent authorized reviewers record CONVERGED, BLOCKED, or PIVOT_REQUIRED with scope and naming decision", "evidenceSchema": "evidence-schema://attestation/human-review/v1"}
+  "requiredUnitGates": [
+    "gate://p00/P00.W01/v1",
+    "gate://p00/P00.W02/v1",
+    "gate://p00/P00.W03/v1",
+    "gate://p00/P00.W04/v1",
+    "gate://p00/P00.W05/v1"
   ],
-  "protectedInputs": ["execution/phases/P00.yaml", "execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/go-no-go.yaml", "execution/metrics/definitions.yaml", "execution/evaluators/catalog.yaml", "execution/evidence-schemas/catalog.yaml"],
-  "missingEvidencePolicy": {"MACHINE": "FAIL", "EXTERNAL": "WAITING_EXTERNAL", "HUMAN": "REVIEW_PENDING"},
-  "unknownOrPlannedEvaluatorResult": {"status": "ERROR", "reasonCode": "missing_evaluator", "mayPass": false},
-  "selfEvidenceMaySatisfyCriterion": false
+  "criteria": [
+    {
+      "id": "P00-M-AGGREGATE",
+      "kind": "MACHINE",
+      "evaluator": "evaluator://phase/aggregate/v1",
+      "threshold": "all five work units CONVERGED and every applicable P00 MACHINE criterion PASS from recomputed evidence",
+      "evidenceSchema": "evidence-schema://phase/aggregate-report/v1"
+    },
+    {
+      "id": "P00-H-GO-NOGO",
+      "kind": "HUMAN",
+      "evaluator": "attestation://review/go-no-go/v1",
+      "threshold": "independent authorized reviewers record CONVERGED, BLOCKED, or PIVOT_REQUIRED with scope and naming decision",
+      "evidenceSchema": "evidence-schema://attestation/human-review/v1"
+    }
+  ],
+  "protectedInputs": [
+    "execution/phases/P00.yaml",
+    "execution/catalogs/p00/acceptance.yaml",
+    "execution/catalogs/p00/go-no-go.yaml",
+    "execution/metrics/definitions.yaml",
+    "execution/evaluators/catalog.yaml",
+    "execution/evidence-schemas/catalog.yaml"
+  ],
+  "missingEvidencePolicy": {
+    "MACHINE": "FAIL",
+    "EXTERNAL": "WAITING_EXTERNAL",
+    "HUMAN": "REVIEW_PENDING"
+  },
+  "unknownOrPlannedEvaluatorResult": {
+    "status": "ERROR",
+    "reasonCode": "unknown_or_unapproved_evaluator",
+    "mayPass": false
+  },
+  "selfEvidenceMaySatisfyCriterion": false,
+  "datasetPolicy": {
+    "status": "late_bound_requires_signed_freeze",
+    "digest": null,
+    "missingOrUnfrozenResult": "insufficient_samples"
+  }
 }

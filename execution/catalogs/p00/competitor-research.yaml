@@ -4,7 +4,7 @@
   "id": "catalog://p00/competitor-research/v1",
   "catalogStatus": "candidate-unapproved",
   "protected": true,
-  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
+  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
   "namedProjects": ["am-i-openai-compatible", "octest", "FauxpenAI-conformance", "Open Responses"],
   "requiredMatrixDimensions": ["capability overlap", "architecture", "evidence model", "client-observed behavior", "governance", "reuse or collaboration opportunity", "independent-project justification"],
   "sourcePolicy": {"primarySourcesRequired": true, "recordResolvedURL": true, "recordRetrievedAt": true, "recordRevision": true, "recordDigest": true, "recordLicenseOrReuseStatus": true},

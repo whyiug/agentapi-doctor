@@ -4,10 +4,10 @@
   "id": "catalog://p00/risk-experiments/v1",
   "catalogStatus": "candidate-unapproved",
   "protected": true,
-  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
+  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
   "datasetStatus": "pending_protected_input",
   "datasetDigest": null,
-  "activationRule": "Before P00.W04 activation an independent reviewer freezes ten eligible failure IDs and the dataset digest; until then every dataset-dependent metric is insufficient_samples.",
+  "activationRule": "P00.W04 may activate against this approved empty dataset slot and construct bounded experiment records from P00.W03 outputs. Before any dataset-dependent evaluator may PASS or P00.W04 may enter MACHINE_CONVERGED, an independent reviewer must sign a SignedProtectedInputFreeze for the ten final eligible IDs, manifest, dataset digest, source commit, contract, and applicable criteria; until then every dataset-dependent metric is insufficient_samples.",
   "experiments": [
     {"id": "sse-source-faithful-capture", "question": "Can application-observed SSE bytes and line endings be captured without repairing target semantics?"},
     {"id": "responses-typed-event-fsm", "question": "Can typed Responses events be validated as a state machine with unknown events preserved?"},

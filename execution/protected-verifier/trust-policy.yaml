@@ -1,36 +1,164 @@
 {
-  "schemaVersion": "urn:agentapi-doctor:protected-verifier-policy:v1alpha1",
-  "kind": "ProtectedVerifierTrustPolicy",
+  "schemaVersion": "urn:agentapi-doctor:protected-verifier-policy:v1alpha2",
+  "kind": "ProtectedVerifierTrustPolicyCandidate",
   "policyId": "P00-protected-verifier",
-  "revision": 1,
-  "policyStatus": "pending_trust_roots",
-  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
-  "signatureScheme": {
-    "type": "openssh-sshsig-v1",
-    "allowedKeyTypes": ["ssh-ed25519"],
-    "approvalNamespace": "agentapi-doctor/control-plane-approval/v1",
-    "stateEventNamespace": "agentapi-doctor/state-event/v1"
+  "revision": 2,
+  "policyStatus": "configured-candidate-awaiting-independent-approval",
+  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
+  "signatureSchemes": {
+    "human": {
+      "type": "openssh-sshsig-v1",
+      "allowedKeyTypes": ["ssh-ed25519"],
+      "allowedMessageHashes": ["sha256", "sha512"],
+      "verifier": "dependency-free-rfc8032-and-openssh-sshsig-profile",
+      "namespaces": {
+        "activationApproval": "agentapi-doctor/activation-approval/v1",
+        "blockerResolution": "agentapi-doctor/lifecycle-evidence/blocker-resolution/v1",
+        "chainHeadWitness": "agentapi-doctor/chain-head-witness/v1",
+        "communityDesignPartner": "agentapi-doctor/community-fact/design-partner/v1",
+        "communityExternalReview": "agentapi-doctor/community-fact/external-review/v1",
+        "communityOutreach": "agentapi-doctor/community-fact/outreach/v1",
+        "controlPlaneApproval": "agentapi-doctor/control-plane-approval/v2",
+        "criterionResult": "agentapi-doctor/criterion-result/human/v1",
+        "datasetFreezeSelection": "agentapi-doctor/p00-dataset-freeze-selection/v1",
+        "externalCriterionResult": "agentapi-doctor/criterion-result/external/v1",
+        "lifecycleApproval": "agentapi-doctor/lifecycle-approval/v1",
+        "phaseGoNoGo": "agentapi-doctor/phase-go-no-go-authorization/v1",
+        "phaseProtectedInputFreeze": "agentapi-doctor/phase-protected-input-freeze/v1",
+        "phaseTransitionApproval": "agentapi-doctor/phase-transition-approval/v1",
+        "protectedInputFreeze": "agentapi-doctor/protected-input-freeze/v1",
+        "reviewerDelegation": "agentapi-doctor/reviewer-delegation/v1",
+        "supersessionApproval": "agentapi-doctor/lifecycle-evidence/supersession-approval/v1",
+        "transitionApproval": "agentapi-doctor/transition-approval/v1"
+      }
+    },
+    "machineProvenance": {
+      "type": "github-actions-oidc-rs256-v1",
+      "audiencePrefix": "urn:agentapi-doctor:provenance:v1:",
+      "signerPolicyRef": "githubActionsStateSigner",
+      "allowedNamespaces": ["agentapi-doctor/activation-proof/v1", "agentapi-doctor/criterion-result/machine/v1", "agentapi-doctor/lifecycle-evidence/invalidation/v1", "agentapi-doctor/lifecycle-proof/v1", "agentapi-doctor/phase-criterion-result/machine/v1", "agentapi-doctor/phase-transition-proof/v1", "agentapi-doctor/transition-proof/v1"],
+      "requiredComponentPaths": [".github/workflows/p00-protected-state-writer.yml", "tools/phasegate/__init__.py", "tools/phasegate/chain_artifact.py", "tools/phasegate/chain_witness.py", "tools/phasegate/community_facts.py", "tools/phasegate/control_context.py", "tools/phasegate/delegation.py", "tools/phasegate/digest.py", "tools/phasegate/evidence_index.py", "tools/phasegate/execution_artifact.py", "tools/phasegate/external_facts.py", "tools/phasegate/gate_runner.py", "tools/phasegate/lifecycle_bundle.py", "tools/phasegate/lifecycle_evidence.py", "tools/phasegate/main.py", "tools/phasegate/oidc.py", "tools/phasegate/oidc_provenance.py", "tools/phasegate/p00_evaluators.py", "tools/phasegate/phase_bundle.py", "tools/phasegate/phase_evidence.py", "tools/phasegate/post_event_writer.py", "tools/phasegate/protected.py", "tools/phasegate/protected_v2.py", "tools/phasegate/provenance.py", "tools/phasegate/provenance_writer.py", "tools/phasegate/run_executor.py", "tools/phasegate/serialized_bundle.py", "tools/phasegate/sshsig.py", "tools/phasegate/state_chain_v2.py", "tools/phasegate/state_writer.py", "tools/phasegate/validation.py", "tools/phasegate/workflow_orchestrator.py"],
+      "componentApprovalBinding": "authorityDigest binds the exact approved component digest map",
+      "runAttempt": "1",
+      "shaMustEqualWorkflowSha": true,
+      "headAndBaseRefMustBeAbsent": true
+    },
+    "stateEvent": {
+      "type": "github-actions-oidc-rs256-v1",
+      "namespace": "agentapi-doctor/state-event/v1",
+      "audiencePrefix": "urn:agentapi-doctor:state-event:v1:",
+      "jwksSnapshotPath": "execution/protected-verifier/github-actions-oidc-jwks.json",
+      "jwksSnapshotDigest": "sha256:dd2f404882dd3e33f67c27112cdcb7cdca7d7d07302a51d096193ea49a7e85f0",
+      "onlineKeyDiscoveryDuringReplay": false
+    }
   },
   "thresholds": {
     "controlPlaneApproval": 1,
-    "stateEvent": 1
+    "stateEvent": 1,
+    "transitionApproval": 1,
+    "chainHeadWitness": 1,
+    "p00GoNoGo": 2
   },
   "separationOfDuties": {
-    "distinctPrincipals": true,
-    "distinctKeys": true,
-    "distinctOrganizations": true,
-    "approvalRole": "independent-reviewer",
-    "stateEventRole": "protected-workflow"
+    "stateEventSignerMustDifferFromEveryFactSigner": true,
+    "stateEventSignerOrganization": "github-actions",
+    "controlPlaneApprovalRole": "independent-reviewer",
+    "stateEventRole": "protected-workflow",
+    "oneSshKeyMayNotRepresentMultiplePrincipals": true,
+    "codingAgentMayProduceHumanExternalOrTimeFact": false
   },
-  "principals": [],
+  "sshPrincipals": [
+    {
+      "identity": "whyiug@github",
+      "organization": "whyiug",
+      "roles": ["authorized-maintainer", "independent-reviewer"],
+      "publicKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF/B+rUUQWIF6m4uaMs3GpnuGqqS4I+LDTvLjTw9Nw68",
+      "fingerprint": "SHA256:j3DjYC57yPDuXhn5qbIKYmc0OLyJrRtbqgvsLPIl4hg",
+      "capabilities": ["approve-control-plane", "approve-transition", "attest-human-result", "delegate-reviewer", "freeze-protected-input", "witness-chain-head"],
+      "validFrom": "2026-07-11T00:00:00Z",
+      "validUntil": "2027-07-11T00:00:00Z"
+    }
+  ],
+  "reviewerDelegation": {
+    "namespace": "agentapi-doctor/reviewer-delegation/v1",
+    "rootCapability": "delegate-reviewer",
+    "allowedRoles": ["external-attestor", "independent-dataset-reviewer", "independent-external-reviewer", "independent-rights-reviewer", "independent-technical-reviewer"],
+    "allowedCapabilities": ["attest-external-result", "attest-human-result", "freeze-protected-input"],
+    "roleGrants": {
+      "external-attestor": {"capabilities": ["attest-external-result"], "criteria": ["P00-X-CROSSPLATFORM", "P00-X-DESIGN-PARTNERS", "P00-X-OUTREACH", "P00-X-REVIEW"]},
+      "independent-dataset-reviewer": {"capabilities": ["freeze-protected-input"], "criteria": ["P00-M-AGGREGATE", "P00-M-COMPETITIVE", "P00-M-DOCS", "P00-M-DUAL-VIEW", "P00-M-PROVENANCE", "P00-M-REDUCTION", "P00-M-REPLAY", "P00-M-REPRO", "P00-M-SECRET", "P00-M-TAXONOMY", "P00-M-UNKNOWN"]},
+      "independent-external-reviewer": {"capabilities": ["attest-external-result", "attest-human-result"], "criteria": ["P00-H-GO-NOGO", "P00-X-REVIEW"]},
+      "independent-rights-reviewer": {"capabilities": ["attest-human-result"], "criteria": ["P00-H-CORPUS-RIGHTS"]},
+      "independent-technical-reviewer": {"capabilities": ["attest-human-result"], "criteria": ["P00-H-SPIKE-ADR"]}
+    },
+    "maxValiditySeconds": 7776000,
+    "priorChainHeadRequired": true,
+    "delegatedMayApproveControlPlane": false,
+    "delegatedMaySignStateEvent": false,
+    "delegatedMayDelegate": false
+  },
+  "githubActionsStateSigner": {
+    "identity": "github-actions:whyiug/agentapi-doctor:p00-state-writer",
+    "organization": "github-actions",
+    "role": "protected-workflow",
+    "repository": "whyiug/agentapi-doctor",
+    "repositoryId": "1296831403",
+    "repositoryOwner": "whyiug",
+    "repositoryOwnerId": "6668626",
+    "repositoryVisibility": "public",
+    "workflowPath": ".github/workflows/p00-protected-state-writer.yml",
+    "workflowRef": "whyiug/agentapi-doctor/.github/workflows/p00-protected-state-writer.yml@refs/heads/main",
+    "eventName": "workflow_dispatch",
+    "ref": "refs/heads/main",
+    "refType": "branch",
+    "refProtected": "true",
+    "runnerEnvironment": "github-hosted",
+    "allowedActorIds": ["6668626"],
+    "runAttempt": "1",
+    "workflowShaSource": "approval.body.workflowExecutionCommit",
+    "shaMustEqualWorkflowSha": true,
+    "headAndBaseRefMustBeEmpty": true
+  },
+  "repositoryProtection": {
+    "required": true,
+    "visibility": "public",
+    "branch": "main",
+    "observationApi": ["GET /repos/whyiug/agentapi-doctor", "GET /repos/whyiug/agentapi-doctor/branches/main", "GET /repos/whyiug/agentapi-doctor/rules/branches/main", "GET /repos/whyiug/agentapi-doctor/rulesets", "GET /repos/whyiug/agentapi-doctor/rulesets/{id}"],
+    "ruleset": {"name": "P00 protected main", "target": "branch", "sourceType": "Repository", "source": "whyiug/agentapi-doctor", "enforcement": "active", "conditions": {"refName": {"include": ["refs/heads/main"], "exclude": []}}},
+    "requiredRuleTypes": ["deletion", "linear_history", "non_fast_forward", "pull_request", "required_signatures", "required_status_checks"],
+    "pullRequest": {"requiredApprovingReviewCount": 1, "dismissStaleReviewsOnPush": true, "requireCodeOwnerReview": true, "requireLastPushApproval": true, "requiredReviewThreadResolution": true},
+    "requiredStatusChecks": {"strict": true, "contexts": ["P00 bootstrap cross-platform / aggregate", "P00 protected control-plane / verify"], "integrationId": "positive integer when observable; null is retained when the read-only API omits it"},
+    "apiLimitations": ["ruleset bypass actors not observable with read-only token"],
+    "administratorAndBypassVisibility": "unproved; no enforce-admins or no-bypass claim is made",
+    "compensatingControl": "independent SSHSIG approval binds the exact workflow execution commit, candidate source, policy, and verifier implementation",
+    "proofSource": "public GitHub Rulesets REST responses captured, normalized, and digest-bound by the OIDC StateEvent writer",
+    "missingOrWeakerProof": "non-authoritative-provenance-only"
+  },
+  "protectedFacts": {
+    "machine": "only an OIDC-bound protected verifier result recomputed from exact Run A/B evidence may satisfy a MACHINE criterion",
+    "external": "requires an independently verified producer statement; a workflow import receipt alone never satisfies EXTERNAL",
+    "time": "requires an independently verified protected clock or Registry anchor; event timestamps alone never satisfy TIME",
+    "human": "requires an SSHSIG principal and exact criterion role grant",
+    "missingVerifier": "incomplete"
+  },
+  "humanCriterionRoleGrants": {
+    "P00-H-CONTROL": {"roles": ["independent-reviewer"], "threshold": 1, "derivedFromBootstrapApprovalAndGenesis": true},
+    "P00-H-NO-PUBLIC-CLAIM": {"roles": ["authorized-maintainer"], "threshold": 1, "derivedFromBootstrapApprovalAndGenesis": false},
+    "P00-H-CORPUS-RIGHTS": {"roles": ["independent-rights-reviewer"], "threshold": 1, "derivedFromBootstrapApprovalAndGenesis": false},
+    "P00-H-SPIKE-ADR": {"roles": ["independent-technical-reviewer"], "threshold": 1, "derivedFromBootstrapApprovalAndGenesis": false},
+    "P00-H-GO-NOGO": {"roles": ["authorized-maintainer", "independent-external-reviewer"], "threshold": 2, "distinctPrincipals": true, "distinctOrganizations": true, "derivedFromBootstrapApprovalAndGenesis": false}
+  },
   "revokedFingerprints": [],
+  "revokedOidcKids": [],
   "requiredExternalPins": [
     "trustPolicyDigest",
+    "jwksSnapshotDigest",
     "controlPlaneDigest",
     "candidateSourceCommit",
     "requestDigest",
-    "chainHeadDigest",
-    "sshKeygenDigest"
+    "workflowExecutionCommit",
+    "priorChainHeadDigest",
+    "resultingChainHeadDigest"
   ],
   "allowedTransitions": {
     "NOT_STARTED": ["READY", "REJECTED", "SUPERSEDED"],
@@ -43,5 +171,10 @@
     "CONVERGED": ["REJECTED"],
     "REJECTED": ["READY"],
     "SUPERSEDED": []
+  },
+  "controlPlaneRevisionPolicy": {
+    "p00": "all P00 evaluators and protected result semantics must be implemented and approved before Genesis",
+    "postP00": "a separately approved ControlPlaneRevision event and historical revision map are required before P01 activation",
+    "silentDigestSwap": "forbidden"
   }
 }

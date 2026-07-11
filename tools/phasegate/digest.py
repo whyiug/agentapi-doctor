@@ -219,6 +219,9 @@ def approval_digest_groups(components: list[dict[str, str]]) -> dict[str, str]:
         "execution/protected-verifier/trust-policy.yaml",
         "execution/protected-verifier/workflow-contract.yaml",
         ".github/workflows/p00-protected-verifier-candidate.yml",
+        ".github/workflows/p00-protected-control-plane.yml",
+        ".github/workflows/p00-protected-state-writer.yml",
+        ".github/workflows/p00-bootstrap-cross-platform.yml",
     }
     missing = sorted(required_paths - by_path.keys())
     if missing:
@@ -255,5 +258,14 @@ def approval_digest_groups(components: list[dict[str, str]]) -> dict[str, str]:
         ),
         "protectedWorkflowDigest": by_path[
             ".github/workflows/p00-protected-verifier-candidate.yml"
+        ],
+        "protectedControlPlaneWorkflowDigest": by_path[
+            ".github/workflows/p00-protected-control-plane.yml"
+        ],
+        "protectedStateWriterWorkflowDigest": by_path[
+            ".github/workflows/p00-protected-state-writer.yml"
+        ],
+        "crossPlatformWorkflowDigest": by_path[
+            ".github/workflows/p00-bootstrap-cross-platform.yml"
         ],
     }

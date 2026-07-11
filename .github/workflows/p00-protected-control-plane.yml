@@ -1,0 +1,45 @@
+name: P00 protected control-plane
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p00-control-plane-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      HOME: ${{ runner.temp }}/isolated-home
+      LC_ALL: C.UTF-8
+      TZ: UTC
+    defaults:
+      run:
+        shell: bash --noprofile --norc -euo pipefail {0}
+    steps:
+      - name: Checkout exact revision without credentials
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate the complete P00 control plane and adversarial suite
+        run: |
+          mkdir -p "$HOME"
+          make verify
+
+      - name: Confirm PRE_GENESIS remains fail closed
+        run: |
+          python3 tools/phasegate/main.py state-verify --root .
+          if python3 tools/phasegate/main.py gate-unit P00.W01 --root .; then
+            echo '::error::P00.W01 passed without verified Genesis'
+            exit 1
+          fi

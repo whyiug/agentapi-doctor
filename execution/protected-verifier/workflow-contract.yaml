@@ -1,126 +1,162 @@
 {
-  "schemaVersion": "urn:agentapi-doctor:protected-verifier-workflow-contract:v1alpha1",
-  "kind": "ProtectedVerifierWorkflowContractCandidate",
-  "id": "P00.B00-protected-verifier",
+  "schemaVersion": "urn:agentapi-doctor:protected-verifier-workflow-contract:v1alpha2",
+  "kind": "ProtectedStateWorkflowContractCandidate",
+  "id": "P00.B00-R3-protected-workflows",
   "contractStatus": "candidate-unapproved",
-  "authoritative": false,
+  "authoritative": "conditional-after-independent-R3-approval-and-live-protection-proof",
   "controlPlaneIncluded": true,
-  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
-  "workflowPath": ".github/workflows/p00-protected-verifier-candidate.yml",
-  "purpose": "Read-only verification of an exact P00 candidate and independently signed approval; never state or Genesis creation.",
+  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
+  "workflows": {
+    "controlPlane": ".github/workflows/p00-protected-control-plane.yml",
+    "crossPlatform": ".github/workflows/p00-bootstrap-cross-platform.yml",
+    "stateWriter": ".github/workflows/p00-protected-state-writer.yml",
+    "historicalR2ReadOnlyCandidate": ".github/workflows/p00-protected-verifier-candidate.yml"
+  },
+  "purpose": "In strict genesis mode verify the exact independently signed R3 control plane and construct one digest-bound Genesis artifact; in strict append mode replay an immutable artifact-id/run-id-pinned raw chain and append exactly one bundle-authorized OIDC event, always without repository write permission.",
   "trigger": {
-    "event": "workflow_dispatch",
+    "stateWriterEvent": "workflow_dispatch",
+    "modes": ["append", "genesis"],
     "repository": "whyiug/agentapi-doctor",
     "requiredWorkflowRef": "refs/heads/main",
+    "requiredRefProtectedClaim": "true",
     "candidateInput": "full lowercase 40-hex Git commit",
-    "approvalInput": "full lowercase 40-hex Git commit"
+    "workflowExecutionInput": "full lowercase 40-hex main commit equal to github.sha",
+    "approvalInput": "genesis only: canonical base64 of a detached R3 SSHSIG approval; data only",
+    "appendChainInput": "append only: same-repository numeric run ID plus immutable numeric artifact ID containing exactly chain.json",
+    "appendBundleInput": "append only: same-repository numeric run ID plus immutable numeric artifact ID containing exactly authorization-bundle.json",
+    "appendPins": ["bootstrapRequestCommit", "currentChainHeadDigest", "workflowExecutionCommit", "operation", "toState", "phase", "conditionalWorkUnit", "optionalAuthorizationBundleDigest"]
   },
   "permissions": {
-    "githubToken": {"contents": "read", "allUnspecifiedPermissions": "none"},
+    "githubToken": {"metadata": "implicit read-only GitHub App permission", "contents": "read", "actions": "read", "allUnspecifiedConfigurablePermissions": "none"},
+    "idToken": "write only in the state-writer job after approval validation",
     "secrets": [],
     "contentsWrite": false,
-    "idTokenWrite": false,
-    "createsOrApprovesPullRequests": false
+    "createsOrApprovesPullRequests": false,
+    "forcePush": false
   },
   "directoryBoundary": {
-    "trustedVerifier": "trusted",
-    "candidateData": "candidate-input",
-    "approvalData": "approval-input",
+    "trustedCode": "exact workflowExecutionCommit checkout from protected main; every executed control-plane component must byte/digest-match the independently approved candidateSourceCommit",
+    "candidateComparisonData": "exact candidateSourceCommit checkout; parsed only as data by protected-main code",
+    "requestAndWorkflowProof": "exact workflowExecutionCommit checkout",
+    "approvalData": "runner temporary file decoded from workflow input",
+    "appendArtifactData": "chain and authorization bundle are downloaded only by immutable numeric artifact ID and numeric run ID from the same fixed repository, normalized to fixed regular filenames, parsed only as data, and never executed",
     "candidateCodeMayExecute": false,
+    "protectedMainCodeMayExecute": true,
+    "protectedMainCodeCondition": "workflowExecutionCommit equals github.sha and all executed component digests exactly equal the independently approved candidateSourceCommit",
     "approvalCodeMayExecute": false,
-    "onlyTrustedVerifierMayExecute": true
+    "onlyApprovedControlPlaneCodeMayExecute": true
   },
-  "trustedVerifier": {
-    "entrypoint": "tools/phasegate/main.py approval-verify",
-    "implementation": [
-      "tools/phasegate/protected.py",
-      "tools/phasegate/digest.py",
-      "tools/phasegate/validation.py"
-    ],
-    "mustComeFromDefaultBranchWorkflowCommit": true,
-    "mustNotImportCandidatePython": true,
-    "candidateFilesAreDataOnly": true
+  "portableHumanSignatureVerifier": {
+    "entrypoint": "tools/phasegate/protected_v2.py",
+    "implementation": ["tools/phasegate/sshsig.py", "tools/phasegate/digest.py"],
+    "profile": "OpenSSH SSHSIG v1 with comment-free Ed25519, SHA-256/SHA-512, empty reserved field, strict canonical payload",
+    "externalBinaryRequired": false
   },
-  "trustPolicy": {
-    "path": "execution/protected-verifier/trust-policy.yaml",
-    "status": "pending_trust_roots",
-    "externalDigestPinRequired": true,
-    "approvalNamespace": "agentapi-doctor/control-plane-approval/v1",
-    "stateEventNamespace": "agentapi-doctor/state-event/v1",
-    "configuredSignerRosterPresent": false,
-    "privateKeysPermitted": false
+  "oidcStateWriter": {
+    "entrypoint": "tools/phasegate/main.py protected-chain-append",
+    "implementation": ["tools/phasegate/workflow_orchestrator.py", "tools/phasegate/evidence_index.py", "tools/phasegate/phase_evidence.py", "tools/phasegate/phase_bundle.py", "tools/phasegate/execution_artifact.py", "tools/phasegate/run_executor.py", "tools/phasegate/post_event_writer.py", "tools/phasegate/state_writer.py", "tools/phasegate/oidc.py", "tools/phasegate/oidc_provenance.py", "tools/phasegate/protected_v2.py", "tools/phasegate/provenance.py", "tools/phasegate/digest.py"],
+    "signatureScheme": "github-actions-oidc-jwt-rs256-v1",
+    "audience": "exact prefix plus canonical StateEvent statement digest",
+    "offlineJwksPath": "execution/protected-verifier/github-actions-oidc-jwks.json",
+    "onlineJwksRefreshDuringReplay": false,
+    "selfVerificationBeforeArtifact": true,
+    "candidateOrApprovalMaySelectKey": false,
+    "defaultAppendTokenProvider": "GitHub Actions OIDC environment provider after every chain/bundle/commit/head/operation pin passes"
   },
   "externalPins": [
     "candidateSourceCommit",
+    "workflowExecutionCommit",
     "controlPlaneDigest",
     "requestDigest",
     "trustPolicyDigest",
-    "chainHeadDigest for state replay",
-    "sshKeygenDigest"
+    "jwksSnapshotDigest",
+    "priorChainHeadDigest",
+    "resultingChainHeadDigest"
   ],
   "actionPins": [
-    {
-      "repository": "actions/checkout",
-      "observedVersion": "v4.3.1",
-      "commit": "34e114876b0b11c390a56381ad16ebd13914f8d5",
-      "status": "candidate-unapproved"
-    }
+    {"repository": "actions/checkout", "version": "v4.3.1", "commit": "34e114876b0b11c390a56381ad16ebd13914f8d5"},
+    {"repository": "actions/upload-artifact", "version": "v4.6.2", "commit": "ea165f8d65b6e75b540449e92b4886f43607fa02"},
+    {"repository": "actions/download-artifact", "version": "v4.3.0", "commit": "d3f86a106a0bac45b974a628896c90dbdf5c8093"}
   ],
-  "environmentProtection": {
-    "environment": "p00-control-plane-review",
-    "privateRepositoryRequiredReviewerCapability": "unproven",
-    "requiredIndependentReviewer": true,
-    "preventSelfReview": true,
-    "administratorBypassAllowed": false,
-    "proofStatus": "missing",
-    "missingProofBlocksAuthoritativeUse": true
+  "repositoryProtection": {
+    "requiredVisibility": "public",
+    "branch": "main",
+    "requiredPolicy": "execution/protected-verifier/trust-policy.yaml#repositoryProtection",
+    "liveProofRequired": true,
+    "oidcRefProtectedRequired": true,
+    "proofApi": ["GET repository metadata", "GET main branch", "GET effective rules for main", "GET repository rulesets", "GET exact active ruleset detail"],
+    "rulesetDetailAndEffectiveRulesMustMatch": true,
+    "apiLimitations": ["ruleset bypass actors not observable with read-only token"],
+    "administratorOrNoBypassClaim": false,
+    "compensatingControl": "independent SSHSIG approval of exact source, workflow execution commit, policy, and verifier",
+    "currentRepositoryVisibility": "private",
+    "currentProofStatus": "missing-blocks-authoritative-use",
+    "privateFreeFallback": "none; OIDC provenance remains non-authoritative"
   },
   "runtime": {
     "runner": "ubuntu-24.04",
-    "runnerLabelImmutable": false,
-    "pythonVersion": null,
-    "openSshVersion": null,
-    "toolchainProofStatus": "missing",
-    "missingProofBlocksAuthoritativeUse": true
+    "pythonDependencies": "stdlib only",
+    "candidateDependencyInstall": "forbidden",
+    "runAttempt": 1,
+    "timeoutMinutes": 10,
+    "toolchainRecordedInArtifact": true
   },
   "networkPolicy": {
-    "checkout": "GitHub repository only through the commit-pinned checkout action",
-    "trustedVerifierRequestedMode": "offline after checkout",
-    "networkIsolationEnforced": false,
-    "networkIsolationProofStatus": "missing-blocks-authoritative-use",
+    "checkout": "GitHub repository only through commit-pinned checkout",
+    "oidc": "GitHub Actions HTTPS OIDC endpoint with digest-bound audience",
+    "rulesets": "fixed read-only GitHub REST GET endpoints using implicit metadata read and contents:read; no mutation endpoint is reachable",
+    "artifact": "GitHub Actions artifact service; append reads same-repository artifacts only by numeric run ID and immutable artifact ID with actions:read, and writes one-day immutable outputs",
     "dependencyInstall": "forbidden",
-    "candidateNetworkAccess": "forbidden"
+    "candidateArbitraryNetwork": "forbidden by approved code; hosted-runner egress isolation is not claimed",
+    "networkIsolationEnforced": false,
+    "limitation": "lack of hosted-runner egress firewall remains explicit and is not represented as isolation"
+  },
+  "outputs": {
+    "genesisChain": "one canonical chain.json containing the detached approval and 00000000 Genesis event",
+    "event": "one canonical Genesis or appended event containing the expired-after-minutes OIDC JWT",
+    "updatedChain": "append mode atomically publishes canonical chain.json, event.json, phase-state.yaml, and verification-result.json",
+    "derivedView": "one exact phase-state.yaml replay projection",
+    "verificationSummary": "digest-only verification-result.json",
+    "repositoryWrite": false,
+    "import": "separate protected PR after independent local replay"
   },
   "failClosedConditions": [
-    "activation status is not independently-approved-read-only",
-    "workflow does not run from protected main",
-    "candidate or approval reference is not an immutable full commit",
-    "any externally managed digest pin is missing or mismatched",
-    "trust policy is pending, replaced, revoked, expired, or lacks required roles",
-    "private-repository environment protection remains unproved",
-    "runtime/toolchain identity remains unproved",
-    "candidate or approval code would execute",
-    "any repository write or Genesis operation is requested"
-  ],
-  "forbiddenCapabilities": [
-    "contents:write",
-    "id-token:write",
-    "repository or environment secrets",
-    "pull_request_target",
-    "candidate Makefile, scripts, hooks, dependencies, or binaries",
-    "approval-bundle scripts, hooks, dependencies, or binaries",
-    "approval publication",
-    "Genesis, StateTransition, EvidenceAttachment, phase-state, or evidence creation"
+    "mode is not exactly genesis or append, mode-specific inputs are absent, mixed, malformed, or mismatched",
+    "R3 approval or any genesis external digest/commit pin is absent or mismatched",
+    "append chain/bundle artifact ID or run ID is nonnumeric, cross-repository, absent, contains extra files/symlinks, or exceeds its bound",
+    "append chain head, bootstrap request commit, current workflow commit, operation, to-state, exact P00 phase, required work-unit (or forbidden work-unit for phase aggregate), canonical bundle, or optional bundle digest pin is absent or mismatched",
+    "main is not public and protected or OIDC ref_protected is not true",
+    "workflow run is a rerun or workflowExecutionCommit differs from github.sha",
+    "workflow file at the OIDC workflow_sha differs from the approved component digest",
+    "reviewer identity, role, organization, COI, validity, SSHSIG, or reviewed decision coverage is invalid",
+    "JWK snapshot is unapproved, changed, revoked, unknown, or refreshed online during replay",
+    "candidate, request, approval, or artifact code would execute",
+    "repository contents write, force push, automatic merge, or direct state import is requested",
+    "public repository, protected main, effective Rulesets, exact active ruleset detail, or Rulesets evidence digest is missing or weaker than policy",
+    "Genesis does not replay to the unique initial P00/P00.W01 ACTIVE state, or an append event does not replay to its exact pinned P00 phase/work-unit projection",
+    "a lifecycle resume, impact/control invalidation, or control-plane supersession write is requested by this workflow revision"
   ],
   "genesisWriter": {
-    "present": false,
-    "authorized": false,
-    "outOfScope": true
+    "present": true,
+    "authorized": "only after all fail-closed conditions are false",
+    "writesRepository": false,
+    "createsSignedArtifact": true,
+    "currentStatus": "candidate-blocked-by-private-unprotected-repository-and-missing-R3-approval"
+  },
+  "appendWriter": {
+    "present": true,
+    "writesRepository": false,
+    "readsArtifactsByImmutableId": true,
+    "replaysFromGenesisBeforeAppend": true,
+    "atomicOutputDirectory": true,
+    "supportedOperations": ["evidence-attachment", "phase-transition", "work-unit-activation", "work-unit-convergence", "work-unit-readiness"],
+    "unsupportedLifecycleWrites": ["work-unit-control-invalidation", "work-unit-impact-invalidation", "work-unit-resume", "work-unit-supersession"]
   },
   "activation": {
     "status": "candidate-non-authoritative",
     "mayProduceApprovalFact": false,
-    "mayProtectOrCreateGenesis": false,
-    "nextRequiredAction": "Independent review must freeze trust roots, external pins, private-repository protection, and runtime evidence in a new approved revision."
+    "mayCreateGenesisArtifact": "conditional",
+    "mayImportOrActivateState": false,
+    "nextRequiredAction": "Complete R3 tests/request and independent approval, then establish public protected main and verify live protection before dispatch."
   }
 }

@@ -6,7 +6,7 @@
   "phase": "P00",
   "title": "Validation and bootstrap",
   "objective": "Validate that AgentAPI Doctor has a defensible differentiated scope and prove the evidence-first bootstrap, corpus, attribution, minimization, redaction, and governance assumptions before entering P01.",
-  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
+  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
   "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/README.md"],
   "inScope": ["execution/**", "tools/phasegate/**", "test/bootstrap/**", "docs/**", "rfcs/**", "adrs/**", "research/**", "corpus/**", "experiments/**"],
   "outOfScope": ["P01-P08 product implementation", "public compatibility claims or badges", "public Registry", "contacting external projects without human action", "approval or Genesis generation", "production-target scanning or exploitation"],

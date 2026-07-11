@@ -6,13 +6,13 @@
   "phase": "P00",
   "title": "Corpus and provenance",
   "objective": "Build a rights-reviewed first-party provenance catalog and prove reproducibility, deterministic replay, and fault-domain classification on a frozen representative denominator.",
-  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
+  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
   "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/phase-state.yaml", "execution/catalogs/p00/corpus.yaml", "execution/metrics/definitions.yaml"],
   "inScope": ["corpus/**", "fixtures/p00/**", "research/provenance/**", "test/corpus/**"],
   "outOfScope": ["private or unlicensed logs", "public-target reproduction", "weaponized payloads", "risk-retirement production architecture", "P01 schemas"],
   "protectedAcceptanceInputs": ["execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/corpus.yaml", "execution/metrics/definitions.yaml", "execution/gates/p00/P00.W03.yaml"],
   "mutableImplementationTests": ["test/corpus/**", "test/regression/p00-corpus/**"],
-  "prerequisites": ["P00.W02: CONVERGED", "actual P00 corpus dataset digest: independently frozen"],
+  "prerequisites": ["P00.W02: CONVERGED", "approved P00 corpus dataset slot and late-bound freeze semantics: independently approved"],
   "deliverables": ["at least 30 provenance candidates", "frozen representative set of at least 20 reproduction attempts", "rights and redaction metadata", "synthetic public-safe fixtures for reproducible cases", "fault taxonomy and fingerprints"],
   "verification": ["make gate-unit UNIT=P00.W03"],
   "convergence": [
@@ -24,6 +24,6 @@
   ],
   "resourceBudget": {"wallTime": "2w", "commandTimeout": "30m", "fuzzCPUHours": 1, "diskBytes": 4294967296, "downloadBytes": 1073741824, "processLimit": 32},
   "networkPolicy": {"gate": "offline", "researchAllowlist": ["github.com"], "dependencyFetch": "lockfile-only"},
-  "stopAndBlock": ["actual dataset digest is not independently frozen", "corpus rights or provenance is ambiguous", "reproduction requires a public target", "three attempts have the same failure fingerprint", "evaluator implementation remains planned"],
+  "stopAndBlock": ["dataset-dependent PASS or MACHINE_CONVERGED is requested before an independent SignedProtectedInputFreeze", "corpus rights or provenance is ambiguous", "reproduction requires a public target", "three attempts have the same failure fingerprint", "evaluator implementation is unavailable or differs from the approved digest"],
   "humanGate": "corpus-rights-review"
 }

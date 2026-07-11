@@ -6,13 +6,13 @@
   "phase": "P00",
   "title": "Risk-retirement experiments",
   "objective": "Retire the four highest-risk evidence assumptions with bounded local experiments for source-faithful SSE capture, Responses event state, raw/client correlation, and fingerprint-preserving multi-tool minimization.",
-  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
+  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
   "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/phase-state.yaml", "execution/catalogs/p00/risk-experiments.yaml", "execution/metrics/definitions.yaml"],
   "inScope": ["experiments/p00/**", "fixtures/p00/**", "test/experiments/**", "adrs/experiments/**"],
   "outOfScope": ["hidden production architecture", "public service exposure", "real secrets", "unbounded fuzzing", "P01-P08 product implementation"],
   "protectedAcceptanceInputs": ["execution/catalogs/p00/acceptance.yaml", "execution/catalogs/p00/risk-experiments.yaml", "execution/metrics/definitions.yaml", "execution/gates/p00/P00.W04.yaml"],
   "mutableImplementationTests": ["test/experiments/**", "test/regression/p00-experiments/**"],
-  "prerequisites": ["P00.W03: CONVERGED", "actual P00 experiment dataset digest: independently frozen"],
+  "prerequisites": ["P00.W03: CONVERGED", "approved P00 experiment dataset slot and late-bound freeze semantics: independently approved"],
   "deliverables": ["source-faithful SSE capture experiment", "typed Responses event FSM experiment", "SDK forward-proxy raw/client correlation experiment", "multi-tool delta minimization experiment", "retain-rewrite-delete ADR for every spike"],
   "verification": ["make gate-unit UNIT=P00.W04"],
   "convergence": [
@@ -24,6 +24,6 @@
   ],
   "resourceBudget": {"wallTime": "2w", "commandTimeout": "30m", "fuzzCPUHours": 2, "diskBytes": 4294967296, "downloadBytes": 536870912, "processLimit": 32},
   "networkPolicy": {"gate": "offline", "researchAllowlist": [], "dependencyFetch": "lockfile-only"},
-  "stopAndBlock": ["actual experiment dataset digest is not independently frozen", "secret canary is written before redaction", "experiment needs public network access", "spike starts becoming unreviewed production architecture", "evaluator implementation remains planned"],
+  "stopAndBlock": ["dataset-dependent PASS or MACHINE_CONVERGED is requested before an independent SignedProtectedInputFreeze", "secret canary is written before redaction", "experiment needs public network access", "spike starts becoming unreviewed production architecture", "evaluator implementation is unavailable or differs from the approved digest"],
   "humanGate": "spike-adr-review"
 }

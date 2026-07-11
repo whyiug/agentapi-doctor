@@ -18,13 +18,11 @@ from .digest import (
     sha256_bytes,
 )
 from .protected import (
-    PREVIOUS_CANDIDATE_COMMIT,
-    PREVIOUS_CONTROL_PLANE_DIGEST,
-    PREVIOUS_REQUEST_DIGEST,
     ProtectedVerificationError,
     document_digest,
-    validate_trust_policy,
 )
+from .oidc import jwks_snapshot_digest
+from .protected_v2 import validate_trust_policy_v2
 
 
 @dataclass(frozen=True)
@@ -75,9 +73,51 @@ REQUIRED_CRITERION_FIELDS = {
     "evidenceSchema",
 }
 
-IMPLEMENTED_BOOTSTRAP_HANDLERS = {
+IMPLEMENTED_HANDLERS = {
     "evaluator://bootstrap/control-plane/v1": "bootstrap.control_plane",
     "evaluator://bootstrap/anti-placeholder/v1": "bootstrap.anti_placeholder",
+    "evaluator://research/competitive/v1": "p00.competitive",
+    "evaluator://catalog/provenance-count/v1": "p00.provenance_count",
+    "evaluator://corpus/reproduction/v1": "p00.reproduction",
+    "evaluator://corpus/taxonomy/v1": "p00.taxonomy",
+    "evaluator://corpus/replay/v1": "p00.replay",
+    "evaluator://experiment/dual-view/v1": "p00.dual_view",
+    "evaluator://experiment/minimization/v1": "p00.minimization",
+    "evaluator://redaction/secret-canary/v1": "p00.secret_canary",
+    "evaluator://attribution/unknown/v1": "p00.unknown",
+    "evaluator://docs/license-links/v1": "p00.docs",
+    "evaluator://phase/aggregate/v1": "p00.aggregate",
+}
+
+EXTERNAL_VERIFIER_SPECS = {
+    "attestation://ci/cross-platform/v1": {
+        "factory": "tools.phasegate.external_facts.build_p00_external_fact_verifier",
+        "implementationPaths": ["tools/phasegate/external_facts.py"],
+        "protectedTests": ["test/bootstrap/test_external_facts.py"],
+        "factVerifierDigest": "sha256:c6e5a2fafacf90f1be7c51988641b000c9a576d103fd0e0a0ad8a6d72a832a29",
+        "network": "fixed-read-only-github-rest",
+    },
+    "attestation://upstream/outreach/v1": {
+        "factory": "tools.phasegate.community_facts.build_p00_community_fact_verifier",
+        "implementationPaths": ["tools/phasegate/community_facts.py"],
+        "protectedTests": ["test/bootstrap/test_community_facts.py"],
+        "factVerifierDigest": "sha256:9a0427cdaae70b076572ebdc107d20cff6374a4374625a49074d5482305e3998",
+        "network": "offline-signed-evidence",
+    },
+    "attestation://review/design-partners/v1": {
+        "factory": "tools.phasegate.community_facts.build_p00_community_fact_verifier",
+        "implementationPaths": ["tools/phasegate/community_facts.py"],
+        "protectedTests": ["test/bootstrap/test_community_facts.py"],
+        "factVerifierDigest": "sha256:9a0427cdaae70b076572ebdc107d20cff6374a4374625a49074d5482305e3998",
+        "network": "offline-signed-evidence",
+    },
+    "attestation://review/external-feedback/v1": {
+        "factory": "tools.phasegate.community_facts.build_p00_community_fact_verifier",
+        "implementationPaths": ["tools/phasegate/community_facts.py"],
+        "protectedTests": ["test/bootstrap/test_community_facts.py"],
+        "factVerifierDigest": "sha256:9a0427cdaae70b076572ebdc107d20cff6374a4374625a49074d5482305e3998",
+        "network": "offline-signed-evidence",
+    },
 }
 
 FORBIDDEN_IMPLEMENTATION_TYPES = {
@@ -132,6 +172,7 @@ REQUIRED_ANTI_PLACEHOLDER_TESTS = (
     "test_agent_authored_reviewer_identity_cannot_pass",
     "test_phase_state_before_genesis_cannot_pass",
     "test_transition_chain_before_genesis_cannot_pass",
+    "test_runtime_logs_are_forbidden_pre_genesis_and_excluded_afterward",
     "test_missing_approval_request_cannot_pass",
     "test_previous_request_revision_cannot_be_rewritten",
     "test_request_cannot_bind_a_nonexistent_source_commit",
@@ -150,6 +191,12 @@ REQUIRED_ANTI_PLACEHOLDER_TESTS = (
     "test_planned_evaluator_cannot_reuse_bootstrap_handler_after_rebind",
     "test_input_kind_cannot_hide_non_json_gate",
     "test_human_attestation_schema_cannot_be_weakened_after_rebind",
+    "test_external_fact_schema_must_bind_subject_and_fact_digest",
+    "test_r3_request_identity_and_ambiguity_projection_cannot_drift",
+    "test_p00_evaluator_cannot_be_downgraded_after_rebind",
+    "test_late_bound_dataset_cannot_be_prefilled_after_rebind",
+    "test_protected_v2_contract_cannot_be_downgraded_after_rebind",
+    "test_codeowners_cannot_be_weakened_after_rebind",
     "test_planned_machine_evaluator_is_not_executable",
     "test_unknown_evaluator_is_not_executable",
     "test_unit_gate_fails_before_independent_approval_and_genesis",
@@ -187,6 +234,9 @@ REQUIRED_FORBIDDEN_ABSENCE = (
     "execution/phase-state.yaml",
     "execution/transitions",
     "execution/approvals",
+    "execution/progress.md",
+    "execution/decisions.md",
+    "execution/blockers.md",
     "execution/waivers.yaml",
     "Genesis or StateTransition events",
     "valid P00 completion evidence",
@@ -208,11 +258,177 @@ REQUIRED_DECISION_IDS = {
     "request-revision-chain",
 }
 
-ACTIVE_REQUEST_PATH = "execution/approval-requests/P00.B00-R2.yaml"
-PREVIOUS_REQUEST_PATH = "execution/approval-requests/P00.B00.yaml"
-PREVIOUS_REQUEST_FILE_DIGEST = (
+ACTIVE_REQUEST_PATH = "execution/approval-requests/P00.B00-R3.yaml"
+R2_REQUEST_PATH = "execution/approval-requests/P00.B00-R2.yaml"
+ORIGINAL_REQUEST_PATH = "execution/approval-requests/P00.B00.yaml"
+ORIGINAL_REQUEST_FILE_DIGEST = (
     "sha256:4abd872ab81a1f1fcca65492843ddcb587f1716ce692f4763ef3c3709b3bf310"
 )
+ORIGINAL_REQUEST_DIGEST = (
+    "sha256:54c8a29baafb06c13d3d3eb35183bd95aab44ea63f638c53c997da5d60ddb8de"
+)
+ORIGINAL_CONTROL_PLANE_DIGEST = (
+    "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77"
+)
+ORIGINAL_CANDIDATE_SOURCE_COMMIT = "1e2409c24231b83c09a93ee18764cce9ee1a4efc"
+R2_REQUEST_FILE_DIGEST = (
+    "sha256:adc59eb65e0c963429c824ba2a889092dd16f01773809042d4254be33ab943b7"
+)
+R2_REQUEST_DIGEST = (
+    "sha256:3fc6b9adfc077a2b3f78c2a811a8d61f9fb72c0e7a6c03ff269ff0ee4cc35ca0"
+)
+R2_CONTROL_PLANE_DIGEST = (
+    "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6"
+)
+R2_CANDIDATE_SOURCE_COMMIT = "5babc022f1a714024c903122eb150ed49c515e6d"
+R2_REQUEST_COMMIT = "8faf45512ec5384e816390ad1a46a403c103c5dc"
+
+TEST_SUITE_MODULES = {
+    "bootstrap": ("test/bootstrap/test_phasegate.py", "test.bootstrap.test_phasegate"),
+    "chainArtifact": (
+        "test/bootstrap/test_chain_artifact.py",
+        "test.bootstrap.test_chain_artifact",
+    ),
+    "chainWitness": (
+        "test/bootstrap/test_chain_witness.py",
+        "test.bootstrap.test_chain_witness",
+    ),
+    "communityFacts": (
+        "test/bootstrap/test_community_facts.py",
+        "test.bootstrap.test_community_facts",
+    ),
+    "controlContext": (
+        "test/bootstrap/test_control_context.py",
+        "test.bootstrap.test_control_context",
+    ),
+    "delegation": (
+        "test/bootstrap/test_delegation.py",
+        "test.bootstrap.test_delegation",
+    ),
+    "executionArtifact": (
+        "test/bootstrap/test_execution_artifact.py",
+        "test.bootstrap.test_execution_artifact",
+    ),
+    "externalFacts": (
+        "test/bootstrap/test_external_facts.py",
+        "test.bootstrap.test_external_facts",
+    ),
+    "gateRunner": (
+        "test/bootstrap/test_gate_runner.py",
+        "test.bootstrap.test_gate_runner",
+    ),
+    "lifecycleEvidence": (
+        "test/bootstrap/test_lifecycle_evidence.py",
+        "test.bootstrap.test_lifecycle_evidence",
+    ),
+    "phaseBundle": (
+        "test/bootstrap/test_phase_bundle.py",
+        "test.bootstrap.test_phase_bundle",
+    ),
+    "phaseEvidence": (
+        "test/bootstrap/test_phase_evidence.py",
+        "test.bootstrap.test_phase_evidence",
+    ),
+    "protectedChainCli": (
+        "test/bootstrap/test_protected_chain_cli.py",
+        "test.bootstrap.test_protected_chain_cli",
+    ),
+    "protectedStateWriterWorkflow": (
+        "test/bootstrap/test_protected_state_writer_workflow.py",
+        "test.bootstrap.test_protected_state_writer_workflow",
+    ),
+    "protectedV1Historical": (
+        "test/bootstrap/test_protected_verifier.py",
+        "test.bootstrap.test_protected_verifier",
+    ),
+    "protectedV2": (
+        "test/bootstrap/test_protected_v2.py",
+        "test.bootstrap.test_protected_v2",
+    ),
+    "oidc": ("test/bootstrap/test_oidc.py", "test.bootstrap.test_oidc"),
+    "oidcProvenance": (
+        "test/bootstrap/test_oidc_provenance.py",
+        "test.bootstrap.test_oidc_provenance",
+    ),
+    "postEventWriter": (
+        "test/bootstrap/test_post_event_writer.py",
+        "test.bootstrap.test_post_event_writer",
+    ),
+    "runExecutor": (
+        "test/bootstrap/test_run_executor.py",
+        "test.bootstrap.test_run_executor",
+    ),
+    "serializedBundle": (
+        "test/bootstrap/test_serialized_bundle.py",
+        "test.bootstrap.test_serialized_bundle",
+    ),
+    "sshsig": ("test/bootstrap/test_sshsig.py", "test.bootstrap.test_sshsig"),
+    "stateChainV2": (
+        "test/bootstrap/test_state_chain_v2.py",
+        "test.bootstrap.test_state_chain_v2",
+    ),
+    "stateWriter": (
+        "test/bootstrap/test_state_writer.py",
+        "test.bootstrap.test_state_writer",
+    ),
+    "workflowOrchestrator": (
+        "test/bootstrap/test_workflow_orchestrator.py",
+        "test.bootstrap.test_workflow_orchestrator",
+    ),
+    "provenance": (
+        "test/bootstrap/test_provenance.py",
+        "test.bootstrap.test_provenance",
+    ),
+    "provenanceWriter": (
+        "test/bootstrap/test_provenance_writer.py",
+        "test.bootstrap.test_provenance_writer",
+    ),
+    "p00Evaluators": (
+        "test/bootstrap/test_p00_evaluators.py",
+        "test.bootstrap.test_p00_evaluators",
+    ),
+}
+
+
+def _test_methods(root: Path, relative: str) -> list[str]:
+    path = root / relative
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    methods = [
+        node.name
+        for class_node in tree.body
+        if isinstance(class_node, ast.ClassDef)
+        for node in class_node.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name.startswith("test_")
+    ]
+    return sorted(methods, key=lambda value: value.encode("utf-8"))
+
+
+def _expected_test_suites(root: Path, issues: list[Issue]) -> dict[str, dict[str, Any]]:
+    suites: dict[str, dict[str, Any]] = {}
+    for suite_id, (relative, module) in TEST_SUITE_MODULES.items():
+        try:
+            cases = _test_methods(root, relative)
+        except (OSError, SyntaxError) as exc:
+            issues.append(Issue("invalid_protected_test_source", relative, str(exc)))
+            cases = []
+        if not cases or len(cases) != len(set(cases)):
+            issues.append(
+                Issue(
+                    "invalid_protected_test_contract",
+                    relative,
+                    "test suite must contain unique test_* methods",
+                )
+            )
+        suites[suite_id] = {
+            "command": (
+                "python3 -m unittest discover -s test/bootstrap "
+                f"-p '{Path(relative).name}'"
+            ),
+            "protectedFile": relative,
+            "cases": cases,
+        }
+    return suites
 
 
 def _json_files(root: Path, declared_inputs: list[dict[str, Any]]) -> dict[str, Any]:
@@ -229,6 +445,7 @@ def _validate_input_closure(
 ) -> None:
     declared = {entry["path"] for entry in declared_inputs}
     expected_special = {
+        ".github/CODEOWNERS",
         ".gitignore",
         "AGENTS.md",
         "Makefile",
@@ -262,6 +479,8 @@ def _validate_input_closure(
             return "contract"
         if path.startswith("execution/gates/p00/"):
             return "gate"
+        if path == "execution/protected-verifier/github-actions-oidc-jwks.json":
+            return "catalog"
         if path.startswith("execution/") and path.endswith(".yaml"):
             return "catalog"
         return ""
@@ -291,8 +510,12 @@ def _validate_input_closure(
                 or relative.startswith("execution/gates/p00/evidence/")
                 or relative
                 in {
+                    "execution/blockers.md",
+                    "execution/decisions.md",
                     "execution/phase-state.yaml",
+                    "execution/progress.md",
                     "execution/gates/p00/latest.json",
+                    "execution/waivers.yaml",
                 }
             ):
                 continue
@@ -392,7 +615,7 @@ def _validate_evaluator_catalog(
                     )
                 )
             if status == "implemented" and (
-                IMPLEMENTED_BOOTSTRAP_HANDLERS.get(evaluator_id) != handler
+                IMPLEMENTED_HANDLERS.get(evaluator_id) != handler
                 or implementation_type != "builtin"
             ):
                 issues.append(
@@ -451,6 +674,18 @@ def _validate_evaluator_catalog(
                         "local_attestation_production_allowed", location, evaluator_id
                     )
                 )
+            expected_verifier = EXTERNAL_VERIFIER_SPECS.get(evaluator_id)
+            if status == "external-only" and (
+                expected_verifier is None
+                or entry.get("verification") != expected_verifier
+            ):
+                issues.append(
+                    Issue(
+                        "missing_external_fact_verifier",
+                        location,
+                        f"{evaluator_id} lacks its exact protected fact verifier",
+                    )
+                )
         expected_status_kind = {
             "implemented": "MACHINE",
             "planned": "MACHINE",
@@ -474,18 +709,21 @@ def _validate_metric_document(
     metrics: dict[str, dict[str, Any]] = {}
     required = {
         "id",
+        "status",
         "formula",
         "numerator",
         "denominator",
         "minimumN",
         "datasetCatalog",
         "datasetStatus",
+        "datasetDigest",
         "window",
         "exclusions",
         "unknownPolicy",
         "quarantinePolicy",
         "confidenceMethod",
         "evaluator",
+        "evaluatorDigest",
         "threshold",
     }
     for index, metric in enumerate(document["metrics"]):
@@ -523,13 +761,21 @@ def _validate_metric_document(
         if dataset_status not in {
             "frozen",
             "pending_protected_input",
+            "late_bound_requires_signed_freeze",
             "not_applicable",
         }:
             issues.append(
                 Issue("invalid_dataset_status", location, str(dataset_status))
             )
         dataset_digest = metric.get("datasetDigest")
-        if dataset_status == "pending_protected_input" and dataset_digest is not None:
+        if (
+            dataset_status
+            in {
+                "pending_protected_input",
+                "late_bound_requires_signed_freeze",
+            }
+            and dataset_digest is not None
+        ):
             issues.append(
                 Issue(
                     "unapproved_dataset_digest",
@@ -544,6 +790,22 @@ def _validate_metric_document(
         ):
             issues.append(
                 Issue("missing_dataset_digest", location, "frozen dataset needs sha256")
+            )
+        if metric.get("status") != "implemented-evaluator-late-bound-dataset":
+            issues.append(
+                Issue("unapproved_metric_state", location, str(metric.get("status")))
+            )
+        evaluator_digest = metric.get("evaluatorDigest")
+        if not (
+            isinstance(evaluator_digest, str)
+            and re.fullmatch(r"sha256:[0-9a-f]{64}", evaluator_digest)
+        ):
+            issues.append(
+                Issue(
+                    "missing_evaluator_digest",
+                    location,
+                    str(evaluator_digest),
+                )
             )
         for field in ("formula", "numerator", "denominator", "threshold"):
             if not isinstance(metric.get(field), str) or not metric[field].strip():
@@ -605,7 +867,13 @@ def _validate_evidence_schema_catalog(
                 )
             )
         required_field_set = set(required_fields)
-        if schema.get("kind") in {"EXTERNAL", "HUMAN", "TIME"}:
+        # HUMAN/TIME attestations in this catalog are flat signed envelopes.
+        # EXTERNAL entries are fact-evidence inputs: their producer signature
+        # is verified by the enclosing criterion result, while criterion-
+        # specific verifiers independently re-observe the fact.  Requiring
+        # flat actor/signature fields here would make the implemented nested
+        # GitHub/community schemas lie about their actual byte contract.
+        if schema.get("kind") in {"HUMAN", "TIME"}:
             attestation_base = {
                 "schemaVersion",
                 "sourceCommit",
@@ -622,6 +890,21 @@ def _validate_evidence_schema_catalog(
                         location,
                         f"missing {missing_attestation}",
                     )
+                )
+        if schema.get("kind") == "EXTERNAL":
+            external_base = {"schemaVersion", "factEvidenceDigest"}
+            missing_external = sorted(external_base - required_field_set)
+            has_subject_binding = "subject" in required_field_set or {
+                "sourceCommit",
+                "controlPlaneDigest",
+            }.issubset(required_field_set)
+            if missing_external or not has_subject_binding:
+                detail = (
+                    f"missing {missing_external}; "
+                    "subject or flat source/control binding required"
+                )
+                issues.append(
+                    Issue("incomplete_external_fact_schema", location, detail)
                 )
         if schema.get("kind") == "HUMAN":
             human_fields = {"criterionId", "subjectDigest", "decision", "actorRole"}
@@ -799,11 +1082,11 @@ def _validate_contract(
         "P00.W02": ["P00.W01: CONVERGED"],
         "P00.W03": [
             "P00.W02: CONVERGED",
-            "actual P00 corpus dataset digest: independently frozen",
+            "approved P00 corpus dataset slot and late-bound freeze semantics: independently approved",
         ],
         "P00.W04": [
             "P00.W03: CONVERGED",
-            "actual P00 experiment dataset digest: independently frozen",
+            "approved P00 experiment dataset slot and late-bound freeze semantics: independently approved",
         ],
         "P00.W05": ["P00.W04: CONVERGED"],
     }
@@ -980,11 +1263,20 @@ def _validate_gate_documents(
             issues.append(
                 Issue("invalid_missing_evidence_policy", path, "policy drift")
             )
-        if document.get("unknownOrPlannedEvaluatorResult") != {
-            "status": "ERROR",
-            "reasonCode": "missing_evaluator",
-            "mayPass": False,
-        }:
+        expected_unknown_policy = (
+            {
+                "status": "ERROR",
+                "reasonCode": "missing_evaluator",
+                "mayPass": False,
+            }
+            if path == "execution/gates/p00/P00.W01.yaml"
+            else {
+                "status": "ERROR",
+                "reasonCode": "unknown_or_unapproved_evaluator",
+                "mayPass": False,
+            }
+        )
+        if document.get("unknownOrPlannedEvaluatorResult") != expected_unknown_policy:
             issues.append(
                 Issue("invalid_missing_evaluator_policy", path, "policy drift")
             )
@@ -1064,12 +1356,16 @@ def _validate_gate_documents(
             for criterion in criteria
             if isinstance(criterion, dict) and criterion.get("kind") == "MACHINE"
         ]
-        expected_machine_status = (
-            "implemented"
-            if machine_statuses
-            and all(status == "implemented" for status in machine_statuses)
-            else "planned-fail-closed"
-        )
+        if machine_statuses and all(
+            status == "implemented" for status in machine_statuses
+        ):
+            expected_machine_status = (
+                "implemented"
+                if path == "execution/gates/p00/P00.W01.yaml"
+                else "implemented-protected-paired"
+            )
+        else:
+            expected_machine_status = "planned-fail-closed"
         if document.get("machineImplementationStatus") != expected_machine_status:
             issues.append(
                 Issue(
@@ -1077,6 +1373,16 @@ def _validate_gate_documents(
                     path,
                     f"expected {expected_machine_status}",
                 )
+            )
+        if path != "execution/gates/p00/P00.W01.yaml" and document.get(
+            "datasetPolicy"
+        ) != {
+            "status": "late_bound_requires_signed_freeze",
+            "digest": None,
+            "missingOrUnfrozenResult": "insufficient_samples",
+        }:
+            issues.append(
+                Issue("invalid_dataset_policy", path, "late-bound freeze policy drift")
             )
         for index, criterion in enumerate(criteria):
             location = f"{path}#criteria[{index}]"
@@ -1326,9 +1632,15 @@ def _validate_catalog_semantics(
     if (
         corpus.get("datasetStatus") != "pending_protected_input"
         or corpus.get("datasetDigest") is not None
+        or "SignedProtectedInputFreeze" not in corpus.get("activationRule", "")
+        or "insufficient_samples" not in corpus.get("activationRule", "")
     ):
         issues.append(
-            Issue("unapproved_corpus_dataset", corpus_path, "must remain pending/null")
+            Issue(
+                "unapproved_corpus_dataset",
+                corpus_path,
+                "must remain pending/null and require an independent signed freeze",
+            )
         )
     for field, expected in (
         ("candidateMinimum", 30),
@@ -1350,10 +1662,14 @@ def _validate_catalog_semantics(
     if (
         risk.get("datasetStatus") != "pending_protected_input"
         or risk.get("datasetDigest") is not None
+        or "SignedProtectedInputFreeze" not in risk.get("activationRule", "")
+        or "insufficient_samples" not in risk.get("activationRule", "")
     ):
         issues.append(
             Issue(
-                "unapproved_experiment_dataset", risk_path, "must remain pending/null"
+                "unapproved_experiment_dataset",
+                risk_path,
+                "must remain pending/null and require an independent signed freeze",
             )
         )
     experiment_ids = {
@@ -1405,9 +1721,12 @@ def _validate_support_manifests(
     documents: dict[str, Any], expected_digest: str, issues: list[Issue]
 ) -> None:
     for path, document in documents.items():
-        if path == "execution/control-plane-inputs.yaml" or not isinstance(
-            document, dict
-        ):
+        if path in {
+            "execution/control-plane-inputs.yaml",
+            # This snapshot is content-pinned from the trust policy rather
+            # than recursively embedding the aggregate digest it helps form.
+            "execution/protected-verifier/github-actions-oidc-jwks.json",
+        } or not isinstance(document, dict):
             continue
         if document.get("controlPlaneDigest") != expected_digest:
             issues.append(
@@ -1587,17 +1906,28 @@ def _validate_evaluator_references(
     declared_paths: set[str],
     issues: list[Issue],
 ) -> None:
-    expected_implemented_paths = {
+    bootstrap_paths = {
         "tools/phasegate/main.py",
         "tools/phasegate/digest.py",
         "tools/phasegate/validation.py",
         "tools/phasegate/__init__.py",
     }
+    p00_paths = {"tools/phasegate/p00_evaluators.py"}
     for evaluator_id, entry in evaluator_catalog.items():
         path = f"execution/evaluators/catalog.yaml#{evaluator_id}"
         implementation_paths = entry.get("implementationPaths")
         if entry.get("status") == "implemented":
-            if set(implementation_paths or []) != expected_implemented_paths:
+            expected_paths = (
+                bootstrap_paths
+                if evaluator_id.startswith("evaluator://bootstrap/")
+                else p00_paths
+            )
+            expected_tests = (
+                ["test/bootstrap/test_phasegate.py"]
+                if evaluator_id.startswith("evaluator://bootstrap/")
+                else ["test/bootstrap/test_p00_evaluators.py"]
+            )
+            if set(implementation_paths or []) != expected_paths:
                 issues.append(
                     Issue(
                         "implemented_evaluator_path_drift",
@@ -1605,7 +1935,7 @@ def _validate_evaluator_references(
                         str(implementation_paths),
                     )
                 )
-            if entry.get("protectedTests") != ["test/bootstrap/test_phasegate.py"]:
+            if entry.get("protectedTests") != expected_tests:
                 issues.append(
                     Issue(
                         "implemented_evaluator_test_drift", path, "protected test drift"
@@ -1621,11 +1951,24 @@ def _validate_evaluator_references(
 
 
 def _validate_metric_references(
+    root: Path,
     metric_catalog: dict[str, dict[str, Any]],
     evaluator_catalog: dict[str, dict[str, Any]],
     declared_paths: set[str],
     issues: list[Issue],
 ) -> None:
+    evaluator_path = root / "tools/phasegate/p00_evaluators.py"
+    try:
+        expected_evaluator_digest = sha256_bytes(evaluator_path.read_bytes())
+    except OSError as exc:
+        issues.append(
+            Issue(
+                "unbound_evaluator_path",
+                "tools/phasegate/p00_evaluators.py",
+                str(exc),
+            )
+        )
+        expected_evaluator_digest = None
     expected = {
         "p00_provenance_candidate_count": (
             "evaluator://catalog/provenance-count/v1",
@@ -1662,18 +2005,33 @@ def _validate_metric_references(
             issues.append(
                 Issue("metric_evaluator_drift", location, str(metric.get("evaluator")))
             )
-        if evaluator_catalog.get(evaluator_id, {}).get("status") != "planned":
-            issues.append(Issue("metric_evaluator_not_planned", location, evaluator_id))
+        if evaluator_catalog.get(evaluator_id, {}).get("status") != "implemented":
+            issues.append(
+                Issue("metric_evaluator_not_implemented", location, evaluator_id)
+            )
         if metric.get("minimumN") != minimum_n:
             issues.append(
                 Issue("metric_minimum_n_drift", location, str(metric.get("minimumN")))
             )
         if (
-            metric.get("status") != "planned"
-            or metric.get("evaluatorDigest") is not None
+            metric.get("status") != "implemented-evaluator-late-bound-dataset"
+            or metric.get("datasetStatus") != "late_bound_requires_signed_freeze"
+            or metric.get("datasetDigest") is not None
         ):
             issues.append(
-                Issue("unapproved_metric_state", location, "must be planned/null")
+                Issue(
+                    "unapproved_metric_state",
+                    location,
+                    "implemented evaluator must remain bound to a null late-bound dataset",
+                )
+            )
+        if metric.get("evaluatorDigest") != expected_evaluator_digest:
+            issues.append(
+                Issue(
+                    "metric_evaluator_digest_mismatch",
+                    location,
+                    "must bind the exact tools/phasegate/p00_evaluators.py bytes",
+                )
             )
         if metric.get("datasetCatalog") not in declared_paths:
             issues.append(
@@ -1686,25 +2044,17 @@ def _validate_metric_references(
 
 
 def _validate_protected_test_contract(root: Path, issues: list[Issue]) -> None:
-    contracts = {
-        "test/bootstrap/test_phasegate.py": REQUIRED_ANTI_PLACEHOLDER_TESTS,
-        "test/bootstrap/test_protected_verifier.py": REQUIRED_PROTECTED_VERIFIER_TESTS,
+    suites = _expected_test_suites(root, issues)
+    required_by_suite = {
+        "bootstrap": REQUIRED_ANTI_PLACEHOLDER_TESTS,
+        "protectedV1Historical": REQUIRED_PROTECTED_VERIFIER_TESTS,
     }
-    for relative, required in contracts.items():
-        path = root / relative
-        try:
-            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        except (OSError, SyntaxError) as exc:
-            issues.append(Issue("invalid_protected_test_source", relative, str(exc)))
-            continue
-        methods = {
-            node.name
-            for class_node in tree.body
-            if isinstance(class_node, ast.ClassDef)
-            for node in class_node.body
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-        }
-        missing = sorted(set(required) - methods)
+    for suite_id, required in required_by_suite.items():
+        relative = TEST_SUITE_MODULES[suite_id][0]
+        methods = set(suites[suite_id]["cases"])
+        missing = sorted(
+            set(required) - methods, key=lambda value: value.encode("utf-8")
+        )
         if missing:
             issues.append(
                 Issue("missing_protected_meta_test", relative, f"missing {missing}")
@@ -1718,6 +2068,9 @@ def _validate_pre_genesis(
         "execution/phase-state.yaml",
         "execution/transitions",
         "execution/approvals",
+        "execution/progress.md",
+        "execution/decisions.md",
+        "execution/blockers.md",
         "execution/waivers.yaml",
     ]
     for declared in forbidden_paths:
@@ -1770,9 +2123,30 @@ def _validate_protected_verifier_candidate(
     control_plane_digest: str,
     issues: list[Issue],
 ) -> None:
+    codeowners_path = ".github/CODEOWNERS"
+    try:
+        codeowners = (root / codeowners_path).read_text(encoding="utf-8")
+    except OSError as exc:
+        issues.append(Issue("missing_codeowners", codeowners_path, str(exc)))
+    else:
+        effective_rules = [
+            line.strip()
+            for line in codeowners.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+        if effective_rules != ["* @whyiug"]:
+            issues.append(
+                Issue(
+                    "invalid_codeowners",
+                    codeowners_path,
+                    "R3 protection requires one exact catch-all owner",
+                )
+            )
     policy_path = "execution/protected-verifier/trust-policy.yaml"
+    jwks_path = "execution/protected-verifier/github-actions-oidc-jwks.json"
     policy = documents.get(policy_path)
-    if policy is None:
+    jwks = documents.get(jwks_path)
+    if not isinstance(policy, dict):
         issues.append(
             Issue(
                 "missing_protected_verifier_policy",
@@ -1780,24 +2154,28 @@ def _validate_protected_verifier_candidate(
                 "protected verifier policy is required",
             )
         )
+    elif not isinstance(jwks, dict):
+        issues.append(
+            Issue(
+                "missing_oidc_jwks_snapshot",
+                jwks_path,
+                "the offline GitHub Actions JWK snapshot is required",
+            )
+        )
     else:
         try:
-            validate_trust_policy(
+            snapshot_digest = jwks_snapshot_digest(jwks)
+            validate_trust_policy_v2(
                 policy,
+                jwks_snapshot=jwks,
                 expected_policy_digest=document_digest(policy),
+                expected_jwks_snapshot_digest=snapshot_digest,
                 expected_control_plane_digest=control_plane_digest,
-                require_configured=False,
             )
-            if policy.get("policyStatus") != "pending_trust_roots":
-                issues.append(
-                    Issue(
-                        "agent_configured_trust_roots",
-                        policy_path,
-                        "B00 verifier candidate must remain pending independent trust roots",
-                    )
-                )
         except ProtectedVerificationError as exc:
             issues.append(Issue(exc.code, policy_path, exc.message))
+        except ValueError as exc:
+            issues.append(Issue("invalid_oidc_jwks_snapshot", jwks_path, str(exc)))
 
     workflow_contract_path = "execution/protected-verifier/workflow-contract.yaml"
     contract = documents.get(workflow_contract_path)
@@ -1811,13 +2189,13 @@ def _validate_protected_verifier_candidate(
         )
     else:
         required = {
-            "schemaVersion": "urn:agentapi-doctor:protected-verifier-workflow-contract:v1alpha1",
-            "kind": "ProtectedVerifierWorkflowContractCandidate",
+            "schemaVersion": "urn:agentapi-doctor:protected-verifier-workflow-contract:v1alpha2",
+            "kind": "ProtectedStateWorkflowContractCandidate",
+            "id": "P00.B00-R3-protected-workflows",
             "contractStatus": "candidate-unapproved",
-            "authoritative": False,
+            "authoritative": "conditional-after-independent-R3-approval-and-live-protection-proof",
             "controlPlaneIncluded": True,
             "controlPlaneDigest": control_plane_digest,
-            "workflowPath": ".github/workflows/p00-protected-verifier-candidate.yml",
         }
         for key, expected in required.items():
             if contract.get(key) != expected:
@@ -1828,79 +2206,239 @@ def _validate_protected_verifier_candidate(
                         f"expected {expected!r}",
                     )
                 )
+        expected_workflows = {
+            "controlPlane": ".github/workflows/p00-protected-control-plane.yml",
+            "crossPlatform": ".github/workflows/p00-bootstrap-cross-platform.yml",
+            "stateWriter": ".github/workflows/p00-protected-state-writer.yml",
+            "historicalR2ReadOnlyCandidate": ".github/workflows/p00-protected-verifier-candidate.yml",
+        }
+        if contract.get("workflows") != expected_workflows:
+            issues.append(
+                Issue(
+                    "protected_workflow_contract_drift",
+                    f"{workflow_contract_path}#workflows",
+                    "R3 workflow set drift",
+                )
+            )
         permissions = contract.get("permissions")
         genesis = contract.get("genesisWriter")
         activation = contract.get("activation")
+        append_writer = contract.get("appendWriter")
+        trigger = contract.get("trigger")
+        repository_protection = contract.get("repositoryProtection")
+        outputs = contract.get("outputs")
         if not (
             isinstance(permissions, dict)
             and permissions.get("contentsWrite") is False
-            and permissions.get("idTokenWrite") is False
+            and isinstance(permissions.get("githubToken"), dict)
+            and permissions.get("githubToken", {}).get("actions") == "read"
+            and permissions.get("idToken")
+            == "write only in the state-writer job after approval validation"
             and permissions.get("secrets") == []
             and isinstance(genesis, dict)
-            and genesis.get("present") is False
-            and genesis.get("authorized") is False
+            and genesis.get("present") is True
+            and genesis.get("writesRepository") is False
+            and genesis.get("createsSignedArtifact") is True
             and isinstance(activation, dict)
             and activation.get("mayProduceApprovalFact") is False
-            and activation.get("mayProtectOrCreateGenesis") is False
+            and activation.get("mayImportOrActivateState") is False
+            and isinstance(append_writer, dict)
+            and append_writer.get("present") is True
+            and append_writer.get("writesRepository") is False
+            and append_writer.get("readsArtifactsByImmutableId") is True
+            and append_writer.get("replaysFromGenesisBeforeAppend") is True
+            and append_writer.get("atomicOutputDirectory") is True
+            and append_writer.get("supportedOperations")
+            == [
+                "evidence-attachment",
+                "phase-transition",
+                "work-unit-activation",
+                "work-unit-convergence",
+                "work-unit-readiness",
+            ]
+            and append_writer.get("unsupportedLifecycleWrites")
+            == [
+                "work-unit-control-invalidation",
+                "work-unit-impact-invalidation",
+                "work-unit-resume",
+                "work-unit-supersession",
+            ]
+            and isinstance(trigger, dict)
+            and trigger.get("appendPins")
+            == [
+                "bootstrapRequestCommit",
+                "currentChainHeadDigest",
+                "workflowExecutionCommit",
+                "operation",
+                "toState",
+                "phase",
+                "conditionalWorkUnit",
+                "optionalAuthorizationBundleDigest",
+            ]
+            and isinstance(repository_protection, dict)
+            and repository_protection.get("requiredVisibility") == "public"
+            and repository_protection.get("branch") == "main"
+            and repository_protection.get("liveProofRequired") is True
+            and repository_protection.get("oidcRefProtectedRequired") is True
+            and repository_protection.get("currentRepositoryVisibility") == "private"
+            and repository_protection.get("currentProofStatus")
+            == "missing-blocks-authoritative-use"
+            and isinstance(outputs, dict)
+            and outputs.get("repositoryWrite") is False
         ):
             issues.append(
                 Issue(
                     "unsafe_protected_workflow_contract",
                     workflow_contract_path,
-                    "candidate must remain read-only and unable to create approval or Genesis facts",
+                    "R3 may only emit a conditional artifact after approval and live protection proof",
+                )
+            )
+        expected_action_pins = [
+            {
+                "repository": "actions/checkout",
+                "version": "v4.3.1",
+                "commit": "34e114876b0b11c390a56381ad16ebd13914f8d5",
+            },
+            {
+                "repository": "actions/upload-artifact",
+                "version": "v4.6.2",
+                "commit": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+            },
+            {
+                "repository": "actions/download-artifact",
+                "version": "v4.3.0",
+                "commit": "d3f86a106a0bac45b974a628896c90dbdf5c8093",
+            },
+        ]
+        if contract.get("actionPins") != expected_action_pins:
+            issues.append(
+                Issue(
+                    "protected_workflow_action_pin_drift",
+                    workflow_contract_path,
+                    "external action pin set drift",
                 )
             )
 
-    workflow_path = root / ".github/workflows/p00-protected-verifier-candidate.yml"
-    try:
-        workflow = workflow_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        issues.append(
-            Issue(
-                "missing_protected_workflow_candidate",
-                str(workflow_path.relative_to(root)),
-                str(exc),
-            )
-        )
-        return
-    required_fragments = (
-        "workflow_dispatch:",
-        "permissions:\n  contents: read",
-        "persist-credentials: false",
-        "vars.P00_ACTIVATION_STATUS",
-        "34e114876b0b11c390a56381ad16ebd13914f8d5",
-    )
-    forbidden_fragments = (
+    checkout = "actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5"
+    upload = "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
+    download = "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093"
+    workflow_contracts = {
+        ".github/workflows/p00-protected-control-plane.yml": {
+            "actions": {checkout},
+            "required": {
+                "permissions:\n  contents: read",
+                "persist-credentials: false",
+                "make verify",
+                "state-verify --root .",
+            },
+            "idToken": False,
+        },
+        ".github/workflows/p00-bootstrap-cross-platform.yml": {
+            "actions": {checkout, upload, download},
+            "required": {
+                "permissions:\n  contents: read",
+                "persist-credentials: false",
+                "ubuntu-24.04, macos-14, windows-2022",
+                "expected exactly three platform results",
+            },
+            "idToken": False,
+        },
+        ".github/workflows/p00-protected-state-writer.yml": {
+            "actions": {checkout, upload, download},
+            "required": {
+                "permissions:",
+                "contents: read",
+                "actions: read",
+                "id-token: write",
+                "inputs.mode == 'genesis'",
+                "inputs.mode == 'append'",
+                "github.ref_protected == true",
+                "github.run_attempt == 1",
+                'test "$WORKFLOW_EXECUTION_SHA" = "$GITHUB_SHA"',
+                "PYTHONPATH: request-input",
+                "validate_bootstrap_candidate",
+                "artifact-ids: ${{ inputs.chain_artifact_id }}",
+                "artifact-ids: ${{ inputs.bundle_artifact_id }}",
+                "github-token: ${{ github.token }}",
+                "repository: ${{ github.repository }}",
+                "run-id: ${{ inputs.chain_run_id }}",
+                "run-id: ${{ inputs.bundle_run_id }}",
+                "protected-chain-append",
+                "phase-transition",
+                'test "$PHASE" = P00',
+                "os.O_NOFOLLOW",
+                "os.fstat(descriptor)",
+                "retention-days: 1",
+            },
+            "idToken": True,
+        },
+        ".github/workflows/p00-protected-verifier-candidate.yml": {
+            "actions": {checkout},
+            "required": {
+                "workflow_dispatch:",
+                "permissions:\n  contents: read",
+                "persist-credentials: false",
+                "vars.P00_ACTIVATION_STATUS",
+            },
+            "idToken": False,
+        },
+    }
+    globally_forbidden = (
         "pull_request_target",
         "contents: write",
-        "id-token: write",
         "actions: write",
         "continue-on-error:",
         "curl ",
         "wget ",
         "pip install",
-        "make -C candidate-input",
-        "cd candidate-input",
         "python3 candidate-input",
         "bash candidate-input",
+        "make -C candidate-input",
+        "cd candidate-input",
     )
-    action_uses = re.findall(
-        r"^\s*uses:\s*([^#\s]+)(?:\s+#.*)?$", workflow, flags=re.MULTILINE
-    )
-    pinned_checkout = "actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5"
-    if (
-        any(fragment not in workflow for fragment in required_fragments)
-        or any(fragment in workflow for fragment in forbidden_fragments)
-        or not action_uses
-        or any(action != pinned_checkout for action in action_uses)
-    ):
-        issues.append(
-            Issue(
-                "unsafe_protected_workflow_candidate",
-                str(workflow_path.relative_to(root)),
-                "read-only/pinned/fail-closed workflow invariants drifted",
+    for relative, source_contract in workflow_contracts.items():
+        workflow_path = root / relative
+        try:
+            workflow = workflow_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            issues.append(
+                Issue("missing_protected_workflow_candidate", relative, str(exc))
+            )
+            continue
+        action_uses = set(
+            re.findall(
+                r"^\s*uses:\s*([^#\s]+)(?:\s+#.*)?$",
+                workflow,
+                flags=re.MULTILINE,
             )
         )
+        forbidden = list(globally_forbidden)
+        if source_contract["idToken"] is False:
+            forbidden.append("id-token: write")
+        if relative == ".github/workflows/p00-protected-state-writer.yml":
+            forbidden.extend(("PYTHONPATH: trusted", "cd trusted", "python3 trusted"))
+        writer_job_guard_drift = (
+            relative == ".github/workflows/p00-protected-state-writer.yml"
+            and (
+                workflow.count("github.ref_protected == true") != 2
+                or workflow.count("github.run_attempt == 1") != 2
+                or workflow.count("inputs.mode == 'genesis'") != 1
+                or workflow.count("inputs.mode == 'append'") != 1
+            )
+        )
+        if (
+            any(fragment not in workflow for fragment in source_contract["required"])
+            or any(fragment in workflow for fragment in forbidden)
+            or action_uses != source_contract["actions"]
+            or writer_job_guard_drift
+        ):
+            issues.append(
+                Issue(
+                    "unsafe_protected_workflow_candidate",
+                    relative,
+                    "R3 permission, source-boundary, action-pin, or fail-closed invariant drifted",
+                )
+            )
 
 
 def _validate_approval_request(
@@ -1910,26 +2448,61 @@ def _validate_approval_request(
     issues: list[Issue],
 ) -> None:
     path = root / ACTIVE_REQUEST_PATH
-    previous_path = root / PREVIOUS_REQUEST_PATH
-    try:
-        previous = load_json_yaml(previous_path)
-    except DigestError as exc:
-        issues.append(
-            Issue("invalid_previous_request", PREVIOUS_REQUEST_PATH, str(exc))
-        )
-        previous = None
-    previous_raw_digest = (
-        sha256_bytes(previous_path.read_bytes()) if previous_path.is_file() else None
+    historical_requests = (
+        (
+            ORIGINAL_REQUEST_PATH,
+            ORIGINAL_REQUEST_FILE_DIGEST,
+            ORIGINAL_REQUEST_DIGEST,
+        ),
+        (R2_REQUEST_PATH, R2_REQUEST_FILE_DIGEST, R2_REQUEST_DIGEST),
     )
-    if previous is not None and (
-        document_digest(previous) != PREVIOUS_REQUEST_DIGEST
-        or previous_raw_digest != PREVIOUS_REQUEST_FILE_DIGEST
-    ):
+    loaded_history: dict[str, Any] = {}
+    for relative, expected_file_digest, expected_document_digest in historical_requests:
+        historical_path = root / relative
+        try:
+            historical = load_json_yaml(historical_path)
+        except DigestError as exc:
+            issues.append(Issue("invalid_previous_request", relative, str(exc)))
+            continue
+        loaded_history[relative] = historical
+        raw_digest = (
+            sha256_bytes(historical_path.read_bytes())
+            if historical_path.is_file()
+            else None
+        )
+        if (
+            document_digest(historical) != expected_document_digest
+            or raw_digest != expected_file_digest
+        ):
+            issues.append(
+                Issue(
+                    "previous_request_drift",
+                    relative,
+                    "historical request revisions must remain byte-for-byte immutable",
+                )
+            )
+    original = loaded_history.get(ORIGINAL_REQUEST_PATH, {})
+    r2 = loaded_history.get(R2_REQUEST_PATH, {})
+    if isinstance(r2, dict) and r2.get("previousRequest") != {
+        "requestId": "P00.B00",
+        "revision": 1,
+        "requestDigest": ORIGINAL_REQUEST_DIGEST,
+        "controlPlaneDigest": ORIGINAL_CONTROL_PLANE_DIGEST,
+        "candidateSourceCommit": ORIGINAL_CANDIDATE_SOURCE_COMMIT,
+    }:
         issues.append(
             Issue(
                 "previous_request_drift",
-                PREVIOUS_REQUEST_PATH,
-                "the approved B00 request revision must remain immutable",
+                R2_REQUEST_PATH,
+                "R2 no longer binds the immutable original request",
+            )
+        )
+    if isinstance(original, dict) and original.get("requestId") != "P00.B00":
+        issues.append(
+            Issue(
+                "previous_request_drift",
+                ORIGINAL_REQUEST_PATH,
+                "original request identity drift",
             )
         )
     if not path.is_file():
@@ -1937,7 +2510,7 @@ def _validate_approval_request(
             Issue(
                 "missing_approval_request",
                 ACTIVE_REQUEST_PATH,
-                "P00.B00-R2 request is required",
+                "P00.B00-R3 request is required",
             )
         )
         return
@@ -1961,10 +2534,10 @@ def _validate_approval_request(
         "candidate",
         "componentDigests",
         "digestGroups",
-        "antiPlaceholderTests",
-        "protectedVerifierTests",
+        "testSuites",
         "diff",
         "decisionsRequested",
+        "ambiguities",
         "limitations",
         "nextAuthorizedAction",
     }
@@ -1977,10 +2550,10 @@ def _validate_approval_request(
             )
         )
     if (
-        request.get("schemaVersion") != "urn:agentapi-doctor:bootstrap-request:v1alpha2"
+        request.get("schemaVersion") != "urn:agentapi-doctor:bootstrap-request:v1alpha3"
         or request.get("kind") != "BootstrapControlPlaneReviewRequest"
-        or request.get("requestId") != "P00.B00-R2"
-        or request.get("revision") != 2
+        or request.get("requestId") != "P00.B00-R3"
+        or request.get("revision") != 3
     ):
         issues.append(
             Issue(
@@ -1990,11 +2563,12 @@ def _validate_approval_request(
             )
         )
     expected_previous = {
-        "requestId": "P00.B00",
-        "revision": 1,
-        "requestDigest": PREVIOUS_REQUEST_DIGEST,
-        "controlPlaneDigest": PREVIOUS_CONTROL_PLANE_DIGEST,
-        "candidateSourceCommit": PREVIOUS_CANDIDATE_COMMIT,
+        "requestId": "P00.B00-R2",
+        "revision": 2,
+        "requestDigest": R2_REQUEST_DIGEST,
+        "controlPlaneDigest": R2_CONTROL_PLANE_DIGEST,
+        "candidateSourceCommit": R2_CANDIDATE_SOURCE_COMMIT,
+        "requestCommit": R2_REQUEST_COMMIT,
     }
     if request.get("previousRequest") != expected_previous:
         issues.append(
@@ -2050,7 +2624,7 @@ def _validate_approval_request(
                 )
             )
     if (
-        candidate.get("baseCommit") != PREVIOUS_CANDIDATE_COMMIT
+        candidate.get("baseCommit") != R2_REQUEST_COMMIT
         or candidate.get("gitObjectFormat") != "sha1"
         or candidate.get("canonicalPlanPath") != "agentapi-doctor-Plan.md"
     ):
@@ -2134,33 +2708,14 @@ def _validate_approval_request(
                 "named digest groups must be recomputed",
             )
         )
-    anti_tests = request.get("antiPlaceholderTests")
-    if not (
-        isinstance(anti_tests, dict)
-        and anti_tests.get("command") == "make test-bootstrap"
-        and anti_tests.get("protectedFile") == "test/bootstrap/test_phasegate.py"
-        and anti_tests.get("cases") == list(REQUIRED_ANTI_PLACEHOLDER_TESTS)
-    ):
+    expected_test_suites = _expected_test_suites(root, issues)
+    test_suites = request.get("testSuites")
+    if test_suites != expected_test_suites:
         issues.append(
             Issue(
-                "request_anti_placeholder_drift",
+                "request_test_suite_drift",
                 ACTIVE_REQUEST_PATH,
-                "bootstrap test contract drift",
-            )
-        )
-    protected_tests = request.get("protectedVerifierTests")
-    if not (
-        isinstance(protected_tests, dict)
-        and protected_tests.get("command") == "make test-protected-verifier"
-        and protected_tests.get("protectedFile")
-        == "test/bootstrap/test_protected_verifier.py"
-        and protected_tests.get("cases") == list(REQUIRED_PROTECTED_VERIFIER_TESTS)
-    ):
-        issues.append(
-            Issue(
-                "request_protected_verifier_test_drift",
-                ACTIVE_REQUEST_PATH,
-                "protected verifier test contract drift",
+                "R3 testSuites must exactly bind every protected module and sorted test_* case",
             )
         )
 
@@ -2181,29 +2736,66 @@ def _validate_approval_request(
                 )
             )
         entries = diff.get("entries")
+        entry_list = entries if isinstance(entries, list) else []
         entry_paths = {
-            item.get("path")
-            for item in (entries if isinstance(entries, list) else [])
-            if isinstance(item, dict)
+            item.get("path") for item in entry_list if isinstance(item, dict)
         }
         required_diff_paths = {
-            item["path"]
-            for item in components
-            if item["path"]
-            in {
-                "Makefile",
-                "execution/README.md",
-                "execution/control-plane-inputs.yaml",
-                "execution/protected-verifier/trust-policy.yaml",
-                "execution/protected-verifier/workflow-contract.yaml",
-                ".github/workflows/p00-protected-verifier-candidate.yml",
-                "tools/phasegate/main.py",
-                "tools/phasegate/protected.py",
-                "tools/phasegate/prepare_request.py",
-                "tools/phasegate/validation.py",
-                "test/bootstrap/test_phasegate.py",
-                "test/bootstrap/test_protected_verifier.py",
-            }
+            ".github/CODEOWNERS",
+            ".github/workflows/p00-bootstrap-cross-platform.yml",
+            ".github/workflows/p00-protected-control-plane.yml",
+            ".github/workflows/p00-protected-state-writer.yml",
+            "execution/control-plane-inputs.yaml",
+            "execution/evaluators/catalog.yaml",
+            "execution/evidence-schemas/catalog.yaml",
+            "execution/metrics/definitions.yaml",
+            "execution/protected-verifier/ambiguities.yaml",
+            "execution/protected-verifier/github-actions-oidc-jwks.json",
+            "execution/protected-verifier/trust-policy.yaml",
+            "execution/protected-verifier/workflow-contract.yaml",
+            "test/bootstrap/test_chain_artifact.py",
+            "test/bootstrap/test_oidc.py",
+            "test/bootstrap/test_oidc_provenance.py",
+            "test/bootstrap/test_chain_witness.py",
+            "test/bootstrap/test_control_context.py",
+            "test/bootstrap/test_delegation.py",
+            "test/bootstrap/test_execution_artifact.py",
+            "test/bootstrap/test_external_facts.py",
+            "test/bootstrap/test_gate_runner.py",
+            "test/bootstrap/test_p00_evaluators.py",
+            "test/bootstrap/test_phasegate.py",
+            "test/bootstrap/test_post_event_writer.py",
+            "test/bootstrap/test_protected_v2.py",
+            "test/bootstrap/test_provenance.py",
+            "test/bootstrap/test_provenance_writer.py",
+            "test/bootstrap/test_run_executor.py",
+            "test/bootstrap/test_serialized_bundle.py",
+            "test/bootstrap/test_sshsig.py",
+            "test/bootstrap/test_state_chain_v2.py",
+            "test/bootstrap/test_state_writer.py",
+            "test/bootstrap/test_workflow_orchestrator.py",
+            "tools/phasegate/oidc.py",
+            "tools/phasegate/chain_artifact.py",
+            "tools/phasegate/oidc_provenance.py",
+            "tools/phasegate/chain_witness.py",
+            "tools/phasegate/control_context.py",
+            "tools/phasegate/delegation.py",
+            "tools/phasegate/execution_artifact.py",
+            "tools/phasegate/external_facts.py",
+            "tools/phasegate/gate_runner.py",
+            "tools/phasegate/p00_evaluators.py",
+            "tools/phasegate/prepare_request.py",
+            "tools/phasegate/post_event_writer.py",
+            "tools/phasegate/protected_v2.py",
+            "tools/phasegate/provenance.py",
+            "tools/phasegate/provenance_writer.py",
+            "tools/phasegate/run_executor.py",
+            "tools/phasegate/serialized_bundle.py",
+            "tools/phasegate/sshsig.py",
+            "tools/phasegate/state_chain_v2.py",
+            "tools/phasegate/state_writer.py",
+            "tools/phasegate/workflow_orchestrator.py",
+            "tools/phasegate/validation.py",
         }
         required_diff_paths.add(ACTIVE_REQUEST_PATH)
         if not isinstance(entries, list) or not required_diff_paths.issubset(
@@ -2214,6 +2806,24 @@ def _validate_approval_request(
                     "incomplete_request_diff",
                     ACTIVE_REQUEST_PATH,
                     "verifier revision paths are missing",
+                )
+            )
+        if any(
+            not isinstance(item, dict)
+            or set(item) != {"status", "path"}
+            or not isinstance(item.get("status"), str)
+            or not item["status"]
+            or not isinstance(item.get("path"), str)
+            or not item["path"]
+            or item["path"].startswith("/")
+            or ".." in Path(item["path"]).parts
+            for item in entry_list
+        ) or len(entry_paths) != len(entry_list):
+            issues.append(
+                Issue(
+                    "invalid_request_diff",
+                    ACTIVE_REQUEST_PATH,
+                    "diff entries must be unique, relative {status,path} objects",
                 )
             )
         if diff.get("baseCommit") != candidate.get("baseCommit"):
@@ -2229,8 +2839,12 @@ def _validate_approval_request(
     if (
         set(decision_ids) != REQUIRED_DECISION_IDS
         or len(decision_ids) != len(REQUIRED_DECISION_IDS)
+        or not isinstance(decisions, list)
+        or len(decisions) != len(REQUIRED_DECISION_IDS)
         or any(
-            not isinstance(item.get("question"), str) or not item["question"].strip()
+            set(item) != {"id", "question"}
+            or not isinstance(item.get("question"), str)
+            or not item["question"].strip()
             for item in (decisions if isinstance(decisions, list) else [])
             if isinstance(item, dict)
         )
@@ -2240,15 +2854,70 @@ def _validate_approval_request(
                 "request_decision_set_drift", ACTIVE_REQUEST_PATH, "decision set drift"
             )
         )
+    ambiguity_path = "execution/protected-verifier/ambiguities.yaml"
+    try:
+        ambiguity_register = load_json_yaml(root / ambiguity_path)
+        entries = ambiguity_register.get("entries")
+        if not isinstance(entries, list):
+            raise ValueError("entries must be a list")
+        expected_ambiguities = [
+            {
+                "id": item["id"],
+                "decisionCandidate": item["decisionCandidate"],
+                "currentEffect": item["currentEffect"],
+            }
+            for item in entries
+            if isinstance(item, dict)
+        ]
+    except (DigestError, KeyError, TypeError, ValueError) as exc:
+        issues.append(Issue("invalid_ambiguity_register", ambiguity_path, str(exc)))
+        expected_ambiguities = []
+    expected_ambiguity_ids = {
+        "P00-A-OIDC-PROTECTED-WORKFLOW",
+        "P00-A-LATE-BOUND-DATASET-FREEZE",
+        "P00-A-CONTROL-PLANE-REVISION",
+        "P00-A-GO-NOGO-THRESHOLD",
+    }
+    if (
+        request.get("ambiguities") != expected_ambiguities
+        or {item.get("id") for item in expected_ambiguities} != expected_ambiguity_ids
+        or len(expected_ambiguities) != len(expected_ambiguity_ids)
+    ):
+        issues.append(
+            Issue(
+                "request_ambiguity_projection_drift",
+                ACTIVE_REQUEST_PATH,
+                "ambiguities must exactly project id/decisionCandidate/currentEffect",
+            )
+        )
     if (
         not isinstance(request.get("limitations"), list)
         or len(request["limitations"]) < 6
+        or any(
+            not isinstance(item, str) or not item.strip()
+            for item in request.get("limitations", [])
+        )
+        or (
+            all(isinstance(item, str) for item in request.get("limitations", []))
+            and len(request["limitations"]) != len(set(request["limitations"]))
+        )
     ):
         issues.append(
             Issue(
                 "missing_request_limitations",
                 ACTIVE_REQUEST_PATH,
                 "limitations missing",
+            )
+        )
+    if (
+        not isinstance(request.get("nextAuthorizedAction"), str)
+        or not request["nextAuthorizedAction"].strip()
+    ):
+        issues.append(
+            Issue(
+                "missing_next_authorized_action",
+                ACTIVE_REQUEST_PATH,
+                "request must name the next independently authorized action",
             )
         )
     for key, _, location in _walk_keys(request):
@@ -2362,10 +3031,14 @@ def validate_bootstrap_candidate(
     required_excluded_paths = {
         "execution/approval-requests/**",
         "execution/approvals/**",
+        "execution/blockers.md",
+        "execution/decisions.md",
         "execution/phase-state.yaml",
+        "execution/progress.md",
         "execution/transitions/**",
         "execution/gates/p00/evidence/**",
         "execution/gates/p00/latest.json",
+        "execution/waivers.yaml",
     }
     if excluded_paths != required_excluded_paths or any(
         not isinstance(item.get("reason"), str) or not item["reason"].strip()
@@ -2396,7 +3069,7 @@ def validate_bootstrap_candidate(
     _validate_support_manifests(documents, control_plane_digest, issues)
     _validate_evaluator_references(root, evaluator_catalog, declared_paths, issues)
     _validate_metric_references(
-        metric_catalog, evaluator_catalog, declared_paths, issues
+        root, metric_catalog, evaluator_catalog, declared_paths, issues
     )
     _validate_protected_test_contract(root, issues)
 
