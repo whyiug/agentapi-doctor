@@ -109,7 +109,7 @@ PLATFORM_SPECS: tuple[dict[str, Any], ...] = (
     },
     {
         "platform": "aggregate",
-        "jobName": "aggregate",
+        "jobName": "P00 bootstrap cross-platform / aggregate",
         "runnerLabel": "ubuntu-24.04",
         "requiredSteps": (
             "Download all exact platform results",

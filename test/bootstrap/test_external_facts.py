@@ -208,7 +208,12 @@ class P00CrossPlatformExternalFactTests(unittest.TestCase):
             self._job(101, "ubuntu-24.04", "ubuntu-24.04", platform_steps),
             self._job(102, "macos-14", "macos-14", platform_steps),
             self._job(103, "windows-2022", "windows-2022", platform_steps),
-            self._job(104, "aggregate", "ubuntu-24.04", aggregate_steps),
+            self._job(
+                104,
+                "P00 bootstrap cross-platform / aggregate",
+                "ubuntu-24.04",
+                aggregate_steps,
+            ),
         ]
         return {
             self.run_endpoint: run,

@@ -46,6 +46,7 @@ jobs:
           retention-days: 1
           compression-level: 0
   aggregate:
+    name: P00 bootstrap cross-platform / aggregate
     needs: platform
     runs-on: ubuntu-24.04
     timeout-minutes: 10

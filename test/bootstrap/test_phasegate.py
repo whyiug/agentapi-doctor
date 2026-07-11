@@ -685,6 +685,30 @@ class BootstrapCandidateTests(CandidateCopy):
         self.rebind_candidate()
         self.assert_candidate_fails_with("unsafe_protected_workflow_candidate")
 
+    def test_required_status_check_job_names_cannot_drift_after_rebind(
+        self,
+    ) -> None:
+        mutations = {
+            ".github/workflows/p00-bootstrap-cross-platform.yml": (
+                "name: P00 bootstrap cross-platform / aggregate",
+                "name: aggregate",
+            ),
+            ".github/workflows/p00-protected-control-plane.yml": (
+                "name: P00 protected control-plane / verify",
+                "name: verify",
+            ),
+        }
+        for relative, (expected, replacement) in mutations.items():
+            path = self.root / relative
+            workflow = path.read_text(encoding="utf-8")
+            self.assertIn(expected, workflow)
+            path.write_text(
+                workflow.replace(expected, replacement, 1),
+                encoding="utf-8",
+            )
+        self.rebind_candidate()
+        self.assert_candidate_fails_with("unsafe_protected_workflow_candidate")
+
 
 class GateExecutionTests(CandidateCopy):
     def test_planned_machine_evaluator_is_not_executable(self) -> None:

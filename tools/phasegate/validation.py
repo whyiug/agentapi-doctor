@@ -183,6 +183,7 @@ REQUIRED_ANTI_PLACEHOLDER_TESTS = (
     "test_line_ending_policy_cannot_be_weakened_after_rebind",
     "test_workflow_job_env_cannot_use_runner_context_after_rebind",
     "test_genesis_request_checkout_cannot_use_shallow_history_after_rebind",
+    "test_required_status_check_job_names_cannot_drift_after_rebind",
     "test_gate_digest_mismatch_cannot_pass_after_rebind",
     "test_request_integrity_fields_cannot_be_forged",
     "test_empty_fail_open_gate_cannot_pass_after_rebind",
@@ -2352,6 +2353,7 @@ def _validate_protected_verifier_candidate(
             "required": {
                 "permissions:\n  contents: read",
                 "persist-credentials: false",
+                "name: P00 protected control-plane / verify",
                 "make verify",
                 "state-verify --root .",
             },
@@ -2363,6 +2365,7 @@ def _validate_protected_verifier_candidate(
                 "permissions:\n  contents: read",
                 "persist-credentials: false",
                 "fetch-depth: 0",
+                "name: P00 bootstrap cross-platform / aggregate",
                 "ubuntu-24.04, macos-14, windows-2022",
                 "expected exactly three platform results",
             },
