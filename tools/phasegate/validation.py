@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import ast
 from pathlib import Path
+import re
+import subprocess
 from typing import Any, Iterable
 
 from .digest import (
@@ -13,6 +15,15 @@ from .digest import (
     compute_control_plane_digest,
     load_json_yaml,
     read_input_manifest,
+    sha256_bytes,
+)
+from .protected import (
+    PREVIOUS_CANDIDATE_COMMIT,
+    PREVIOUS_CONTROL_PLANE_DIGEST,
+    PREVIOUS_REQUEST_DIGEST,
+    ProtectedVerificationError,
+    document_digest,
+    validate_trust_policy,
 )
 
 
@@ -122,6 +133,11 @@ REQUIRED_ANTI_PLACEHOLDER_TESTS = (
     "test_phase_state_before_genesis_cannot_pass",
     "test_transition_chain_before_genesis_cannot_pass",
     "test_missing_approval_request_cannot_pass",
+    "test_previous_request_revision_cannot_be_rewritten",
+    "test_request_cannot_bind_a_nonexistent_source_commit",
+    "test_agent_cannot_configure_trust_roots_after_rebind",
+    "test_state_transition_policy_cannot_be_weakened_after_rebind",
+    "test_protected_workflow_cannot_gain_write_permission_after_rebind",
     "test_gate_digest_mismatch_cannot_pass_after_rebind",
     "test_request_integrity_fields_cannot_be_forged",
     "test_empty_fail_open_gate_cannot_pass_after_rebind",
@@ -137,6 +153,34 @@ REQUIRED_ANTI_PLACEHOLDER_TESTS = (
     "test_planned_machine_evaluator_is_not_executable",
     "test_unknown_evaluator_is_not_executable",
     "test_unit_gate_fails_before_independent_approval_and_genesis",
+)
+
+REQUIRED_PROTECTED_VERIFIER_TESTS = (
+    "test_active_rejection_clears_pointers_without_false_conflict",
+    "test_approval_bundle_cannot_hide_state_artifacts",
+    "test_approval_namespace_replay_is_rejected",
+    "test_candidate_source_commit_pin_is_required",
+    "test_claimed_reviewer_role_must_match_policy",
+    "test_event_chain_reordering_is_rejected",
+    "test_evidence_attachment_is_bound_and_does_not_change_state",
+    "test_expired_approval_is_rejected",
+    "test_external_chain_head_detects_signed_tail_truncation",
+    "test_external_policy_pin_rejects_replaced_roster",
+    "test_hand_edited_phase_state_view_is_rejected",
+    "test_illegal_state_transition_is_rejected",
+    "test_machine_transition_requires_approved_evidence_result",
+    "test_one_key_cannot_approve_and_sign_state",
+    "test_pending_policy_cannot_authorize",
+    "test_parent_directory_symlink_input_is_rejected",
+    "test_path_substitution_cannot_replace_ssh_keygen",
+    "test_prior_chain_prefix_cannot_be_rewritten",
+    "test_request_digest_pin_is_required",
+    "test_second_genesis_is_rejected",
+    "test_signed_approval_tamper_is_rejected",
+    "test_state_transition_cannot_consume_random_approval_digest",
+    "test_unlisted_approval_signer_is_rejected",
+    "test_valid_approval_is_verified_without_state_write",
+    "test_valid_signed_genesis_replays_to_unique_active_unit",
 )
 
 REQUIRED_FORBIDDEN_ABSENCE = (
@@ -158,7 +202,17 @@ REQUIRED_DECISION_IDS = {
     "protected-genesis",
     "post-genesis-verifier",
     "external-actions",
+    "protected-verifier-format",
+    "externally-pinned-trust-roots",
+    "read-only-protected-workflow",
+    "request-revision-chain",
 }
+
+ACTIVE_REQUEST_PATH = "execution/approval-requests/P00.B00-R2.yaml"
+PREVIOUS_REQUEST_PATH = "execution/approval-requests/P00.B00.yaml"
+PREVIOUS_REQUEST_FILE_DIGEST = (
+    "sha256:4abd872ab81a1f1fcca65492843ddcb587f1716ce692f4763ef3c3709b3bf310"
+)
 
 
 def _json_files(root: Path, declared_inputs: list[dict[str, Any]]) -> dict[str, Any]:
@@ -193,6 +247,7 @@ def _validate_input_closure(
         if (
             path in expected_special
             or path == "execution/README.md"
+            or path.startswith(".github/workflows/")
             or path.endswith(".py")
         ):
             return "text"
@@ -229,7 +284,17 @@ def _validate_input_closure(
             if not path.is_file():
                 continue
             relative = path.relative_to(root).as_posix()
-            if relative == "execution/approval-requests/P00.B00.yaml":
+            if (
+                relative.startswith("execution/approval-requests/")
+                or relative.startswith("execution/approvals/")
+                or relative.startswith("execution/transitions/")
+                or relative.startswith("execution/gates/p00/evidence/")
+                or relative
+                in {
+                    "execution/phase-state.yaml",
+                    "execution/gates/p00/latest.json",
+                }
+            ):
                 continue
             discovered.add(relative)
     for directory in (root / "tools/phasegate", root / "test/bootstrap"):
@@ -237,6 +302,11 @@ def _validate_input_closure(
             for path in directory.rglob("*.py"):
                 if path.is_file() and "__pycache__" not in path.parts:
                     discovered.add(path.relative_to(root).as_posix())
+    workflows = root / ".github/workflows"
+    if workflows.exists():
+        for path in workflows.rglob("*"):
+            if path.is_file():
+                discovered.add(path.relative_to(root).as_posix())
     for path in sorted(discovered - declared):
         issues.append(
             Issue(
@@ -1616,28 +1686,29 @@ def _validate_metric_references(
 
 
 def _validate_protected_test_contract(root: Path, issues: list[Issue]) -> None:
-    path = root / "test/bootstrap/test_phasegate.py"
-    try:
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    except (OSError, SyntaxError) as exc:
-        issues.append(Issue("invalid_protected_test_source", str(path), str(exc)))
-        return
-    methods = {
-        node.name
-        for class_node in tree.body
-        if isinstance(class_node, ast.ClassDef)
-        for node in class_node.body
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    contracts = {
+        "test/bootstrap/test_phasegate.py": REQUIRED_ANTI_PLACEHOLDER_TESTS,
+        "test/bootstrap/test_protected_verifier.py": REQUIRED_PROTECTED_VERIFIER_TESTS,
     }
-    missing = sorted(set(REQUIRED_ANTI_PLACEHOLDER_TESTS) - methods)
-    if missing:
-        issues.append(
-            Issue(
-                "missing_protected_meta_test",
-                "test/bootstrap/test_phasegate.py",
-                f"missing {missing}",
+    for relative, required in contracts.items():
+        path = root / relative
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        except (OSError, SyntaxError) as exc:
+            issues.append(Issue("invalid_protected_test_source", relative, str(exc)))
+            continue
+        methods = {
+            node.name
+            for class_node in tree.body
+            if isinstance(class_node, ast.ClassDef)
+            for node in class_node.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+        missing = sorted(set(required) - methods)
+        if missing:
+            issues.append(
+                Issue("missing_protected_meta_test", relative, f"missing {missing}")
             )
-        )
 
 
 def _validate_pre_genesis(
@@ -1693,117 +1764,358 @@ def _validate_pre_genesis(
             )
 
 
+def _validate_protected_verifier_candidate(
+    root: Path,
+    documents: dict[str, Any],
+    control_plane_digest: str,
+    issues: list[Issue],
+) -> None:
+    policy_path = "execution/protected-verifier/trust-policy.yaml"
+    policy = documents.get(policy_path)
+    if policy is None:
+        issues.append(
+            Issue(
+                "missing_protected_verifier_policy",
+                policy_path,
+                "protected verifier policy is required",
+            )
+        )
+    else:
+        try:
+            validate_trust_policy(
+                policy,
+                expected_policy_digest=document_digest(policy),
+                expected_control_plane_digest=control_plane_digest,
+                require_configured=False,
+            )
+            if policy.get("policyStatus") != "pending_trust_roots":
+                issues.append(
+                    Issue(
+                        "agent_configured_trust_roots",
+                        policy_path,
+                        "B00 verifier candidate must remain pending independent trust roots",
+                    )
+                )
+        except ProtectedVerificationError as exc:
+            issues.append(Issue(exc.code, policy_path, exc.message))
+
+    workflow_contract_path = "execution/protected-verifier/workflow-contract.yaml"
+    contract = documents.get(workflow_contract_path)
+    if not isinstance(contract, dict):
+        issues.append(
+            Issue(
+                "missing_protected_workflow_contract",
+                workflow_contract_path,
+                "read-only protected workflow contract is required",
+            )
+        )
+    else:
+        required = {
+            "schemaVersion": "urn:agentapi-doctor:protected-verifier-workflow-contract:v1alpha1",
+            "kind": "ProtectedVerifierWorkflowContractCandidate",
+            "contractStatus": "candidate-unapproved",
+            "authoritative": False,
+            "controlPlaneIncluded": True,
+            "controlPlaneDigest": control_plane_digest,
+            "workflowPath": ".github/workflows/p00-protected-verifier-candidate.yml",
+        }
+        for key, expected in required.items():
+            if contract.get(key) != expected:
+                issues.append(
+                    Issue(
+                        "protected_workflow_contract_drift",
+                        f"{workflow_contract_path}#{key}",
+                        f"expected {expected!r}",
+                    )
+                )
+        permissions = contract.get("permissions")
+        genesis = contract.get("genesisWriter")
+        activation = contract.get("activation")
+        if not (
+            isinstance(permissions, dict)
+            and permissions.get("contentsWrite") is False
+            and permissions.get("idTokenWrite") is False
+            and permissions.get("secrets") == []
+            and isinstance(genesis, dict)
+            and genesis.get("present") is False
+            and genesis.get("authorized") is False
+            and isinstance(activation, dict)
+            and activation.get("mayProduceApprovalFact") is False
+            and activation.get("mayProtectOrCreateGenesis") is False
+        ):
+            issues.append(
+                Issue(
+                    "unsafe_protected_workflow_contract",
+                    workflow_contract_path,
+                    "candidate must remain read-only and unable to create approval or Genesis facts",
+                )
+            )
+
+    workflow_path = root / ".github/workflows/p00-protected-verifier-candidate.yml"
+    try:
+        workflow = workflow_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        issues.append(
+            Issue(
+                "missing_protected_workflow_candidate",
+                str(workflow_path.relative_to(root)),
+                str(exc),
+            )
+        )
+        return
+    required_fragments = (
+        "workflow_dispatch:",
+        "permissions:\n  contents: read",
+        "persist-credentials: false",
+        "vars.P00_ACTIVATION_STATUS",
+        "34e114876b0b11c390a56381ad16ebd13914f8d5",
+    )
+    forbidden_fragments = (
+        "pull_request_target",
+        "contents: write",
+        "id-token: write",
+        "actions: write",
+        "continue-on-error:",
+        "curl ",
+        "wget ",
+        "pip install",
+        "make -C candidate-input",
+        "cd candidate-input",
+        "python3 candidate-input",
+        "bash candidate-input",
+    )
+    action_uses = re.findall(
+        r"^\s*uses:\s*([^#\s]+)(?:\s+#.*)?$", workflow, flags=re.MULTILINE
+    )
+    pinned_checkout = "actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5"
+    if (
+        any(fragment not in workflow for fragment in required_fragments)
+        or any(fragment in workflow for fragment in forbidden_fragments)
+        or not action_uses
+        or any(action != pinned_checkout for action in action_uses)
+    ):
+        issues.append(
+            Issue(
+                "unsafe_protected_workflow_candidate",
+                str(workflow_path.relative_to(root)),
+                "read-only/pinned/fail-closed workflow invariants drifted",
+            )
+        )
+
+
 def _validate_approval_request(
     root: Path,
     control_plane_digest: str,
     components: list[dict[str, str]],
     issues: list[Issue],
 ) -> None:
-    path = root / "execution/approval-requests/P00.B00.yaml"
+    path = root / ACTIVE_REQUEST_PATH
+    previous_path = root / PREVIOUS_REQUEST_PATH
+    try:
+        previous = load_json_yaml(previous_path)
+    except DigestError as exc:
+        issues.append(
+            Issue("invalid_previous_request", PREVIOUS_REQUEST_PATH, str(exc))
+        )
+        previous = None
+    previous_raw_digest = (
+        sha256_bytes(previous_path.read_bytes()) if previous_path.is_file() else None
+    )
+    if previous is not None and (
+        document_digest(previous) != PREVIOUS_REQUEST_DIGEST
+        or previous_raw_digest != PREVIOUS_REQUEST_FILE_DIGEST
+    ):
+        issues.append(
+            Issue(
+                "previous_request_drift",
+                PREVIOUS_REQUEST_PATH,
+                "the approved B00 request revision must remain immutable",
+            )
+        )
     if not path.is_file():
         issues.append(
             Issue(
                 "missing_approval_request",
-                str(path.relative_to(root)),
-                "P00.B00 request is required",
+                ACTIVE_REQUEST_PATH,
+                "P00.B00-R2 request is required",
             )
         )
         return
     try:
         request = load_json_yaml(path)
     except DigestError as exc:
-        issues.append(
-            Issue("invalid_approval_request", str(path.relative_to(root)), str(exc))
-        )
+        issues.append(Issue("invalid_approval_request", ACTIVE_REQUEST_PATH, str(exc)))
         return
     if not isinstance(request, dict):
         issues.append(
-            Issue(
-                "invalid_approval_request",
-                str(path.relative_to(root)),
-                "must be an object",
-            )
+            Issue("invalid_approval_request", ACTIVE_REQUEST_PATH, "must be an object")
         )
         return
-    if request.get("schemaVersion") != "urn:agentapi-doctor:bootstrap-request:v1alpha1":
+    expected_top_level = {
+        "schemaVersion",
+        "kind",
+        "requestId",
+        "revision",
+        "previousRequest",
+        "requestStatus",
+        "candidate",
+        "componentDigests",
+        "digestGroups",
+        "antiPlaceholderTests",
+        "protectedVerifierTests",
+        "diff",
+        "decisionsRequested",
+        "limitations",
+        "nextAuthorizedAction",
+    }
+    if set(request) != expected_top_level:
         issues.append(
             Issue(
                 "invalid_approval_request_schema",
-                str(path.relative_to(root)),
-                "schema drift",
+                ACTIVE_REQUEST_PATH,
+                "top-level field set drift",
             )
         )
     if (
-        request.get("kind") != "BootstrapControlPlaneReviewRequest"
-        or request.get("requestId") != "P00.B00"
+        request.get("schemaVersion") != "urn:agentapi-doctor:bootstrap-request:v1alpha2"
+        or request.get("kind") != "BootstrapControlPlaneReviewRequest"
+        or request.get("requestId") != "P00.B00-R2"
+        or request.get("revision") != 2
     ):
         issues.append(
             Issue(
                 "invalid_approval_request_identity",
-                str(path.relative_to(root)),
-                "identity drift",
+                ACTIVE_REQUEST_PATH,
+                "revision identity drift",
+            )
+        )
+    expected_previous = {
+        "requestId": "P00.B00",
+        "revision": 1,
+        "requestDigest": PREVIOUS_REQUEST_DIGEST,
+        "controlPlaneDigest": PREVIOUS_CONTROL_PLANE_DIGEST,
+        "candidateSourceCommit": PREVIOUS_CANDIDATE_COMMIT,
+    }
+    if request.get("previousRequest") != expected_previous:
+        issues.append(
+            Issue(
+                "request_revision_chain_mismatch",
+                ACTIVE_REQUEST_PATH,
+                "previous request binding drift",
             )
         )
     if request.get("requestStatus") != "pending_review":
         issues.append(
             Issue(
-                "invalid_request_status",
-                str(path.relative_to(root)),
-                "must be pending_review",
+                "invalid_request_status", ACTIVE_REQUEST_PATH, "must be pending_review"
             )
         )
     candidate = request.get("candidate")
-    if (
-        not isinstance(candidate, dict)
-        or candidate.get("controlPlaneDigest") != control_plane_digest
-    ):
+    expected_candidate_keys = {
+        "baseCommit",
+        "candidateSourceCommit",
+        "gitObjectFormat",
+        "canonicalPlanPath",
+        "controlPlaneDigest",
+    }
+    if not isinstance(candidate, dict) or set(candidate) != expected_candidate_keys:
+        issues.append(
+            Issue(
+                "invalid_request_candidate",
+                ACTIVE_REQUEST_PATH,
+                "candidate field set drift",
+            )
+        )
+        candidate = {}
+    if candidate.get("controlPlaneDigest") != control_plane_digest:
         issues.append(
             Issue(
                 "request_digest_mismatch",
-                str(path.relative_to(root)),
-                "request does not bind the computed control-plane digest",
+                ACTIVE_REQUEST_PATH,
+                "request does not bind computed control-plane digest",
             )
         )
-    if isinstance(candidate, dict):
-        base_commit = candidate.get("baseCommit")
+    for key in ("baseCommit", "candidateSourceCommit"):
+        value = candidate.get(key)
         if not (
-            isinstance(base_commit, str)
-            and len(base_commit) == 40
-            and all(character in "0123456789abcdef" for character in base_commit)
+            isinstance(value, str)
+            and len(value) == 40
+            and all(character in "0123456789abcdef" for character in value)
         ):
             issues.append(
                 Issue(
-                    "invalid_request_base_commit",
-                    str(path.relative_to(root)),
-                    str(base_commit),
+                    "invalid_request_source_commit",
+                    ACTIVE_REQUEST_PATH,
+                    f"invalid {key}",
                 )
             )
-        if candidate.get("canonicalPlanPath") != "agentapi-doctor-Plan.md":
+    if (
+        candidate.get("baseCommit") != PREVIOUS_CANDIDATE_COMMIT
+        or candidate.get("gitObjectFormat") != "sha1"
+        or candidate.get("canonicalPlanPath") != "agentapi-doctor-Plan.md"
+    ):
+        issues.append(
+            Issue(
+                "request_candidate_binding_drift",
+                ACTIVE_REQUEST_PATH,
+                "candidate base/format/path drift",
+            )
+        )
+
+    source_commit = candidate.get("candidateSourceCommit")
+    if (root / ".git").exists() and isinstance(source_commit, str):
+        declared_paths = [item["path"] for item in components]
+        try:
+            committed_paths = set(
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(root),
+                        "ls-tree",
+                        "-r",
+                        "--name-only",
+                        source_commit,
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                ).stdout.splitlines()
+            )
+            exact = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(root),
+                    "diff",
+                    "--quiet",
+                    source_commit,
+                    "--",
+                    *declared_paths,
+                ],
+                check=False,
+                timeout=30,
+            ).returncode
+            if not set(declared_paths).issubset(committed_paths) or exact != 0:
+                raise ValueError(
+                    "source commit does not exactly contain current inputs"
+                )
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:
             issues.append(
                 Issue(
-                    "request_plan_path_drift",
-                    str(path.relative_to(root)),
-                    "canonical path drift",
+                    "request_source_commit_mismatch",
+                    ACTIVE_REQUEST_PATH,
+                    str(exc),
                 )
             )
-        if (
-            candidate.get("sourceCommitBinding")
-            != "independent-review-must-bind-the-reviewed-candidate-commit"
-        ):
-            issues.append(
-                Issue(
-                    "request_source_binding_drift",
-                    str(path.relative_to(root)),
-                    "binding drift",
-                )
-            )
+
     expected = {item["path"]: item["digest"] for item in components}
-    supplied = request.get("componentDigests")
-    if supplied != expected:
+    if request.get("componentDigests") != expected:
         issues.append(
             Issue(
                 "request_component_digest_mismatch",
-                str(path.relative_to(root)),
+                ACTIVE_REQUEST_PATH,
                 "componentDigests must exactly match declared inputs",
             )
         )
@@ -1811,15 +2123,15 @@ def _validate_approval_request(
         expected_groups = approval_digest_groups(components)
     except DigestError as exc:
         issues.append(
-            Issue("request_digest_group_error", str(path.relative_to(root)), str(exc))
+            Issue("request_digest_group_error", ACTIVE_REQUEST_PATH, str(exc))
         )
         expected_groups = {}
     if request.get("digestGroups") != expected_groups:
         issues.append(
             Issue(
                 "request_digest_group_mismatch",
-                str(path.relative_to(root)),
-                "named digest groups must be recomputed from components",
+                ACTIVE_REQUEST_PATH,
+                "named digest groups must be recomputed",
             )
         )
     anti_tests = request.get("antiPlaceholderTests")
@@ -1832,14 +2144,30 @@ def _validate_approval_request(
         issues.append(
             Issue(
                 "request_anti_placeholder_drift",
-                str(path.relative_to(root)),
-                "test contract drift",
+                ACTIVE_REQUEST_PATH,
+                "bootstrap test contract drift",
             )
         )
+    protected_tests = request.get("protectedVerifierTests")
+    if not (
+        isinstance(protected_tests, dict)
+        and protected_tests.get("command") == "make test-protected-verifier"
+        and protected_tests.get("protectedFile")
+        == "test/bootstrap/test_protected_verifier.py"
+        and protected_tests.get("cases") == list(REQUIRED_PROTECTED_VERIFIER_TESTS)
+    ):
+        issues.append(
+            Issue(
+                "request_protected_verifier_test_drift",
+                ACTIVE_REQUEST_PATH,
+                "protected verifier test contract drift",
+            )
+        )
+
     diff = request.get("diff")
     if not isinstance(diff, dict):
         issues.append(
-            Issue("invalid_request_diff", str(path.relative_to(root)), "diff missing")
+            Issue("invalid_request_diff", ACTIVE_REQUEST_PATH, "diff missing")
         )
     else:
         if diff.get("forbiddenArtifactsVerifiedAbsent") != list(
@@ -1848,7 +2176,7 @@ def _validate_approval_request(
             issues.append(
                 Issue(
                     "request_forbidden_absence_drift",
-                    str(path.relative_to(root)),
+                    ACTIVE_REQUEST_PATH,
                     "absence list drift",
                 )
             )
@@ -1858,54 +2186,68 @@ def _validate_approval_request(
             for item in (entries if isinstance(entries, list) else [])
             if isinstance(item, dict)
         }
-        required_diff_paths = set(expected) - {".gitignore", "agentapi-doctor-Plan.md"}
-        required_diff_paths.add("execution/approval-requests/P00.B00.yaml")
+        required_diff_paths = {
+            item["path"]
+            for item in components
+            if item["path"]
+            in {
+                "Makefile",
+                "execution/README.md",
+                "execution/control-plane-inputs.yaml",
+                "execution/protected-verifier/trust-policy.yaml",
+                "execution/protected-verifier/workflow-contract.yaml",
+                ".github/workflows/p00-protected-verifier-candidate.yml",
+                "tools/phasegate/main.py",
+                "tools/phasegate/protected.py",
+                "tools/phasegate/prepare_request.py",
+                "tools/phasegate/validation.py",
+                "test/bootstrap/test_phasegate.py",
+                "test/bootstrap/test_protected_verifier.py",
+            }
+        }
+        required_diff_paths.add(ACTIVE_REQUEST_PATH)
         if not isinstance(entries, list) or not required_diff_paths.issubset(
             entry_paths
         ):
             issues.append(
                 Issue(
                     "incomplete_request_diff",
-                    str(path.relative_to(root)),
-                    "changed paths missing",
+                    ACTIVE_REQUEST_PATH,
+                    "verifier revision paths are missing",
                 )
             )
-        if diff.get("baseCommit") != (
-            candidate.get("baseCommit") if isinstance(candidate, dict) else None
-        ):
+        if diff.get("baseCommit") != candidate.get("baseCommit"):
             issues.append(
-                Issue(
-                    "request_diff_base_mismatch",
-                    str(path.relative_to(root)),
-                    "base drift",
-                )
+                Issue("request_diff_base_mismatch", ACTIVE_REQUEST_PATH, "base drift")
             )
     decisions = request.get("decisionsRequested")
-    decision_ids = {
+    decision_ids = [
         item.get("id")
         for item in (decisions if isinstance(decisions, list) else [])
         if isinstance(item, dict)
-    }
-    if decision_ids != REQUIRED_DECISION_IDS or any(
-        not isinstance(item.get("question"), str) or not item["question"].strip()
-        for item in (decisions if isinstance(decisions, list) else [])
-        if isinstance(item, dict)
+    ]
+    if (
+        set(decision_ids) != REQUIRED_DECISION_IDS
+        or len(decision_ids) != len(REQUIRED_DECISION_IDS)
+        or any(
+            not isinstance(item.get("question"), str) or not item["question"].strip()
+            for item in (decisions if isinstance(decisions, list) else [])
+            if isinstance(item, dict)
+        )
     ):
         issues.append(
             Issue(
-                "request_decision_set_drift",
-                str(path.relative_to(root)),
-                "decision set drift",
+                "request_decision_set_drift", ACTIVE_REQUEST_PATH, "decision set drift"
             )
         )
     if (
         not isinstance(request.get("limitations"), list)
-        or len(request["limitations"]) < 4
+        or len(request["limitations"]) < 6
     ):
         issues.append(
             Issue(
                 "missing_request_limitations",
-                str(path.relative_to(root)),
+                ACTIVE_REQUEST_PATH,
                 "limitations missing",
             )
         )
@@ -1915,32 +2257,32 @@ def _validate_approval_request(
             issues.append(
                 Issue(
                     "agent_authored_approval_fact",
-                    f"execution/approval-requests/P00.B00.yaml#{location}",
-                    f"approval request may not contain reviewer/approval fact key {key!r}",
+                    f"{ACTIVE_REQUEST_PATH}#{location}",
+                    f"request may not contain approval fact key {key!r}",
                 )
             )
         if normalized in FORBIDDEN_REQUEST_FACT_KEYS:
             issues.append(
                 Issue(
                     "agent_authored_approval_fact",
-                    f"execution/approval-requests/P00.B00.yaml#{location}",
-                    f"approval request may not contain decision fact key {key!r}",
+                    f"{ACTIVE_REQUEST_PATH}#{location}",
+                    f"request may not contain decision fact key {key!r}",
                 )
             )
         if normalized in {"phase", "activephase", "activeworkunit", "phasestatus"}:
-            # A request may mention a requested activation in prose but cannot
-            # serialize it as state.
             issues.append(
                 Issue(
                     "approval_request_is_not_state",
-                    f"execution/approval-requests/P00.B00.yaml#{location}",
-                    f"approval request may not contain state field {key!r}",
+                    f"{ACTIVE_REQUEST_PATH}#{location}",
+                    f"request may not contain state field {key!r}",
                 )
             )
 
 
 def validate_bootstrap_candidate(
-    root: Path, require_request: bool = True
+    root: Path,
+    require_request: bool = True,
+    require_pre_genesis: bool = True,
 ) -> dict[str, Any]:
     root = root.resolve()
     issues: list[Issue] = []
@@ -2086,14 +2428,22 @@ def validate_bootstrap_candidate(
         issues,
     )
     _validate_catalog_semantics(documents, evaluator_catalog, issues)
-    _validate_pre_genesis(root, documents, issues)
+    _validate_protected_verifier_candidate(
+        root, documents, control_plane_digest, issues
+    )
+    if require_pre_genesis:
+        _validate_pre_genesis(root, documents, issues)
     if require_request:
         _validate_approval_request(root, control_plane_digest, components, issues)
 
     if issues:
         raise ValidationError(issues)
     return {
-        "mode": "pre_genesis_candidate",
+        "mode": (
+            "pre_genesis_candidate"
+            if require_pre_genesis
+            else "protected_state_verifier_candidate"
+        ),
         "controlPlaneDigest": control_plane_digest,
         "componentDigests": {item["path"]: item["digest"] for item in components},
         "componentCount": len(components),

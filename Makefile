@@ -3,14 +3,15 @@ PYTHON ?= python3
 PHASEGATE ?= tools/phasegate/main.py
 ROOT ?= .
 
-.PHONY: help bootstrap verify test-bootstrap state-verify control-plane-verify gate-unit gate \
-	gate-all evidence-verify clean-checkout ga-gate
+.PHONY: help bootstrap verify test-bootstrap test-protected-verifier state-verify \
+	control-plane-verify gate-unit gate gate-all evidence-verify clean-checkout ga-gate
 
 help:
 	@echo 'agentapi-doctor bootstrap/control-plane commands'
 	@echo '  make bootstrap'
 	@echo '  make verify'
 	@echo '  make test-bootstrap'
+	@echo '  make test-protected-verifier'
 	@echo '  make state-verify'
 	@echo '  make control-plane-verify'
 	@echo '  make gate-unit UNIT=P00.W01 [OUTPUT=path]'
@@ -30,6 +31,9 @@ verify: bootstrap test-bootstrap
 
 test-bootstrap:
 	$(PYTHON) -m unittest discover -s test/bootstrap -p 'test_*.py'
+
+test-protected-verifier:
+	$(PYTHON) -m unittest discover -s test/bootstrap -p 'test_protected_verifier.py'
 
 state-verify:
 	$(PYTHON) $(PHASEGATE) state-verify --root "$(ROOT)"

@@ -154,9 +154,9 @@ def read_input_manifest(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]
             raise DigestError(f"duplicate control-plane input: {path}")
         seen.add(path)
         normalized.append({"path": path, "kind": kind, "required": True})
-    if "execution/approval-requests/P00.B00.yaml" in seen:
+    if any(path.startswith("execution/approval-requests/") for path in seen):
         raise DigestError(
-            "approval request must not be a self-referential digest input"
+            "approval requests must not be self-referential digest inputs"
         )
     return manifest, normalized
 
@@ -215,6 +215,10 @@ def approval_digest_groups(components: list[dict[str, str]]) -> dict[str, str]:
         "execution/impact-map.yaml",
         "execution/product-stage-map.yaml",
         "test/bootstrap/test_phasegate.py",
+        "test/bootstrap/test_protected_verifier.py",
+        "execution/protected-verifier/trust-policy.yaml",
+        "execution/protected-verifier/workflow-contract.yaml",
+        ".github/workflows/p00-protected-verifier-candidate.yml",
     }
     missing = sorted(required_paths - by_path.keys())
     if missing:
@@ -243,4 +247,13 @@ def approval_digest_groups(components: list[dict[str, str]]) -> dict[str, str]:
         "impactMapDigest": by_path["execution/impact-map.yaml"],
         "productStageMapDigest": by_path["execution/product-stage-map.yaml"],
         "antiPlaceholderTestDigest": by_path["test/bootstrap/test_phasegate.py"],
+        "protectedVerifierTestDigest": by_path[
+            "test/bootstrap/test_protected_verifier.py"
+        ],
+        "protectedVerifierPolicySetDigest": aggregate_selected_components(
+            components, ["execution/protected-verifier/"]
+        ),
+        "protectedWorkflowDigest": by_path[
+            ".github/workflows/p00-protected-verifier-candidate.yml"
+        ],
     }

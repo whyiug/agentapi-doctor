@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from tools.phasegate.validation import (  # noqa: E402
+    ACTIVE_REQUEST_PATH,
     ValidationError,
     ensure_gate_is_executable,
     validate_bootstrap_candidate,
@@ -74,7 +75,7 @@ class CandidateCopy(unittest.TestCase):
                 write_document(self.root, entry["path"], document)
         rebound, components = compute_control_plane_digest(self.root)
         self.assertEqual(rebound, digest)
-        request_path = "execution/approval-requests/P00.B00.yaml"
+        request_path = ACTIVE_REQUEST_PATH
         request = read_document(self.root, request_path)
         request["candidate"]["controlPlaneDigest"] = digest
         request["componentDigests"] = {
@@ -156,7 +157,7 @@ class BootstrapCandidateTests(CandidateCopy):
         self.assert_candidate_fails_with("gate_digest_mismatch")
 
     def test_request_integrity_fields_cannot_be_forged(self) -> None:
-        path = "execution/approval-requests/P00.B00.yaml"
+        path = ACTIVE_REQUEST_PATH
         request = read_document(self.root, path)
         request["digestGroups"] = {
             key: "sha256:" + "0" * 64 for key in request["digestGroups"]
@@ -314,14 +315,14 @@ class BootstrapCandidateTests(CandidateCopy):
         self.assertIn("incomplete_human_schema", self.issue_codes(error))
 
     def test_control_plane_digest_drift_cannot_pass(self) -> None:
-        path = "execution/approval-requests/P00.B00.yaml"
+        path = ACTIVE_REQUEST_PATH
         request = read_document(self.root, path)
         request["candidate"]["controlPlaneDigest"] = "sha256:" + "0" * 64
         write_document(self.root, path, request)
         self.assert_candidate_fails_with("request_digest_mismatch")
 
     def test_agent_authored_reviewer_identity_cannot_pass(self) -> None:
-        path = "execution/approval-requests/P00.B00.yaml"
+        path = ACTIVE_REQUEST_PATH
         request = read_document(self.root, path)
         request["reviewerIdentity"] = "self-approved"
         write_document(self.root, path, request)
@@ -338,8 +339,65 @@ class BootstrapCandidateTests(CandidateCopy):
         self.assert_candidate_fails_with("forbidden_pre_genesis_state")
 
     def test_missing_approval_request_cannot_pass(self) -> None:
-        (self.root / "execution/approval-requests/P00.B00.yaml").unlink()
+        (self.root / ACTIVE_REQUEST_PATH).unlink()
         self.assert_candidate_fails_with("missing_approval_request")
+
+    def test_previous_request_revision_cannot_be_rewritten(self) -> None:
+        path = "execution/approval-requests/P00.B00.yaml"
+        request = read_document(self.root, path)
+        request["limitations"].append("rewritten history")
+        write_document(self.root, path, request)
+        self.assert_candidate_fails_with("previous_request_drift")
+
+    def test_request_cannot_bind_a_nonexistent_source_commit(self) -> None:
+        subprocess.run(
+            ["git", "init", "-q", str(self.root)],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        request = read_document(self.root, ACTIVE_REQUEST_PATH)
+        request["candidate"]["candidateSourceCommit"] = "f" * 40
+        write_document(self.root, ACTIVE_REQUEST_PATH, request)
+        self.assert_candidate_fails_with("request_source_commit_mismatch")
+
+    def test_agent_cannot_configure_trust_roots_after_rebind(self) -> None:
+        path = "execution/protected-verifier/trust-policy.yaml"
+        policy = read_document(self.root, path)
+        policy["policyStatus"] = "configured"
+        write_document(self.root, path, policy)
+        self.rebind_candidate()
+        self.assert_candidate_fails_with("agent_configured_trust_roots")
+
+    def test_state_transition_policy_cannot_be_weakened_after_rebind(self) -> None:
+        path = "execution/protected-verifier/trust-policy.yaml"
+        policy = read_document(self.root, path)
+        policy["allowedTransitions"]["ACTIVE"].append("CONVERGED")
+        write_document(self.root, path, policy)
+        self.rebind_candidate()
+        self.assert_candidate_fails_with("transition_policy_drift")
+
+    def test_protected_workflow_cannot_gain_write_permission_after_rebind(
+        self,
+    ) -> None:
+        path = self.root / ".github/workflows/p00-protected-verifier-candidate.yml"
+        workflow = path.read_text(encoding="utf-8")
+        mutations = (
+            workflow.replace("contents: read", "contents: write", 1),
+            workflow.replace(
+                "actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5",
+                "actions/checkout@v4",
+                1,
+            ),
+            workflow + "\n# continue-on-error: true\n",
+            workflow + "\n# python3 candidate-input/untrusted.py\n",
+        )
+        for mutation in mutations:
+            with self.subTest(mutation=mutation[-80:]):
+                path.write_text(mutation, encoding="utf-8")
+                self.rebind_candidate()
+                self.assert_candidate_fails_with("unsafe_protected_workflow_candidate")
 
 
 class GateExecutionTests(CandidateCopy):

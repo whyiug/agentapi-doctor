@@ -2,7 +2,7 @@
   "schemaVersion": "urn:agentapi-doctor:evidence-schema-catalog:v1",
   "kind": "EvidenceSchemaCatalogCandidate",
   "catalogStatus": "candidate-unapproved",
-  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
   "schemas": [
     {"id": "evidence-schema://bootstrap/control-plane-report/v1", "kind": "MACHINE", "status": "implemented", "requiredFields": ["schemaVersion", "criterionId", "evaluator", "evaluatorStatus", "evaluatorDigest", "result", "reasonCode", "sourceCommit", "controlPlaneDigest", "assertions", "artifactDigests"], "allowedResults": ["PASS", "FAIL", "ERROR"]},
     {"id": "evidence-schema://bootstrap/anti-placeholder-report/v1", "kind": "MACHINE", "status": "implemented", "requiredFields": ["schemaVersion", "criterionId", "evaluator", "evaluatorStatus", "evaluatorDigest", "result", "reasonCode", "sourceCommit", "controlPlaneDigest", "negativeCases", "artifactDigests"], "allowedResults": ["PASS", "FAIL", "ERROR"]},

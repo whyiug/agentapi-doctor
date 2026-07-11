@@ -11,6 +11,7 @@
     {"path": "AGENTS.md", "kind": "text", "required": true},
     {"path": "Makefile", "kind": "text", "required": true},
     {"path": "agentapi-doctor-Plan.md", "kind": "text", "required": true},
+    {"path": ".github/workflows/p00-protected-verifier-candidate.yml", "kind": "text", "required": true},
     {"path": "execution/README.md", "kind": "text", "required": true},
     {"path": "execution/control-plane-inputs.yaml", "kind": "manifest", "required": true},
     {"path": "execution/product-stage-map.yaml", "kind": "manifest", "required": true},
@@ -36,13 +37,17 @@
     {"path": "execution/catalogs/p00/corpus.yaml", "kind": "catalog", "required": true},
     {"path": "execution/catalogs/p00/risk-experiments.yaml", "kind": "catalog", "required": true},
     {"path": "execution/catalogs/p00/go-no-go.yaml", "kind": "catalog", "required": true},
+    {"path": "execution/protected-verifier/trust-policy.yaml", "kind": "catalog", "required": true},
+    {"path": "execution/protected-verifier/workflow-contract.yaml", "kind": "catalog", "required": true},
     {"path": "tools/phasegate/__init__.py", "kind": "text", "required": true},
     {"path": "tools/phasegate/digest.py", "kind": "text", "required": true},
     {"path": "tools/phasegate/main.py", "kind": "text", "required": true},
+    {"path": "tools/phasegate/protected.py", "kind": "text", "required": true},
     {"path": "tools/phasegate/prepare_request.py", "kind": "text", "required": true},
     {"path": "tools/phasegate/validation.py", "kind": "text", "required": true},
     {"path": "test/bootstrap/__init__.py", "kind": "text", "required": true},
-    {"path": "test/bootstrap/test_phasegate.py", "kind": "text", "required": true}
+    {"path": "test/bootstrap/test_phasegate.py", "kind": "text", "required": true},
+    {"path": "test/bootstrap/test_protected_verifier.py", "kind": "text", "required": true}
   ],
   "excluded": [
     {"path": "execution/approval-requests/**", "reason": "review request binds the already computed digest and cannot be a self-referential exam input"},

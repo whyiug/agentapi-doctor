@@ -17,6 +17,14 @@ from tools.phasegate.validation import (  # noqa: E402
     ensure_gate_is_executable,
     validate_bootstrap_candidate,
 )
+from tools.phasegate.protected import (  # noqa: E402
+    ProtectedVerificationError,
+    compare_state_view,
+    load_event_directory,
+    load_strict_document,
+    replay_state_events,
+    verify_control_plane_approval,
+)
 
 
 RESULT_SCHEMA = "urn:agentapi-doctor:phasegate-result:v1"
@@ -70,6 +78,28 @@ def _parser() -> argparse.ArgumentParser:
         command = commands.add_parser(name)
         if name in {"gate-all", "ga-gate"}:
             command.add_argument("--output")
+    approval = commands.add_parser("approval-verify")
+    approval.add_argument("--request", required=True)
+    approval.add_argument("--approval", required=True)
+    approval.add_argument("--policy", required=True)
+    approval.add_argument("--expected-policy-digest", required=True)
+    approval.add_argument("--expected-control-plane-digest", required=True)
+    approval.add_argument("--expected-candidate-source-commit", required=True)
+    approval.add_argument("--expected-request-digest", required=True)
+    approval.add_argument("--expected-ssh-keygen-digest", required=True)
+    state_chain = commands.add_parser("state-chain-verify")
+    state_chain.add_argument("--request", required=True)
+    state_chain.add_argument("--approval", required=True)
+    state_chain.add_argument("--policy", required=True)
+    state_chain.add_argument("--events", required=True)
+    state_chain.add_argument("--prior-events")
+    state_chain.add_argument("--phase-state")
+    state_chain.add_argument("--expected-policy-digest", required=True)
+    state_chain.add_argument("--expected-control-plane-digest", required=True)
+    state_chain.add_argument("--expected-candidate-source-commit", required=True)
+    state_chain.add_argument("--expected-request-digest", required=True)
+    state_chain.add_argument("--expected-chain-head-digest", required=True)
+    state_chain.add_argument("--expected-ssh-keygen-digest", required=True)
     unit = commands.add_parser("gate-unit")
     unit.add_argument("unit", nargs="?")
     unit.add_argument("--unit", dest="unit_option")
@@ -111,10 +141,84 @@ def _gate_evaluator_failure(root: Path, paths: list[str]) -> dict[str, Any] | No
     return None
 
 
+def _protected_artifact_layout(parsed: argparse.Namespace, root: Path) -> None:
+    """Reject hidden state or extra approval artifacts in protected input trees."""
+
+    command = parsed.command
+    forbidden = ["execution/waivers.yaml"]
+    if command == "approval-verify":
+        forbidden.extend(
+            [
+                "execution/phase-state.yaml",
+                "execution/transitions",
+                "execution/gates/p00/evidence",
+                "execution/gates/p00/latest.json",
+            ]
+        )
+    present = [
+        relative
+        for relative in forbidden
+        if (root / relative).exists() or (root / relative).is_symlink()
+    ]
+    if present:
+        raise ProtectedVerificationError(
+            "unexpected_protected_artifact",
+            "repository",
+            "protected input tree contains forbidden artifacts: " + ", ".join(present),
+        )
+
+    approvals = root / "execution/approvals"
+    if approvals.exists() or approvals.is_symlink():
+        if approvals.is_symlink() or not approvals.is_dir():
+            raise ProtectedVerificationError(
+                "unsafe_approval_directory",
+                "execution/approvals",
+                "approval directory must be a real directory",
+            )
+        files = list(approvals.rglob("*"))
+        if any(item.is_symlink() or not item.is_file() for item in files):
+            raise ProtectedVerificationError(
+                "unexpected_approval_artifact",
+                "execution/approvals",
+                "approval bundle may contain only one regular envelope",
+            )
+        expected = Path(parsed.approval).resolve()
+        if {item.resolve() for item in files} != {expected}:
+            raise ProtectedVerificationError(
+                "unexpected_approval_artifact",
+                "execution/approvals",
+                "approval bundle does not exactly match --approval",
+            )
+    phase_state = root / "execution/phase-state.yaml"
+    transitions = root / "execution/transitions"
+    if command == "state-chain-verify" and (
+        transitions.exists() or transitions.is_symlink()
+    ):
+        if Path(parsed.events).resolve() != transitions:
+            raise ProtectedVerificationError(
+                "unverified_transition_directory",
+                "execution/transitions",
+                "repository transitions must be the exact --events directory",
+            )
+    if command == "state-chain-verify" and (
+        phase_state.exists() or phase_state.is_symlink()
+    ):
+        if not parsed.phase_state or Path(parsed.phase_state).resolve() != phase_state:
+            raise ProtectedVerificationError(
+                "unverified_phase_state_view",
+                "execution/phase-state.yaml",
+                "an existing phase-state view must be supplied for exact comparison",
+            )
+
+
 def run(parsed: argparse.Namespace, root: Path) -> tuple[int, dict[str, Any]]:
     command = parsed.command
     try:
-        candidate = validate_bootstrap_candidate(root)
+        candidate = validate_bootstrap_candidate(
+            root,
+            require_pre_genesis=command
+            not in {"approval-verify", "state-chain-verify"},
+        )
     except ValidationError as exc:
         return 2, _validation_result(exc)
 
@@ -122,6 +226,70 @@ def run(parsed: argparse.Namespace, root: Path) -> tuple[int, dict[str, Any]]:
         "controlPlaneDigest": candidate["controlPlaneDigest"],
         "componentCount": candidate["componentCount"],
     }
+    if command in {"approval-verify", "state-chain-verify"}:
+        try:
+            _protected_artifact_layout(parsed, root)
+            request = load_strict_document(Path(parsed.request), label="request")
+            approval = load_strict_document(Path(parsed.approval), label="approval")
+            policy = load_strict_document(Path(parsed.policy), label="policy")
+            verified = verify_control_plane_approval(
+                request=request,
+                approval=approval,
+                policy=policy,
+                expected_policy_digest=parsed.expected_policy_digest,
+                expected_control_plane_digest=parsed.expected_control_plane_digest,
+                expected_candidate_source_commit=(
+                    parsed.expected_candidate_source_commit
+                ),
+                expected_request_digest=parsed.expected_request_digest,
+                expected_ssh_keygen_digest=parsed.expected_ssh_keygen_digest,
+            )
+            if candidate["controlPlaneDigest"] != parsed.expected_control_plane_digest:
+                raise ProtectedVerificationError(
+                    "control_plane_digest_mismatch",
+                    "repository",
+                    "verified repository control plane differs from external pin",
+                )
+            if command == "approval-verify":
+                return 0, _result(
+                    "pass",
+                    (
+                        "verified_pending_genesis"
+                        if verified["decision"] == "APPROVE"
+                        else "verified_rejection"
+                    ),
+                    approval=verified,
+                    **common,
+                )
+            events = load_event_directory(Path(parsed.events))
+            prior_events = (
+                load_event_directory(Path(parsed.prior_events))
+                if parsed.prior_events
+                else []
+            )
+            state_view = replay_state_events(
+                events=events,
+                policy=policy,
+                approval_result=verified,
+                expected_policy_digest=parsed.expected_policy_digest,
+                expected_control_plane_digest=parsed.expected_control_plane_digest,
+                expected_chain_head_digest=parsed.expected_chain_head_digest,
+                expected_ssh_keygen_digest=parsed.expected_ssh_keygen_digest,
+                contract_digests=candidate["componentDigests"],
+                repo_root=root,
+                prior_events=prior_events,
+            )
+            if parsed.phase_state:
+                compare_state_view(Path(parsed.phase_state), state_view)
+            return 0, _result(
+                "pass",
+                "signed_state_chain_verified",
+                stateView=state_view,
+                phaseStateCompared=bool(parsed.phase_state),
+                **common,
+            )
+        except ProtectedVerificationError as exc:
+            return 6, _result("fail", exc.code, issues=[exc.as_dict()], **common)
     if command in {"bootstrap", "control-plane-verify"}:
         return 0, _result("pass", "candidate_valid", mode=candidate["mode"], **common)
     if command == "state-verify":

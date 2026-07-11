@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:protected-verifier-policy:v1alpha1",
+  "kind": "ProtectedVerifierTrustPolicy",
+  "policyId": "P00-protected-verifier",
+  "revision": 1,
+  "policyStatus": "pending_trust_roots",
+  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
+  "signatureScheme": {
+    "type": "openssh-sshsig-v1",
+    "allowedKeyTypes": ["ssh-ed25519"],
+    "approvalNamespace": "agentapi-doctor/control-plane-approval/v1",
+    "stateEventNamespace": "agentapi-doctor/state-event/v1"
+  },
+  "thresholds": {
+    "controlPlaneApproval": 1,
+    "stateEvent": 1
+  },
+  "separationOfDuties": {
+    "distinctPrincipals": true,
+    "distinctKeys": true,
+    "distinctOrganizations": true,
+    "approvalRole": "independent-reviewer",
+    "stateEventRole": "protected-workflow"
+  },
+  "principals": [],
+  "revokedFingerprints": [],
+  "requiredExternalPins": [
+    "trustPolicyDigest",
+    "controlPlaneDigest",
+    "candidateSourceCommit",
+    "requestDigest",
+    "chainHeadDigest",
+    "sshKeygenDigest"
+  ],
+  "allowedTransitions": {
+    "NOT_STARTED": ["READY", "REJECTED", "SUPERSEDED"],
+    "READY": ["ACTIVE", "REJECTED", "SUPERSEDED"],
+    "ACTIVE": ["MACHINE_CONVERGED", "BLOCKED", "REJECTED", "SUPERSEDED"],
+    "BLOCKED": ["ACTIVE", "REJECTED", "SUPERSEDED"],
+    "MACHINE_CONVERGED": ["CONVERGED", "WAITING_EXTERNAL", "REVIEW_PENDING", "REJECTED"],
+    "WAITING_EXTERNAL": ["CONVERGED", "REVIEW_PENDING", "REJECTED"],
+    "REVIEW_PENDING": ["CONVERGED", "REJECTED"],
+    "CONVERGED": ["REJECTED"],
+    "REJECTED": ["READY"],
+    "SUPERSEDED": []
+  }
+}

@@ -1,0 +1,152 @@
+name: P00 protected verifier candidate (read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact P00 candidate source commit; treated only as untrusted data
+        required: true
+        type: string
+      approval_sha:
+        description: Exact commit containing the request and detached approval envelope
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p00-protected-verifier-candidate
+  cancel-in-progress: false
+
+# These defaults deliberately block authoritative verification. They may be
+# changed only in a separately reviewed control-plane revision after the trust
+# policy, immutable subject pins, runtime, and private-repository protection are
+# independently established. This workflow never writes Genesis.
+env:
+  ACTIVATION_STATUS: ${{ vars.P00_ACTIVATION_STATUS }}
+  EXPECTED_CONTROL_PLANE_DIGEST: ${{ vars.P00_CONTROL_PLANE_DIGEST }}
+  EXPECTED_TRUST_POLICY_DIGEST: ${{ vars.P00_TRUST_POLICY_DIGEST }}
+  EXPECTED_REQUEST_DIGEST: ${{ vars.P00_REQUEST_DIGEST }}
+  EXPECTED_SSH_KEYGEN_DIGEST: ${{ vars.P00_SSH_KEYGEN_DIGEST }}
+
+jobs:
+  verify:
+    if: >-
+      github.repository == 'whyiug/agentapi-doctor' &&
+      github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: p00-control-plane-review
+    env:
+      HOME: ${{ runner.temp }}/isolated-home
+      LC_ALL: C.UTF-8
+      TZ: UTC
+    defaults:
+      run:
+        shell: bash --noprofile --norc -euo pipefail {0}
+    steps:
+      - name: Validate immutable dispatch inputs and external pins
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          APPROVAL_SHA: ${{ inputs.approval_sha }}
+        run: |
+          mkdir -p "$HOME"
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo '::error::candidate_sha must be a full lowercase 40-hex commit SHA'
+            exit 2
+          }
+          [[ "$APPROVAL_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo '::error::approval_sha must be a full lowercase 40-hex commit SHA'
+            exit 2
+          }
+          failed=0
+          if [[ "$ACTIVATION_STATUS" != 'independently-approved-read-only' ]]; then
+            echo '::error::protected verifier remains a non-authoritative candidate'
+            failed=1
+          fi
+          for pin in \
+            "$EXPECTED_CONTROL_PLANE_DIGEST" \
+            "$EXPECTED_TRUST_POLICY_DIGEST" \
+            "$EXPECTED_REQUEST_DIGEST" \
+            "$EXPECTED_SSH_KEYGEN_DIGEST"
+          do
+            if [[ ! "$pin" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+              echo '::error::an independently managed SHA-256 pin is missing'
+              failed=1
+            fi
+          done
+          if (( failed != 0 )); then
+            echo '::error::verification is blocked; there is no fail-open fallback'
+            exit 3
+          fi
+
+      - name: Checkout trusted default-branch verifier
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ github.sha }}
+          path: trusted
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout candidate as untrusted data
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          path: candidate-input
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout approval bundle as untrusted data
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ inputs.approval_sha }}
+          path: approval-input
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Confirm resolved immutable commits
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          APPROVAL_SHA: ${{ inputs.approval_sha }}
+        run: |
+          test "$(git -C candidate-input rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git -C approval-input rev-parse HEAD)" = "$APPROVAL_SHA"
+
+      - name: Validate candidate subject with trusted code only
+        env:
+          PYTHONPATH: trusted
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from tools.phasegate.validation import validate_bootstrap_candidate
+
+          result = validate_bootstrap_candidate(
+              Path("candidate-input"),
+              require_request=False,
+              require_pre_genesis=True,
+          )
+          if result["controlPlaneDigest"] != os.environ["EXPECTED_CONTROL_PLANE_DIGEST"]:
+              raise SystemExit("candidate control-plane digest differs from external pin")
+          PY
+
+      - name: Run only the trusted verifier against data trees
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: |
+          python3 trusted/tools/phasegate/main.py approval-verify \
+            --request approval-input/execution/approval-requests/P00.B00-R2.yaml \
+            --approval approval-input/execution/approvals/P00.B00-R2.json \
+            --policy trusted/execution/protected-verifier/trust-policy.yaml \
+            --expected-policy-digest "$EXPECTED_TRUST_POLICY_DIGEST" \
+            --expected-control-plane-digest "$EXPECTED_CONTROL_PLANE_DIGEST" \
+            --expected-candidate-source-commit "$CANDIDATE_SHA" \
+            --expected-request-digest "$EXPECTED_REQUEST_DIGEST" \
+            --expected-ssh-keygen-digest "$EXPECTED_SSH_KEYGEN_DIGEST" \
+            --root approval-input
+
+      # No candidate script, dependency, hook, or Makefile is executed. This
+      # job has no write permission and cannot create approvals, transitions,
+      # phase-state, evidence, or Genesis.

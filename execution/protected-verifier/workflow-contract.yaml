@@ -1,0 +1,126 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:protected-verifier-workflow-contract:v1alpha1",
+  "kind": "ProtectedVerifierWorkflowContractCandidate",
+  "id": "P00.B00-protected-verifier",
+  "contractStatus": "candidate-unapproved",
+  "authoritative": false,
+  "controlPlaneIncluded": true,
+  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
+  "workflowPath": ".github/workflows/p00-protected-verifier-candidate.yml",
+  "purpose": "Read-only verification of an exact P00 candidate and independently signed approval; never state or Genesis creation.",
+  "trigger": {
+    "event": "workflow_dispatch",
+    "repository": "whyiug/agentapi-doctor",
+    "requiredWorkflowRef": "refs/heads/main",
+    "candidateInput": "full lowercase 40-hex Git commit",
+    "approvalInput": "full lowercase 40-hex Git commit"
+  },
+  "permissions": {
+    "githubToken": {"contents": "read", "allUnspecifiedPermissions": "none"},
+    "secrets": [],
+    "contentsWrite": false,
+    "idTokenWrite": false,
+    "createsOrApprovesPullRequests": false
+  },
+  "directoryBoundary": {
+    "trustedVerifier": "trusted",
+    "candidateData": "candidate-input",
+    "approvalData": "approval-input",
+    "candidateCodeMayExecute": false,
+    "approvalCodeMayExecute": false,
+    "onlyTrustedVerifierMayExecute": true
+  },
+  "trustedVerifier": {
+    "entrypoint": "tools/phasegate/main.py approval-verify",
+    "implementation": [
+      "tools/phasegate/protected.py",
+      "tools/phasegate/digest.py",
+      "tools/phasegate/validation.py"
+    ],
+    "mustComeFromDefaultBranchWorkflowCommit": true,
+    "mustNotImportCandidatePython": true,
+    "candidateFilesAreDataOnly": true
+  },
+  "trustPolicy": {
+    "path": "execution/protected-verifier/trust-policy.yaml",
+    "status": "pending_trust_roots",
+    "externalDigestPinRequired": true,
+    "approvalNamespace": "agentapi-doctor/control-plane-approval/v1",
+    "stateEventNamespace": "agentapi-doctor/state-event/v1",
+    "configuredSignerRosterPresent": false,
+    "privateKeysPermitted": false
+  },
+  "externalPins": [
+    "candidateSourceCommit",
+    "controlPlaneDigest",
+    "requestDigest",
+    "trustPolicyDigest",
+    "chainHeadDigest for state replay",
+    "sshKeygenDigest"
+  ],
+  "actionPins": [
+    {
+      "repository": "actions/checkout",
+      "observedVersion": "v4.3.1",
+      "commit": "34e114876b0b11c390a56381ad16ebd13914f8d5",
+      "status": "candidate-unapproved"
+    }
+  ],
+  "environmentProtection": {
+    "environment": "p00-control-plane-review",
+    "privateRepositoryRequiredReviewerCapability": "unproven",
+    "requiredIndependentReviewer": true,
+    "preventSelfReview": true,
+    "administratorBypassAllowed": false,
+    "proofStatus": "missing",
+    "missingProofBlocksAuthoritativeUse": true
+  },
+  "runtime": {
+    "runner": "ubuntu-24.04",
+    "runnerLabelImmutable": false,
+    "pythonVersion": null,
+    "openSshVersion": null,
+    "toolchainProofStatus": "missing",
+    "missingProofBlocksAuthoritativeUse": true
+  },
+  "networkPolicy": {
+    "checkout": "GitHub repository only through the commit-pinned checkout action",
+    "trustedVerifierRequestedMode": "offline after checkout",
+    "networkIsolationEnforced": false,
+    "networkIsolationProofStatus": "missing-blocks-authoritative-use",
+    "dependencyInstall": "forbidden",
+    "candidateNetworkAccess": "forbidden"
+  },
+  "failClosedConditions": [
+    "activation status is not independently-approved-read-only",
+    "workflow does not run from protected main",
+    "candidate or approval reference is not an immutable full commit",
+    "any externally managed digest pin is missing or mismatched",
+    "trust policy is pending, replaced, revoked, expired, or lacks required roles",
+    "private-repository environment protection remains unproved",
+    "runtime/toolchain identity remains unproved",
+    "candidate or approval code would execute",
+    "any repository write or Genesis operation is requested"
+  ],
+  "forbiddenCapabilities": [
+    "contents:write",
+    "id-token:write",
+    "repository or environment secrets",
+    "pull_request_target",
+    "candidate Makefile, scripts, hooks, dependencies, or binaries",
+    "approval-bundle scripts, hooks, dependencies, or binaries",
+    "approval publication",
+    "Genesis, StateTransition, EvidenceAttachment, phase-state, or evidence creation"
+  ],
+  "genesisWriter": {
+    "present": false,
+    "authorized": false,
+    "outOfScope": true
+  },
+  "activation": {
+    "status": "candidate-non-authoritative",
+    "mayProduceApprovalFact": false,
+    "mayProtectOrCreateGenesis": false,
+    "nextRequiredAction": "Independent review must freeze trust roots, external pins, private-repository protection, and runtime evidence in a new approved revision."
+  }
+}

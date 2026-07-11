@@ -6,7 +6,7 @@
   "phase": "P00",
   "title": "Approved bootstrap gate validation",
   "objective": "After protected Genesis activation, prove that the frozen bootstrap control plane and anti-placeholder gate fail closed and execute the real validation path.",
-  "controlPlaneDigest": "sha256:b37b85c688c099899421740d4a82ff4405aba1daed195cdb5c58b0b0889eca77",
+  "controlPlaneDigest": "sha256:8423ed10cd3af376e58382226ba1550f3831d93542ffb580bc1c755e1dee44c6",
   "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/phase-state.yaml", "execution/README.md"],
   "inScope": ["Makefile", "tools/phasegate/**", "test/bootstrap/**", "execution/**"],
   "outOfScope": ["competitor outreach", "corpus collection", "risk experiments", "P00 aggregate approval", "phase activation or state transitions", "product implementation"],
