@@ -13,6 +13,11 @@
   },
   "inputs": [
     {
+      "path": ".gitattributes",
+      "kind": "text",
+      "required": true
+    },
+    {
       "path": ".github/CODEOWNERS",
       "kind": "text",
       "required": true

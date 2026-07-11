@@ -4,7 +4,7 @@
   "id": "catalog://p00/go-no-go/v1",
   "catalogStatus": "candidate-unapproved",
   "protected": true,
-  "controlPlaneDigest": "sha256:622f5edc795e331628ba22a9d6e52a3842e0f1912488aa1739663d62e2d269f8",
+  "controlPlaneDigest": "sha256:0d1cdeae46ee9d5e96b7106935f93cc43afb96c3fc708505d2a0f459d95fb62d",
   "requiredDocuments": ["RFC-0001 compatibility layers", "RFC-0002 evidence and result schema", "RFC-0003 scenario and pack model", "RFC-0004 driver isolation", "RFC-0005 Registry trust", "Threat Model v1 candidate", "Data Policy v1 candidate", "Competitive Landscape", "known limitations", "naming conflict evidence"],
   "documentStatus": "provisional",
   "requiredEvidence": ["all P00 work-unit gate evidence", "clean-checkout Run A and Run B pair", "external reviewer feedback", "three independent design-partner statements", "corpus rights review", "experiment ADR review"],

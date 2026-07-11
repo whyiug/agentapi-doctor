@@ -4,7 +4,7 @@
   "id": "catalog://p00/risk-experiments/v1",
   "catalogStatus": "candidate-unapproved",
   "protected": true,
-  "controlPlaneDigest": "sha256:622f5edc795e331628ba22a9d6e52a3842e0f1912488aa1739663d62e2d269f8",
+  "controlPlaneDigest": "sha256:0d1cdeae46ee9d5e96b7106935f93cc43afb96c3fc708505d2a0f459d95fb62d",
   "datasetStatus": "pending_protected_input",
   "datasetDigest": null,
   "activationRule": "P00.W04 may activate against this approved empty dataset slot and construct bounded experiment records from P00.W03 outputs. Before any dataset-dependent evaluator may PASS or P00.W04 may enter MACHINE_CONVERGED, an independent reviewer must sign a SignedProtectedInputFreeze for the ten final eligible IDs, manifest, dataset digest, source commit, contract, and applicable criteria; until then every dataset-dependent metric is insufficient_samples.",

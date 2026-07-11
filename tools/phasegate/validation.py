@@ -180,6 +180,7 @@ REQUIRED_ANTI_PLACEHOLDER_TESTS = (
     "test_state_transition_policy_cannot_be_weakened_after_rebind",
     "test_protected_workflow_cannot_gain_write_permission_after_rebind",
     "test_cross_platform_workflow_cannot_use_shallow_history_after_rebind",
+    "test_line_ending_policy_cannot_be_weakened_after_rebind",
     "test_gate_digest_mismatch_cannot_pass_after_rebind",
     "test_request_integrity_fields_cannot_be_forged",
     "test_empty_fail_open_gate_cannot_pass_after_rebind",
@@ -446,6 +447,7 @@ def _validate_input_closure(
 ) -> None:
     declared = {entry["path"] for entry in declared_inputs}
     expected_special = {
+        ".gitattributes",
         ".github/CODEOWNERS",
         ".gitignore",
         "AGENTS.md",
@@ -460,6 +462,25 @@ def _validate_input_closure(
                 "required bootstrap input is undeclared",
             )
         )
+    attributes_path = root / ".gitattributes"
+    try:
+        attributes = attributes_path.read_bytes()
+    except OSError as exc:
+        issues.append(
+            Issue("unsafe_checkout_line_endings", ".gitattributes", str(exc))
+        )
+    else:
+        if attributes != (
+            b"# Keep evidence-bearing source bytes identical across supported checkouts.\n"
+            b"* text=auto eol=lf\n"
+        ):
+            issues.append(
+                Issue(
+                    "unsafe_checkout_line_endings",
+                    ".gitattributes",
+                    "all evidence-bearing text must checkout with LF on every platform",
+                )
+            )
 
     def expected_kind(path: str) -> str:
         if (
@@ -2743,6 +2764,7 @@ def _validate_approval_request(
             item.get("path") for item in entry_list if isinstance(item, dict)
         }
         required_diff_paths = {
+            ".gitattributes",
             ".github/CODEOWNERS",
             ".github/workflows/p00-bootstrap-cross-platform.yml",
             ".github/workflows/p00-protected-control-plane.yml",

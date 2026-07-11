@@ -639,6 +639,12 @@ class BootstrapCandidateTests(CandidateCopy):
         self.rebind_candidate()
         self.assert_candidate_fails_with("unsafe_protected_workflow_candidate")
 
+    def test_line_ending_policy_cannot_be_weakened_after_rebind(self) -> None:
+        path = self.root / ".gitattributes"
+        path.write_text("* text=auto\n", encoding="utf-8")
+        self.rebind_candidate()
+        self.assert_candidate_fails_with("unsafe_checkout_line_endings")
+
 
 class GateExecutionTests(CandidateCopy):
     def test_planned_machine_evaluator_is_not_executable(self) -> None:

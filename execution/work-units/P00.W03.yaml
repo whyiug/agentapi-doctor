@@ -6,7 +6,7 @@
   "phase": "P00",
   "title": "Corpus and provenance",
   "objective": "Build a rights-reviewed first-party provenance catalog and prove reproducibility, deterministic replay, and fault-domain classification on a frozen representative denominator.",
-  "controlPlaneDigest": "sha256:622f5edc795e331628ba22a9d6e52a3842e0f1912488aa1739663d62e2d269f8",
+  "controlPlaneDigest": "sha256:0d1cdeae46ee9d5e96b7106935f93cc43afb96c3fc708505d2a0f459d95fb62d",
   "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/phase-state.yaml", "execution/catalogs/p00/corpus.yaml", "execution/metrics/definitions.yaml"],
   "inScope": ["corpus/**", "fixtures/p00/**", "research/provenance/**", "test/corpus/**"],
   "outOfScope": ["private or unlicensed logs", "public-target reproduction", "weaponized payloads", "risk-retirement production architecture", "P01 schemas"],
