@@ -6,7 +6,7 @@
   "phase": "P00",
   "title": "Risk-retirement experiments",
   "objective": "Retire the four highest-risk evidence assumptions with bounded local experiments for source-faithful SSE capture, Responses event state, raw/client correlation, and fingerprint-preserving multi-tool minimization.",
-  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
+  "controlPlaneDigest": "sha256:622f5edc795e331628ba22a9d6e52a3842e0f1912488aa1739663d62e2d269f8",
   "readFirst": ["agentapi-doctor-Plan.md", "AGENTS.md", "execution/phase-state.yaml", "execution/catalogs/p00/risk-experiments.yaml", "execution/metrics/definitions.yaml"],
   "inScope": ["experiments/p00/**", "fixtures/p00/**", "test/experiments/**", "adrs/experiments/**"],
   "outOfScope": ["hidden production architecture", "public service exposure", "real secrets", "unbounded fuzzing", "P01-P08 product implementation"],

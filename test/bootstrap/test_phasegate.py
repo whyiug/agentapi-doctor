@@ -626,6 +626,19 @@ class BootstrapCandidateTests(CandidateCopy):
                 self.rebind_candidate()
                 self.assert_candidate_fails_with("unsafe_protected_workflow_candidate")
 
+    def test_cross_platform_workflow_cannot_use_shallow_history_after_rebind(
+        self,
+    ) -> None:
+        path = self.root / ".github/workflows/p00-bootstrap-cross-platform.yml"
+        workflow = path.read_text(encoding="utf-8")
+        self.assertIn("fetch-depth: 0", workflow)
+        path.write_text(
+            workflow.replace("fetch-depth: 0", "fetch-depth: 1", 1),
+            encoding="utf-8",
+        )
+        self.rebind_candidate()
+        self.assert_candidate_fails_with("unsafe_protected_workflow_candidate")
+
 
 class GateExecutionTests(CandidateCopy):
     def test_planned_machine_evaluator_is_not_executable(self) -> None:

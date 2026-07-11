@@ -4,7 +4,7 @@
   "id": "catalog://p00/corpus/v1",
   "catalogStatus": "candidate-unapproved",
   "protected": true,
-  "controlPlaneDigest": "sha256:aa09703b0ed06c7d60d18f19f181f68ce2280ab2c4cbad756a0d70109c155d62",
+  "controlPlaneDigest": "sha256:622f5edc795e331628ba22a9d6e52a3842e0f1912488aa1739663d62e2d269f8",
   "datasetStatus": "pending_protected_input",
   "datasetDigest": null,
   "activationRule": "P00.W03 may activate against this approved empty dataset slot and collect candidate provenance/reproduction records. Before any dataset-dependent evaluator may PASS or P00.W03 may enter MACHINE_CONVERGED, an independent reviewer must sign a SignedProtectedInputFreeze for the final manifest, eligible IDs, selection result, dataset digest, source commit, contract, and applicable criteria; until then every dataset-dependent metric is insufficient_samples.",

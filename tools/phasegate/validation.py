@@ -179,6 +179,7 @@ REQUIRED_ANTI_PLACEHOLDER_TESTS = (
     "test_agent_cannot_configure_trust_roots_after_rebind",
     "test_state_transition_policy_cannot_be_weakened_after_rebind",
     "test_protected_workflow_cannot_gain_write_permission_after_rebind",
+    "test_cross_platform_workflow_cannot_use_shallow_history_after_rebind",
     "test_gate_digest_mismatch_cannot_pass_after_rebind",
     "test_request_integrity_fields_cannot_be_forged",
     "test_empty_fail_open_gate_cannot_pass_after_rebind",
@@ -2338,6 +2339,7 @@ def _validate_protected_verifier_candidate(
             "required": {
                 "permissions:\n  contents: read",
                 "persist-credentials: false",
+                "fetch-depth: 0",
                 "ubuntu-24.04, macos-14, windows-2022",
                 "expected exactly three platform results",
             },
