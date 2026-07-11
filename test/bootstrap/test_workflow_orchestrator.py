@@ -183,7 +183,6 @@ def b64url(payload: bytes) -> str:
 def ruleset_evidence(commit: str) -> dict:
     rules = [
         {"type": "deletion"},
-        {"type": "linear_history"},
         {"type": "non_fast_forward"},
         {
             "type": "pull_request",
@@ -195,6 +194,7 @@ def ruleset_evidence(commit: str) -> dict:
                 "required_review_thread_resolution": True,
             },
         },
+        {"type": "required_linear_history"},
         {"type": "required_signatures"},
         {
             "type": "required_status_checks",

@@ -50,9 +50,9 @@ REQUIRED_STATUS_CHECKS = tuple(
 )
 EXPECTED_RULE_TYPES = (
     "deletion",
-    "linear_history",
     "non_fast_forward",
     "pull_request",
+    "required_linear_history",
     "required_signatures",
     "required_status_checks",
 )
@@ -371,8 +371,8 @@ def _normalize_rules(
                 )
         if rule_type in {
             "deletion",
-            "linear_history",
             "non_fast_forward",
+            "required_linear_history",
             "required_signatures",
         }:
             normalized.append({"type": rule_type})

@@ -40,7 +40,6 @@ def b64url(payload: bytes) -> str:
 def ruleset_api_evidence(commit: str) -> dict:
     rules = [
         {"type": "deletion"},
-        {"type": "linear_history"},
         {"type": "non_fast_forward"},
         {
             "type": "pull_request",
@@ -52,6 +51,7 @@ def ruleset_api_evidence(commit: str) -> dict:
                 "required_review_thread_resolution": True,
             },
         },
+        {"type": "required_linear_history"},
         {"type": "required_signatures"},
         {
             "type": "required_status_checks",
@@ -605,12 +605,14 @@ class ProtectedV2EndToEndTests(unittest.TestCase):
         ]["requiredStatusChecks"][:-1]
         cases.append((missing_check, "required_status_checks_mismatch"))
         weak_control = deepcopy(original)
-        weak_control["body"]["repositoryProtection"]["ruleset"]["rules"][3][
-            "parameters"
-        ]["requireCodeOwnerReview"] = False
-        weak_control["body"]["repositoryProtection"]["effectiveRules"][3][
-            "parameters"
-        ]["requireCodeOwnerReview"] = False
+        protection = weak_control["body"]["repositoryProtection"]
+        for rules in (
+            protection["ruleset"]["rules"],
+            protection["effectiveRules"],
+        ):
+            next(
+                rule for rule in rules if rule["type"] == "pull_request"
+            )["parameters"]["requireCodeOwnerReview"] = False
         cases.append((weak_control, "repository_ruleset_weakened"))
         hidden_bypass_claim = deepcopy(original)
         hidden_bypass_claim["body"]["repositoryProtection"]["apiLimitations"] = []

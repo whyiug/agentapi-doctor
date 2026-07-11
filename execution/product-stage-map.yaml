@@ -2,7 +2,7 @@
   "schemaVersion": "urn:agentapi-doctor:product-stage-map:v1",
   "kind": "ProductStageMapCandidate",
   "mapStatus": "candidate-unapproved",
-  "controlPlaneDigest": "sha256:c81fcf3afc06458e805d8ae5dc3e6a16a2d93efea9d2bad1c9f3f42b30088ccd",
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
   "stages": [
     {"id": "STAGE-0", "title": "Demand and differentiation validation", "phases": ["P00"], "workUnits": ["P00.W01", "P00.W02", "P00.W03", "P00.W04", "P00.W05"]},
     {"id": "STAGE-1", "title": "Conformance Kernel", "phases": ["P01", "P02", "P03"], "workUnits": ["P01.W01", "P01.W02", "P01.W03", "P01.W04", "P01.W05", "P02.W01", "P02.W02", "P02.W03", "P02.W04", "P02.W05", "P02.W06", "P03.W01", "P03.W02", "P03.W03", "P03.W04", "P03.W05", "P03.W06"]},

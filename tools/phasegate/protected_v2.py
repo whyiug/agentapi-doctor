@@ -58,9 +58,9 @@ REPOSITORY_PROTECTION_SCHEMA = (
 EXPECTED_RULESET_NAME = "P00 protected main"
 EXPECTED_RULE_TYPES = (
     "deletion",
-    "linear_history",
     "non_fast_forward",
     "pull_request",
+    "required_linear_history",
     "required_signatures",
     "required_status_checks",
 )
@@ -1113,8 +1113,8 @@ def _verify_repository_protection_observation(
         rule_type = rule["type"]
         if rule_type in {
             "deletion",
-            "linear_history",
             "non_fast_forward",
+            "required_linear_history",
             "required_signatures",
         }:
             _exact_keys(rule, {"type"}, rule_path)

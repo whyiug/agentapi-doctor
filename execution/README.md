@@ -86,10 +86,10 @@ protected-workflow write path in this revision; impact/control invalidation and
 control-plane supersession fail closed until batch/state-revision semantics are
 separately designed and approved.
 
-The repository is currently private and unprotected, so this candidate cannot
-authoritatively create Genesis. Changing visibility, configuring rules, signing
-the exact R3 decision, and dispatching the writer are separate human-authorized
-steps.
+This repository snapshot is a pre-Genesis review candidate and cannot
+authoritatively create Genesis by code presence alone. Public visibility, exact
+protected-main facts, an independent signature over the exact R3 decision, and
+a separately authorized writer dispatch remain distinct activation inputs.
 
 ## Digests and state boundary
 

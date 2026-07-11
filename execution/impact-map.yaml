@@ -2,7 +2,7 @@
   "schemaVersion": "urn:agentapi-doctor:impact-map:v1",
   "kind": "ImpactMapCandidate",
   "mapStatus": "candidate-unapproved",
-  "controlPlaneDigest": "sha256:c81fcf3afc06458e805d8ae5dc3e6a16a2d93efea9d2bad1c9f3f42b30088ccd",
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
   "defaultImpact": "manual-review-required",
   "stateEffects": {"ACTIVE": "BLOCKED", "READY": "REJECTED", "MACHINE_CONVERGED": "REJECTED", "WAITING_EXTERNAL": "REJECTED", "REVIEW_PENDING": "REJECTED", "CONVERGED": "REJECTED", "NOT_STARTED": "REJECTED_OR_SUPERSEDED"},
   "mappings": [

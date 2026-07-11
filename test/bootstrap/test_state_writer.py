@@ -36,7 +36,6 @@ def _b64url(payload: bytes) -> str:
 def _ruleset_api_evidence(commit: str) -> dict:
     rules = [
         {"type": "deletion"},
-        {"type": "linear_history"},
         {"type": "non_fast_forward"},
         {
             "type": "pull_request",
@@ -48,6 +47,7 @@ def _ruleset_api_evidence(commit: str) -> dict:
                 "required_review_thread_resolution": True,
             },
         },
+        {"type": "required_linear_history"},
         {"type": "required_signatures"},
         {
             "type": "required_status_checks",
@@ -492,10 +492,30 @@ class ProtectedStateWriterTests(unittest.TestCase):
             (invalid_integration, "invalid_repository_protection_evidence")
         )
         weak_reviews = deepcopy(self.api_evidence)
-        weak_reviews["rulesetDetail"]["rules"][3]["parameters"][
-            "require_code_owner_review"
-        ] = False
+        next(
+            rule
+            for rule in weak_reviews["rulesetDetail"]["rules"]
+            if rule["type"] == "pull_request"
+        )["parameters"]["require_code_owner_review"] = False
         cases.append((weak_reviews, "repository_ruleset_weakened"))
+        invalid_linear_history_alias = deepcopy(self.api_evidence)
+        for source in ("rulesetDetail", "effectiveRules"):
+            rules = (
+                invalid_linear_history_alias[source]["rules"]
+                if source == "rulesetDetail"
+                else invalid_linear_history_alias[source]
+            )
+            next(
+                rule
+                for rule in rules
+                if rule["type"] == "required_linear_history"
+            )["type"] = "linear_history"
+        cases.append(
+            (
+                invalid_linear_history_alias,
+                "invalid_repository_protection_evidence",
+            )
+        )
         multiple_active = deepcopy(self.api_evidence)
         second = deepcopy(multiple_active["rulesets"][0])
         second["id"] = 43

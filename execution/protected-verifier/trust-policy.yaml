@@ -4,7 +4,7 @@
   "policyId": "P00-protected-verifier",
   "revision": 2,
   "policyStatus": "configured-candidate-awaiting-independent-approval",
-  "controlPlaneDigest": "sha256:c81fcf3afc06458e805d8ae5dc3e6a16a2d93efea9d2bad1c9f3f42b30088ccd",
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
   "signatureSchemes": {
     "human": {
       "type": "openssh-sshsig-v1",
@@ -125,7 +125,7 @@
     "branch": "main",
     "observationApi": ["GET /repos/whyiug/agentapi-doctor", "GET /repos/whyiug/agentapi-doctor/branches/main", "GET /repos/whyiug/agentapi-doctor/rules/branches/main", "GET /repos/whyiug/agentapi-doctor/rulesets", "GET /repos/whyiug/agentapi-doctor/rulesets/{id}"],
     "ruleset": {"name": "P00 protected main", "target": "branch", "sourceType": "Repository", "source": "whyiug/agentapi-doctor", "enforcement": "active", "conditions": {"refName": {"include": ["refs/heads/main"], "exclude": []}}},
-    "requiredRuleTypes": ["deletion", "linear_history", "non_fast_forward", "pull_request", "required_signatures", "required_status_checks"],
+    "requiredRuleTypes": ["deletion", "non_fast_forward", "pull_request", "required_linear_history", "required_signatures", "required_status_checks"],
     "pullRequest": {"requiredApprovingReviewCount": 1, "dismissStaleReviewsOnPush": true, "requireCodeOwnerReview": true, "requireLastPushApproval": true, "requiredReviewThreadResolution": true},
     "requiredStatusChecks": {"strict": true, "contexts": ["P00 bootstrap cross-platform / aggregate", "P00 protected control-plane / verify"], "integrationId": "positive integer when observable; null is retained when the read-only API omits it"},
     "apiLimitations": ["ruleset bypass actors not observable with read-only token"],

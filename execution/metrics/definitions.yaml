@@ -2,7 +2,7 @@
   "schemaVersion": "urn:agentapi-doctor:metric-definitions:v1",
   "kind": "MetricDefinitionCatalogCandidate",
   "catalogStatus": "candidate-unapproved",
-  "controlPlaneDigest": "sha256:c81fcf3afc06458e805d8ae5dc3e6a16a2d93efea9d2bad1c9f3f42b30088ccd",
+  "controlPlaneDigest": "sha256:65bc515882f35efb74932b82ad7341f513aff523224fa0069b678d7258b5eb56",
   "defaultInsufficientSampleResult": "insufficient_samples",
   "datasetFreezePolicy": "The approved control plane freezes each dataset slot, schema, selection rule, denominator, and threshold. The owning work unit may collect candidate records while ACTIVE, but every dataset-dependent evaluator remains insufficient_samples until an independent SignedProtectedInputFreeze binds the final manifest, eligible ID set, count, dataset digest, source commit, contract, and applicable criteria. A replaced, null, changed, or unapproved freeze cannot PASS or support MACHINE_CONVERGED.",
   "metrics": [
