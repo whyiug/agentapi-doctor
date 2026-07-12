@@ -65,6 +65,9 @@ CLI/Core versions will follow
   policy, loopback listener defaults, bounded request/response handling,
   sanitize-before-store enforcement, symlink/permission checks, and tests that
   use synthetic credentials rather than ambient secrets.
+- On Windows, retained filesystem snapshots now resolve their volume and file
+  identity before later comparisons, preventing same-path replacement from
+  being accepted through Go's lazy `SameFile` lookup.
 - Redacts endpoint-reflected credentials before AssertionResult construction and
   finding fingerprinting, then enforces a whole-report no-redaction-needed
   invariant before run persistence.
