@@ -2,18 +2,18 @@
 
 [Project home](../README.md) | [简体中文](zh-CN/README.md)
 
-AgentAPI Doctor is under active development. You can build and run the current
-source, but there is no tagged release, published package, or hosted service
-yet. Reports are reproducible observations tied to the endpoint, model,
-built-in pack/profile digests, plan, and evidence; they are not vendor
-certification and do not automatically attest the CLI source commit.
+AgentAPI Doctor is in release-candidate development. The `doctor` CLI is
+available as a checksummed GitHub Release archive; there is no hosted service or
+published package-manager channel. Reports are reproducible observations tied
+to the endpoint, model, built-in pack/profile digests, plan, and evidence; they
+are not vendor certification.
 
 ## Start here
 
-- [Quick Start](quick-start.md) — install the current source snapshot, run the
-  one-command demo, or check an authorized endpoint without YAML.
-- [Installation](installation.md) — build from source or build local Docker
-  images; understand what is not published yet.
+- [Quick Start](quick-start.md) — install the prebuilt CLI, run the one-command
+  demo, or check an authorized endpoint without YAML.
+- [Installation](installation.md) — use a verified release archive or build
+  from source; understand which channels are not published.
 - [Getting Started](getting-started/README.md) — configure a target, plan a
   run, execute checks, and render reports.
 - [Configuration](configuration.md) — target URLs, protocols, budgets,

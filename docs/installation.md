@@ -1,128 +1,144 @@
 # Installation
 
-[Documentation home](README.md)
+[Documentation home](README.md) | [Quick Start](quick-start.md)
 
-AgentAPI Doctor currently ships as source only. There is no tagged release,
-published GitHub Release archive, GHCR image, Homebrew tap, Scoop bucket, or
-other supported package channel. Do not treat files under `integrations/` or
-the release workflow as published artifacts.
+`v0.1.0-rc.1` is the first AgentAPI Doctor release candidate. The supported
+distribution is the `doctor` CLI archive on GitHub Releases. Registry,
+reference-server, OCI, Homebrew, Scoop, and GitHub Action files remain
+unpublished candidates and are not installation channels.
 
-## Requirements
+## Fast install on Linux or macOS
 
-- Git
-- The Go toolchain selected by `go.mod` (currently Go 1.26.5)
-- GNU Make and Python 3 for the complete contributor checks
-- Docker only for local container images or the Compose services
-
-## Fast source install
-
-Install the latest available source snapshot and run the self-contained demo:
+The pinned installer chooses the current OS/architecture, downloads the exact
+release archive and `checksums.txt`, verifies SHA-256, and installs one binary
+under `$HOME/.local/bin`:
 
 ```sh
-go install github.com/whyiug/agentapi-doctor/cmd/doctor@latest
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.1/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+doctor version
 doctor demo
 ```
 
-This is not a release install: `@latest` currently resolves a mutable source
-snapshot. If `doctor` is not found, add `GOBIN`, or `$(go env GOPATH)/bin` when
-`GOBIN` is empty, to `PATH`.
+The script does not use `sudo`, change shell configuration, or contact an LLM
+endpoint. Read it before execution if piping a script is outside your policy:
 
-The repository commits its Go vendor tree, so checkout builds do not need to
-resolve Go modules from the network after the repository and required Go
-toolchain are available.
+```sh
+curl --proto '=https' --tlsv1.2 -fSLO \
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.1/install.sh
+less install.sh
+sh install.sh
+```
 
-## Build a reproducible checkout
+Override the user-local destination by exporting it before the installer:
+
+```sh
+export AGENTAPI_DOCTOR_INSTALL_DIR='/your/path'
+sh install.sh
+```
+
+## Manual Linux or macOS verification
+
+Choose an exact release, never a moving `latest` URL:
+
+```sh
+VERSION='0.1.0-rc.1'
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+case "$(uname -m)" in
+  x86_64|amd64) ARCH=amd64 ;;
+  arm64|aarch64) ARCH=arm64 ;;
+  *) echo 'unsupported architecture' >&2; exit 2 ;;
+esac
+ASSET="agentapi-doctor_${VERSION}_${OS}_${ARCH}.tar.gz"
+BASE="https://github.com/whyiug/agentapi-doctor/releases/download/v${VERSION}"
+
+curl --proto '=https' --tlsv1.2 -fLO "$BASE/$ASSET"
+curl --proto '=https' --tlsv1.2 -fLO "$BASE/checksums.txt"
+EXPECTED="$(awk -v asset="$ASSET" '$2 == asset {print $1}' checksums.txt)"
+if command -v sha256sum >/dev/null 2>&1; then
+  ACTUAL="$(sha256sum "$ASSET" | awk '{print $1}')"
+else
+  ACTUAL="$(shasum -a 256 "$ASSET" | awk '{print $1}')"
+fi
+test -n "$EXPECTED" && test "$ACTUAL" = "$EXPECTED"
+
+tar -xzf "$ASSET" doctor
+install -m 0755 doctor "$HOME/.local/bin/doctor"
+"$HOME/.local/bin/doctor" demo
+```
+
+The release manifest must contain exactly one entry for the selected archive.
+The pinned installer enforces that stricter check automatically.
+
+## Windows PowerShell
+
+Run these commands in a new empty directory. Select `arm64` only on Windows on
+ARM; otherwise use `amd64`:
+
+```powershell
+$Version = '0.1.0-rc.1'
+$Arch = 'amd64'
+$Asset = "agentapi-doctor_${Version}_windows_${Arch}.zip"
+$Base = "https://github.com/whyiug/agentapi-doctor/releases/download/v${Version}"
+
+Invoke-WebRequest "$Base/$Asset" -OutFile $Asset
+Invoke-WebRequest "$Base/checksums.txt" -OutFile checksums.txt
+$ChecksumLines = @(Get-Content checksums.txt | Where-Object { $_ -match "^([0-9a-f]{64})\s+$([regex]::Escape($Asset))$" })
+if ($ChecksumLines.Count -ne 1) { throw 'Expected exactly one checksum entry' }
+$Expected = ($ChecksumLines[0] -split '\s+')[0]
+$Actual = (Get-FileHash -Algorithm SHA256 $Asset).Hash.ToLowerInvariant()
+if ($Actual -ne $Expected) { throw 'Archive checksum mismatch' }
+
+Expand-Archive $Asset -DestinationPath .\agentapi-doctor
+.\agentapi-doctor\doctor.exe version
+.\agentapi-doctor\doctor.exe demo
+```
+
+Move `doctor.exe` to a user-controlled directory on `PATH` if desired. The
+archive also contains license, notice, security, and data-policy files.
+
+## Source install for contributors
+
+Source installation is a developer alternative, not the default user path. It
+requires the Go version selected by `go.mod` (Go 1.26.5 for this RC):
+
+```sh
+go install github.com/whyiug/agentapi-doctor/cmd/doctor@v0.1.0-rc.1
+doctor version
+doctor demo
+```
+
+To modify the project, build a checkout instead:
 
 ```sh
 git clone https://github.com/whyiug/agentapi-doctor.git
 cd agentapi-doctor
-
+git checkout v0.1.0-rc.1
 mkdir -p ./bin
 go build -trimpath -o ./bin/doctor ./cmd/doctor
-./bin/doctor version
 ./bin/doctor demo
 ```
 
-On Windows PowerShell, use an `.exe` output name:
+The committed vendor tree keeps checkout builds independent of module downloads
+after the repository and required Go toolchain are available.
 
-```powershell
-New-Item -ItemType Directory -Force .\bin | Out-Null
-go build -trimpath -o .\bin\doctor.exe ./cmd/doctor
-.\bin\doctor.exe version
-```
+## Advanced release verification
 
-To build the local reference server and self-hosted Registry as well:
+Every release contains SHA-256 checksums, an SPDX SBOM, and GitHub build
+provenance. Teams that need independent identity and provenance verification
+should follow [Release Verification](operations/release-verification.md) in
+addition to the quick checksum path above.
 
-```sh
-go build -trimpath -o ./bin/reference-server ./cmd/reference-server
-go build -trimpath -o ./bin/registry ./cmd/registry
-```
+## Remove AgentAPI Doctor
 
-`make build` compile-checks all supported commands but does not install them
-or place executables in `./bin`.
-
-## Build a local Docker image
-
-The Dockerfile contains separate `doctor`, `registry`, and
-`reference-server` targets. Build and inspect the CLI image locally:
+The installer creates one executable. Remove only that exact file:
 
 ```sh
-docker build --network=none --target doctor --tag agentapi-doctor:local .
-docker run --rm --network=none --read-only --cap-drop ALL \
-  --security-opt no-new-privileges \
-  agentapi-doctor:local version --json
+rm "$HOME/.local/bin/doctor"
 ```
 
-The image runs as an unprivileged user and uses `doctor` as its entrypoint.
-`agentapi-doctor:local` is a local tag, not an official published image.
-
-For a bounded build-and-smoke check of all three image targets:
-
-```sh
-make docker-check
-```
-
-That target creates uniquely named local images and removes the images it
-created when the check exits.
-
-## Start the local Compose services
-
-`compose.yaml` starts the Registry and synthetic reference server, not the
-`doctor` CLI:
-
-```sh
-docker compose up --build registry reference
-```
-
-The host bindings are loopback-only by default:
-
-- Registry: `127.0.0.1:18080`
-- Synthetic reference server: `127.0.0.1:18090`
-
-Override the host ports with `AGENTAPI_REGISTRY_PORT` and
-`AGENTAPI_REFERENCE_PORT`. Stop only this project's services with:
-
-```sh
-docker compose down
-```
-
-See [Registry self-hosting](registry/self-hosting.md) before enabling writes or
-persisting local observations.
-
-## Verify a future release
-
-When a release is eventually published, install only an exact version after
-verifying its signature, checksum, provenance, and platform archive. The
-candidate packaging files deliberately contain no usable current version or
-checksum.
-
-The verification procedure is documented in
-[Release verification](operations/release-verification.md). Until an actual
-release page contains the named assets, continue to build from source.
-
-## Remove a source build
-
-A source build does not modify system directories. Remove only the exact
-executables or local image tags you created. Local runs are stored under the
-working directory's `.agentapi/` tree; inspect or archive them before deleting
-that directory.
+On Windows, remove the exact `doctor.exe` you extracted. Local runs are stored
+under the working directory's `.agentapi/` tree; inspect or archive them before
+removing that directory. Uninstalling the CLI does not delete run evidence
+automatically.

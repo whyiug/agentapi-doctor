@@ -1,65 +1,177 @@
+<div align="center">
+
 # AgentAPI Doctor
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+### 200 OK is not compatibility. Check the stream. Keep the evidence.
 
-**Test any local, private-network, or remote HTTP(S) endpoint you are
-authorized to assess** when it exposes `openai-chat`, `openai-responses`, or
-`anthropic-messages` behavior. AgentAPI Doctor keeps redacted, reproducible
-evidence instead of treating one successful request as compatibility.
+A small, local-first CLI that checks whether an “OpenAI-compatible” or
+Anthropic-compatible endpoint behaves like a real client expects—and leaves a
+redacted report you can reproduce, compare, and share.
 
-## Try it
+[![Release](https://img.shields.io/github/v/release/whyiug/agentapi-doctor?include_prereleases&label=release)](https://github.com/whyiug/agentapi-doctor/releases)
+[![CI](https://github.com/whyiug/agentapi-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/whyiug/agentapi-doctor/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/whyiug/agentapi-doctor/actions/workflows/codeql.yml/badge.svg)](https://github.com/whyiug/agentapi-doctor/actions/workflows/codeql.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
+[Quick Start](docs/quick-start.md) ·
+[What it checks](#what-doctor-checks) ·
+[Offline report source](docs/examples/missing-terminal-event-report.html) ·
+[简体中文](README.zh-CN.md)
+
+</div>
+
+<p align="center">
+  <img src="docs/assets/agentapi-doctor-failure.svg" width="900" alt="AgentAPI Doctor detects a stream whose terminal event is missing">
+</p>
+
+## From download to an answer
+
+Linux and macOS can install the exact `v0.1.0-rc.1` release without Go:
 
 ```sh
-go install github.com/whyiug/agentapi-doctor/cmd/doctor@latest
-doctor demo
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.1/install.sh | sh
+$HOME/.local/bin/doctor demo
 ```
 
-`doctor demo` runs the built-in synthetic fixture with no API key or external
-endpoint.
+The pinned installer verifies the release archive against `checksums.txt`
+before extraction. If you prefer to inspect it first, download
+[`install.sh`](install.sh), then run `sh install.sh`. Windows users can download
+the verified ZIP from [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.1);
+the [Installation guide](docs/installation.md) includes checksum steps for every
+platform.
 
-> There is no tagged release or published binary package yet. This is a source
-> install: `@latest` follows the latest available source snapshot and may
-> change between installs.
+The demo needs no API key. It starts a random loopback fixture, runs four
+lifecycle checks, stores local evidence, and stops the fixture automatically:
 
-## Test an authorized endpoint
+```text
+Profile outcome: COMPATIBLE
+Cases: 4 candidate / 4 applicable / 4 executed
+Verdicts: PASS 4 | FAIL 0 | WARN 0 | INCONCLUSIVE 0 | SKIPPED 0 | ERRORED 0
+```
+
+Demo success validates this exact synthetic fixture and the installed CLI. It
+does not certify another endpoint, SDK, provider, or deployment.
+
+## Check an authorized endpoint
+
+No project initialization or YAML is required:
 
 ```sh
 export DOCTOR_TOKEN='replace-with-a-test-token'
 
 doctor test \
-  --base-url 'https://replace-with-authorized-host.invalid/v1' \
+  --base-url 'https://your-endpoint.example/v1' \
   --protocol openai-chat \
-  --model 'replace-with-model-id' \
-  --auth-env DOCTOR_TOKEN \
-  --format terminal
+  --model 'your-model-id' \
+  --auth-env DOCTOR_TOKEN
 ```
 
-Replace the `.invalid` URL and model before running. Omit `--auth-env` for an
-endpoint without authentication. Add `--auth-header x-api-key` when the
-environment value belongs in a custom header instead of a bearer
-`Authorization` header. Plain HTTP is rejected unless you explicitly add
-`--allow-plain-http`; use that only for a trusted local or private endpoint.
+Use `openai-responses` or `anthropic-messages` for those API shapes. Omit
+`--auth-env` for an unauthenticated endpoint. The endpoint can be local, on a
+private network, or remote; it only needs to be yours or explicitly authorized
+for testing.
 
-No `init` step or YAML configuration is required for this one-shot command.
-Each endpoint run sends at most **4 requests**, asks for at most **64 output
-tokens per request**, uses a **60-second execution deadline**, prints the
-selected report format, and saves redacted evidence under `.agentapi/`.
+Each run sends at most four requests under one 60-second deadline. The token is
+read from the named environment variable, not a command argument. Requests stay
+on the configured origin, redirects are not followed, and evidence remains in
+the local `.agentapi/` directory.
 
-Only test systems you have explicit permission to assess. A PASS is bound to
-the exact endpoint, model, built-in pack/profile digests, and four checks; it
-is not vendor certification or proof of complete SDK, agent, provider, or
-deployment compatibility.
+## What Doctor checks
 
-## Documentation
+| A basic smoke test sees | Doctor also checks |
+| --- | --- |
+| HTTP status | Required response envelope |
+| First SSE chunk | Stream media type and lifecycle |
+| Some generated text | Terminal event presence, status, and exactly-once behavior |
+| A transient console log | Content-addressed, secret-redacted evidence bound to the exact run |
+
+Today, each Quick Check selects four executable raw HTTP checks for one of:
+
+- OpenAI Chat Completions;
+- OpenAI Responses;
+- Anthropic Messages.
+
+It can render the same result as terminal output, JSON, JUnit, SARIF, Markdown,
+or a self-contained offline HTML report. Named baselines and stable exit codes
+make the result usable in CI.
+
+## See a failure—not just a self-test
+
+When the checked-in synthetic server omits the Responses terminal event, Doctor
+rejects the stream even though its media type looks correct:
+
+```text
+Profile outcome: INCOMPATIBLE
+Cases: 4 candidate / 4 applicable / 4 executed
+Verdicts: PASS 3 | FAIL 1 | WARN 0 | INCONCLUSIVE 0 | SKIPPED 0 | ERRORED 0
+PASS  stream media type
+PASS  required response envelope
+FAIL  terminal event exactly once
+PASS  terminal status
+```
+
+Download the [offline failure report](docs/examples/missing-terminal-event-report.html)
+and open it locally, or reproduce it with the documented
+[Synthetic Fixture](docs/getting-started/synthetic-fixtures.md).
+This is a real, deterministic wire/lifecycle observation. It is not yet a real
+SDK run or automatic root-cause attribution.
+
+## Where it fits
+
+| Your goal | Best tool today |
+| --- | --- |
+| Check whether one key or endpoint responds | `curl` or a browser checker |
+| Explore models and prompts | A web playground |
+| Repeatedly inspect lifecycle behavior and keep diffable evidence | **AgentAPI Doctor** |
+| Prove compatibility with one SDK or Agent | Run that real client; Doctor's first pinned SDK profile is in progress |
+
+Doctor is not a model-quality benchmark, provider ranking, relay checker, or
+vendor certification service. The current catalog also contains candidate
+metadata that is not executable coverage; see [Known Limitations](docs/known-limitations/README.md).
+
+## Evidence and privacy
+
+- Credentials are resolved from an environment or protected file reference and
+  are redacted before persistence.
+- Exact endpoint, model, plan, profile, pack, and evidence digests stay bound to
+  the run so two results can be meaningfully compared.
+- Structured model content and tool arguments are not necessarily anonymous.
+  Review evidence before sharing it.
+- The provider still receives the bounded synthetic prompts and may retain them
+  under its own policy.
+- A provider may reject or ignore the requested 64-token output field, so it is
+  not an enforced cost ceiling.
+
+Only test systems you are explicitly authorized to assess.
+
+## Why this project exists
+
+Real reports repeatedly show the same gap: direct requests work, but an SSE
+terminal, tool-call delta, strict Responses event, proxy, or client state machine
+breaks later. Examples include [Open WebUI #21768](https://github.com/open-webui/open-webui/issues/21768),
+[llama.cpp #20607](https://github.com/ggml-org/llama.cpp/issues/20607), and
+[Codex #24973](https://github.com/openai/codex/issues/24973).
+
+The research, competitor comparison, intentionally reduced roadmap, and stop
+conditions are recorded in the [July 13 execution plan](0713-plan.md). The next
+product slice is deliberately narrow: one pinned OpenAI Python SDK / Responses
+case before any Registry, public matrix, or hosted UI expansion.
+
+## Documentation and community
 
 [Quick Start](docs/quick-start.md) ·
 [Installation](docs/installation.md) ·
 [CLI reference](docs/cli-reference.md) ·
 [Troubleshooting](docs/troubleshooting.md) ·
-[All documentation](docs/README.md)
+[Known limitations](docs/known-limitations/README.md) ·
+[Roadmap](ROADMAP.md) ·
+[All docs](docs/README.md)
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before sending a change. Report
-suspected vulnerabilities privately through [SECURITY.md](SECURITY.md).
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md), propose a
+real compatibility failure or fixture, and use [SECURITY.md](SECURITY.md) for
+private vulnerability reports. Please do not open a public issue containing a
+credential or unredacted provider response.
 
 Source and documentation use the [Apache License 2.0](LICENSE) unless a file
 says otherwise. See [DATA_LICENSE.md](DATA_LICENSE.md) and

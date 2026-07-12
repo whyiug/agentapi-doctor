@@ -21,6 +21,26 @@ import (
 
 const testUsage = "usage: doctor test <target> [--config <path>] [--data-root <path>] [--plan-only] [--resolve] [--output <path>] [--format json|terminal]\n   or: doctor test --base-url <url> --protocol <id> --model <id> [--auth-env <name>] [--auth-header <name>] [--allow-plain-http] [--data-root <path>] [--plan-only] [--resolve] [--output <path>] [--format json|terminal]"
 
+const testHelp = `Check one authorized endpoint and save the evidence locally.
+
+Usage:
+  doctor test --base-url <url> --protocol <id> --model <id> [options]
+  doctor test <saved-target> [options]
+
+Protocols: openai-chat, openai-responses, anthropic-messages
+
+Quick path:
+  export LLM_API_KEY=...       # keep credentials out of command history
+  doctor test --base-url https://gateway.example/v1 \
+    --protocol openai-responses --model <model> --auth-env LLM_API_KEY
+
+Useful options:
+  --format terminal|json       Human output for inline checks; JSON for automation
+  --output <path>              Also write the canonical report JSON
+  --plan-only                  Resolve checks without making a network request
+  --data-root <path>           Choose the local evidence/run-store directory
+  --allow-plain-http           Required for an explicitly selected http:// URL`
+
 var environmentName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
 const minimumCredentialCanaryBytes = 8
@@ -63,6 +83,9 @@ type testOptions struct {
 }
 
 func runTest(ctx context.Context, args []string, dependencies Dependencies) int {
+	if helpRequested(args) {
+		return writeHelp(dependencies.Stdout, testHelp)
+	}
 	options, err := parseTestOptions(args, dependencies.WorkingDir)
 	if err != nil {
 		return emitCommandError(options.format, dependencies, ExitInput, "invalid_arguments", err.Error())

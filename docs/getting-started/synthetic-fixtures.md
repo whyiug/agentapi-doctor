@@ -42,3 +42,49 @@ visible. Public access does not establish reuse rights.
 
 Use the repository's fixture issue form only for non-sensitive material. A
 suspected vulnerability follows [the security policy](../../SECURITY.md).
+
+## Reproduce the README lifecycle failure
+
+The README's failing output comes from the checked-in
+`missing-terminal-event` mutation. This is a local synthetic check: it needs no
+credential and contacts no external endpoint.
+
+From a source checkout, start the fixture in one shell on an unused loopback
+port:
+
+```sh
+go run ./cmd/reference-server \
+  -listen 127.0.0.1:18091 \
+  -mutant missing-terminal-event
+```
+
+If that port is already occupied, choose another loopback high port. Do not
+stop an unknown process on a shared machine.
+
+In a second shell, run the bounded check with a temporary evidence root:
+
+```sh
+DEMO_DATA_ROOT="$(mktemp -d)"
+
+go run ./cmd/doctor test \
+  --base-url http://127.0.0.1:18091/v1 \
+  --protocol openai-responses \
+  --model synthetic-model \
+  --allow-plain-http \
+  --data-root "$DEMO_DATA_ROOT" \
+  --format terminal
+```
+
+The expected result is three passes, one targeted failure, and process exit
+code 1. Only `terminal-exactly-once` fails: the fixture passes non-streaming
+requests through unchanged and removes the terminal event only where the
+mutation applies. This demonstrates raw wire/lifecycle detection only; it is
+not an SDK or root-cause attribution claim.
+
+Stop the reference server you started with `Ctrl-C`, then remove only this
+demo's temporary evidence:
+
+```sh
+test -n "${DEMO_DATA_ROOT:-}" && rm -rf -- "$DEMO_DATA_ROOT"
+unset DEMO_DATA_ROOT
+```

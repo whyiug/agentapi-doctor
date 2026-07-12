@@ -5,20 +5,22 @@
 Start with these non-destructive checks:
 
 ```sh
-go version
-./bin/doctor version --json
-./bin/doctor self-check
+doctor version --json
+doctor self-check
 ```
 
 `self-check` is offline. It validates the config when present and reports the
 local OS, architecture, Go runtime, and binary digest when available.
 
-## There is no downloadable binary or package
+## The release download returns 404
 
-No tagged release or package channel exists yet. Build from source by following
-[Installation](installation.md). Files under `integrations/` are unpublished
-templates and must not be installed as if they contained a real version and
-checksum.
+Confirm the exact `v0.1.0-rc.1` entry is visible on
+[GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases) and use
+its exact asset name. There is no moving package-manager channel. If the release
+entry is not yet public, use the contributor source path in
+[Installation](installation.md#source-install-for-contributors) rather than
+guessing a tag, version, or checksum. Files under `integrations/` remain
+unpublished candidates.
 
 ## `doctor` is not found after `make build`
 
@@ -34,6 +36,9 @@ go build -trimpath -o ./bin/doctor ./cmd/doctor
 On Windows, use `./bin/doctor.exe`.
 
 ## The Go toolchain is rejected
+
+This section applies to source builds and contributors; prebuilt archives do
+not require Go.
 
 Use the version selected by `go.mod`. Check both `go version` and the
 `toolchain` line in that file. Do not work around a toolchain mismatch by

@@ -69,6 +69,118 @@ func TestTerminalExplainsInconclusiveCase(t *testing.T) {
 	}
 }
 
+func TestHumanRenderersExplainNonPassingCasesAndKeepPassCompact(t *testing.T) {
+	bundle := diagnosticBundle()
+	renderers := map[string]func(Bundle) ([]byte, error){
+		"terminal": Terminal,
+		"markdown": Markdown,
+		"html":     HTML,
+	}
+	for name, renderer := range renderers {
+		t.Run(name, func(t *testing.T) {
+			data, err := renderer(bundle)
+			if err != nil {
+				t.Fatal(err)
+			}
+			text := string(data)
+			normalized := strings.ReplaceAll(text, `\_`, "_")
+			for _, required := range []string{
+				"Terminal Exactly Once",
+				"missing_terminal_event forged",
+				"stream_state_machine forged",
+				"exactly one terminal event forged",
+				"zero",
+				"Emit one terminal event; preserve",
+				"verify",
+				"WARN",
+				"INCONCLUSIVE",
+				"no fault domain was attributed",
+			} {
+				if !strings.Contains(normalized, required) {
+					t.Fatalf("%s report omitted %q:\n%s", name, required, text)
+				}
+			}
+			if strings.Contains(text, "\x1b") || strings.Contains(text, "\u202e") || strings.Contains(text, "\nforged") {
+				t.Fatalf("%s report retained unsafe control text:\n%s", name, text)
+			}
+			if name != "terminal" && strings.Contains(text, "<script>") {
+				t.Fatalf("%s report retained active markup:\n%s", name, text)
+			}
+		})
+	}
+
+	terminal, err := Terminal(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(terminal), "PASS           safe.case") {
+		t.Fatalf("PASS row stopped being compact:\n%s", terminal)
+	}
+	if !strings.Contains(string(terminal), "doctor report markdown "+string(bundle.RunID)+" --output doctor-report.md") {
+		t.Fatalf("terminal report omitted the export next step:\n%s", terminal)
+	}
+}
+
+func diagnosticBundle() Bundle {
+	bundle := validBundle()
+	bundle.Outcome = schema.ProfileIncompatible
+	bundle.Dimensions["protocol"] = schema.DimensionFail
+	bundle.PrimaryExitCode = 1
+	bundle.Denominators.CandidateCount = 4
+	bundle.Denominators.ApplicableCount = 4
+	bundle.Denominators.ExecutedCount = 4
+
+	reference := schema.ObjectRef{Kind: "Evidence", InstanceID: testID, ContentDigest: testDigest("evidence")}
+	oracle := schema.ArtifactPin{Kind: "Oracle", Name: "fixture-oracle", Version: "1.0.0", Digest: testDigest("oracle")}
+	assertion := func(id string, value schema.Verdict, reason schema.ReasonCode, expected, observed any) schema.AssertionResult {
+		return schema.AssertionResult{
+			AssertionResultID: testID,
+			AssertionID:       id,
+			Role:              schema.AssertionBehavioral,
+			Oracle:            oracle,
+			Verdict:           value,
+			ReasonCode:        reason,
+			Expected:          expected,
+			Observed:          observed,
+			EvidenceRefs:      []schema.ObjectRef{reference},
+			Deterministic:     true,
+			EvaluatorDigest:   testDigest("evaluator"),
+		}
+	}
+	caseResult := func(id string, value schema.Verdict, reason schema.ReasonCode, result schema.AssertionResult) schema.CaseResult {
+		return schema.CaseResult{
+			ScenarioID: id, PlanDisposition: schema.DispositionExecute,
+			AttemptIDs: []schema.InstanceID{testID}, ExecutionStatus: schema.ExecutionCompleted,
+			Verdict: verdict(value), ReasonCode: reason, AssertionResults: []schema.AssertionResult{result},
+			CandidateMember: true, ApplicableMember: true, ExecutedMember: true, AttemptAggregation: "all",
+		}
+	}
+
+	failedAssertion := assertion(
+		"terminal-event", schema.VerdictFail, "",
+		"exactly one terminal event\nforged", "zero\x1b[31m\u202eexe.txt",
+	)
+	failed := caseResult("openai-responses-http-030-terminal-exactly-once", schema.VerdictFail, "", failedAssertion)
+	failed.Findings = []schema.Finding{{
+		FindingID: testID, AssertionResultID: testID,
+		Category: "missing_terminal_event\nforged", FaultDomain: "stream_state_machine\x1b[1m forged", FaultFamily: schema.FaultProtocol,
+		Severity: "medium", Confidence: 0.9, CalibrationVersion: "fixture-v1",
+		MinimalEvidenceRefs: []schema.ObjectRef{reference},
+		RemediationHint:     "Emit one terminal event; preserve & verify <script>\nforged",
+		FingerprintVersion:  "fixture-v1", Fingerprint: testDigest("finding"),
+	}}
+	warned := caseResult(
+		"openai-responses-http-039-terminal-status", schema.VerdictWarn, schema.ReasonFlakyDetected,
+		assertion("terminal-status", schema.VerdictWarn, schema.ReasonFlakyDetected, "stable terminal status", "varied across attempts"),
+	)
+	inconclusive := caseResult(
+		"openai-responses-http-014-required-response-envelope", schema.VerdictInconclusive, schema.ReasonUnsupportedCapability,
+		assertion("response-envelope", schema.VerdictInconclusive, schema.ReasonUnsupportedCapability, "documented response envelope", nil),
+	)
+	bundle.Cases = append(bundle.Cases, failed, warned, inconclusive)
+	return bundle
+}
+
 func TestHTMLAndJUnitEscapeProviderControlledText(t *testing.T) {
 	bundle := validBundle()
 	bundle.Cases[0].ScenarioID = `evil<script>alert(1)</script>&"`

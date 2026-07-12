@@ -3,13 +3,14 @@
 [Documentation home](README.md) | [Configuration](configuration.md)
 
 This page documents the implemented `doctor` command surface in the current
-source tree. It is a pre-release interface and may change before the first
-tagged release. The machine-readable contract is
+release-candidate source tree. It is a pre-1.0 interface and may change in a
+later release with documented migration notes. The machine-readable contract is
 [`cli/spec.yaml`](../cli/spec.yaml).
 
 ## General behavior
 
-Run `doctor help` for the top-level usage line. There are no global flags;
+Run `doctor help` for quick paths and the command list, or
+`doctor help test|demo|report` for focused examples. There are no global flags;
 place each command's flags in the positions shown below.
 
 Most commands emit a JSON envelope:

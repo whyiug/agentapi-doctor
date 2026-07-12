@@ -25,6 +25,20 @@ var errRunLookup = errors.New("run lookup failed")
 
 const runInspectUsage = "usage: doctor run inspect <run-ref> [--store <path>] [--allow-latest] [--include-plan]"
 
+const reportHelp = `Export a saved run without contacting the tested endpoint.
+
+Usage:
+  doctor report <format> <run-ref> [--output <path>] [--store <path>]
+
+Formats: terminal, json, junit, sarif, markdown, html
+
+Quick paths:
+  doctor report terminal latest
+  doctor report markdown latest --output doctor-report.md
+  doctor report html <run-id> --output doctor-report.html
+
+Use the run ID printed by "doctor test" or "doctor demo" for a stable reference.`
+
 func runRun(args []string, dependencies Dependencies) int {
 	if len(args) == 0 {
 		return writeError(dependencies.Stderr, ExitInput, "missing_run_command", runInspectUsage)
@@ -75,6 +89,9 @@ func runInspect(args []string, dependencies Dependencies) int {
 }
 
 func runReport(args []string, dependencies Dependencies) int {
+	if helpRequested(args) {
+		return writeHelp(dependencies.Stdout, reportHelp)
+	}
 	if len(args) < 2 || args[0] == "" || args[1] == "" || args[0][0] == '-' || args[1][0] == '-' {
 		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor report <terminal|json|junit|sarif|markdown|html> <run-ref> [--output <path>] [--store <path>] [--allow-latest]")
 	}

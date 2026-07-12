@@ -20,7 +20,20 @@ import (
 
 const demoUsage = "usage: doctor demo [--data-root <path>] [--output <path>] [--format terminal|json]"
 
+const demoHelp = `Run four compatibility checks against a bundled local fixture.
+
+Usage:
+  doctor demo [--format terminal|json] [--output <path>] [--data-root <path>]
+
+Quick path:
+  doctor demo
+
+The demo needs no API key, makes no public network request, and stops its loopback server automatically.`
+
 func runDemo(ctx context.Context, args []string, dependencies Dependencies) int {
+	if helpRequested(args) {
+		return writeHelp(dependencies.Stdout, demoHelp)
+	}
 	return runDemoWithServer(ctx, args, dependencies, startDemoReferenceServer)
 }
 

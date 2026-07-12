@@ -2,52 +2,60 @@
 
 [Project home](../README.md) | [简体中文](zh-CN/quick-start.md)
 
-Two commands run a credential-free demo. One additional `doctor test` command
-can assess any authorized local, private-network, or remote HTTP(S) endpoint
-that exposes a supported API shape.
+Install one binary, run a credential-free demo, then check any authorized local,
+private-network, or remote endpoint. No project initialization or YAML is
+required.
 
-## Install the current source snapshot
+## 1. Install the release candidate
 
-Requires the Go toolchain:
+On Linux or macOS:
 
 ```sh
-go install github.com/whyiug/agentapi-doctor/cmd/doctor@latest
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.1/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-There is no tagged release or published binary package yet. `@latest` is a
-source install that follows the latest available source snapshot, so repeating
-the command later may install different code.
+The script comes from the exact release tag and verifies the downloaded archive
+against that release's `checksums.txt` before extraction. To inspect it first:
 
-If `doctor` is not found, ensure the configured `GOBIN`—or
-`$(go env GOPATH)/bin` when `GOBIN` is empty—is on `PATH`.
+```sh
+curl --proto '=https' --tlsv1.2 -fSLO \
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.1/install.sh
+less install.sh
+sh install.sh
+```
 
-## Run the built-in demo
+Windows users can download `agentapi-doctor_0.1.0-rc.1_windows_amd64.zip` or
+`agentapi-doctor_0.1.0-rc.1_windows_arm64.zip` from
+[v0.1.0-rc.1](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.1).
+See [Installation](installation.md) for exact PowerShell checksum and extraction
+steps.
+
+## 2. Run the no-key demo
 
 ```sh
 doctor demo
 ```
 
-The demo runs an in-process synthetic fixture. It needs no API key, starts a
-temporary HTTP listener on a random loopback port, stops that listener before
-returning, and contacts no external endpoint. It writes its redacted local
-evidence under `.agentapi/`.
+The demo starts an in-process fixture on a random loopback port, executes four
+checks, stores redacted evidence under `.agentapi/`, and stops the fixture before
+returning. It makes no external request and needs no credential.
 
-Demo success verifies only the installed CLI and its synthetic fixture. It is
-not a claim about another endpoint.
-
-## Test an authorized endpoint
-
-The one-shot interface is:
+Expected summary:
 
 ```text
-doctor test --base-url URL --protocol ID --model ID
-  [--auth-env NAME] [--auth-header x-api-key] [--allow-plain-http]
-  --format terminal
+Profile outcome: COMPATIBLE
+Cases: 4 candidate / 4 applicable / 4 executed
+Verdicts: PASS 4 | FAIL 0 | WARN 0 | INCONCLUSIVE 0 | SKIPPED 0 | ERRORED 0
 ```
 
-No `init` step or YAML file is required.
+This validates the installed CLI and exact synthetic fixture, not another
+endpoint.
 
-### HTTPS with bearer authentication
+## 3. Check an authorized endpoint
+
+For an HTTPS endpoint with bearer authentication:
 
 ```sh
 export DOCTOR_TOKEN='replace-with-a-test-token'
@@ -56,59 +64,61 @@ doctor test \
   --base-url 'https://replace-with-authorized-host.invalid/v1' \
   --protocol openai-chat \
   --model 'replace-with-model-id' \
-  --auth-env DOCTOR_TOKEN \
-  --format terminal
+  --auth-env DOCTOR_TOKEN
 ```
 
-Replace the `.invalid` URL and model before running. `--auth-env` names an
-environment variable; the token value is not placed in the command line.
+Replace the `.invalid` URL and model before running. `--auth-env` names the
+environment variable; the token value is not put in the command line.
 
 - No authentication: omit `--auth-env`.
-- Custom token header: use `--auth-env DOCTOR_TOKEN --auth-header x-api-key`.
+- Custom token header: add `--auth-header x-api-key`.
 - Trusted local/private plain HTTP: add `--allow-plain-http`.
 
-Plain HTTP is rejected by default. Do not use `--allow-plain-http` when sending
-a credential across an untrusted network. This flag does not override the
-hard rejection of metadata-service, link-local, multicast, unspecified, or
-invalid destinations.
+Do not use plain HTTP for a credential over an untrusted network. Metadata,
+link-local, multicast, unspecified, and invalid destinations remain blocked.
 
 ## Supported endpoint shapes
 
-| Protocol ID | Derived operation |
+| Protocol ID | Operation derived from the configured API prefix |
 | --- | --- |
-| `openai-chat` | `/v1/chat/completions` |
-| `openai-responses` | `/v1/responses` |
-| `anthropic-messages` | `/v1/messages` |
+| `openai-chat` | `chat/completions` |
+| `openai-responses` | `responses` |
+| `anthropic-messages` | `messages` |
 
-The endpoint may be local, on a private network, or remote. A non-root base
-path is treated as the complete API prefix, so both `/v1` and custom prefixes
-such as `/api/v3` are preserved. Requests stay on the configured origin and
-redirects are not followed.
+A base path such as `/v1` or `/api/v3` is preserved as the complete API prefix.
+Requests remain on the configured origin and redirects are not followed.
 
-The selected endpoint receives bounded synthetic prompts and may log or retain
-them under its own policy. Use an authorized test account and test credential;
-do not send production data through these checks.
+## Read and share a result
 
-## Cost, evidence, and result boundaries
+FAIL/WARN/INCONCLUSIVE cases show a human-readable check name plus expected and
+observed behavior. When the evidence supports a finding, the report also shows
+its fault domain and remediation; otherwise it explicitly says no domain was
+attributed and gives the next review step. The terminal prints the exact export
+command after every run. For example:
+
+```sh
+doctor report markdown '<run-id>' --output doctor-report.md
+doctor report html '<run-id>' --output doctor-report.html
+```
+
+Review an exported report before sharing it. Recognized secrets are redacted,
+but structured model content and tool arguments are not necessarily anonymous.
+
+## Request and cost boundary
 
 Each endpoint run:
 
 - sends at most **4 requests**;
-- asks for at most **64 output tokens per request**;
-- uses one **60-second execution deadline**, followed by bounded cleanup and
-  local persistence;
-- prints the requested report format; and
-- stores redacted evidence and the run record under `.agentapi/`.
+- uses one **60-second deadline**;
+- asks for no more than **64 output tokens per request**; and
+- stores evidence and the run record beneath `.agentapi/`.
 
-The current reference fixture contains 12 executable targeted modes. The
-catalog's 260 candidate records are metadata, not 260 executable requests.
-
-Only test systems you have explicit permission to assess. PASS is bound to the
-exact endpoint, model, built-in pack/profile digests, and four checks. It is
-not vendor certification and does not prove complete SDK, agent, provider, or
-deployment compatibility.
+The output-token field is a provider request, not a client-enforced cost ceiling;
+a provider can reject or ignore it. PASS is bound to the exact endpoint, model,
+versioned artifacts, and four executed checks. It is not complete SDK/Agent
+compatibility or vendor certification.
 
 Next: [CLI reference](cli-reference.md) ·
-[Installation details](installation.md) ·
+[Installation](installation.md) ·
 [Troubleshooting](troubleshooting.md) ·
 [Known limitations](known-limitations/README.md)

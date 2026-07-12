@@ -3,6 +3,13 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact dry-run version without a v prefix.
+        required: true
+        default: 0.1.0-rc.1
+        type: string
 
 permissions:
   contents: read
@@ -11,16 +18,20 @@ env:
   GOTOOLCHAIN: local
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.ref }}-${{ inputs.version || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   build:
-    name: Build release artifacts
+    name: Build Doctor release assets
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 35
+    outputs:
+      commit: ${{ steps.identity.outputs.commit }}
+      tag: ${{ steps.identity.outputs.tag }}
+      version: ${{ steps.identity.outputs.version }}
     steps:
-      - name: Checkout complete immutable tag
+      - name: Checkout complete source history
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
@@ -31,92 +42,44 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: go.sum
           check-latest: false
-      - name: Verify signed SemVer tag belongs to protected main
+      - name: Bind an exact version to a commit on main
+        id: identity
+        shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          printf '%s\n' "$TAG" | grep -Eq '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.(0|[1-9][0-9]*))?$'
-          test "$(git rev-parse "$TAG^{commit}")" = "$GITHUB_SHA"
-          tag_object="$(git rev-parse "$TAG^{tag}")"
-          mapfile -t ref_facts < <(
-            gh api --header 'X-GitHub-Api-Version: 2022-11-28' \
-              "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" \
-              --jq '[.object.type,.object.sha] | .[]'
-          )
-          test "${#ref_facts[@]}" -eq 2
-          test "${ref_facts[0]}" = tag
-          test "${ref_facts[1]}" = "$tag_object"
-          mapfile -t tag_facts < <(
-            gh api --header 'X-GitHub-Api-Version: 2022-11-28' \
-              "repos/$GITHUB_REPOSITORY/git/tags/$tag_object" \
-              --jq '[.sha,.tag,.object.type,.object.sha,(.verification.verified|tostring),.verification.reason,(.verification.verified_at // "")] | .[]'
-          )
-          test "${#tag_facts[@]}" -eq 7
-          test "${tag_facts[0]}" = "$tag_object"
-          test "${tag_facts[1]}" = "$TAG"
-          test "${tag_facts[2]}" = commit
-          test "${tag_facts[3]}" = "$GITHUB_SHA"
-          test "${tag_facts[4]}" = true
-          test "${tag_facts[5]}" = valid
-          test -n "${tag_facts[6]}"
+          if test "$EVENT_NAME" = push; then
+            tag="$REF_NAME"
+            version="${tag#v}"
+            test "$(git rev-parse "$tag^{commit}")" = "$GITHUB_SHA"
+          else
+            version="$INPUT_VERSION"
+            tag="v$version"
+            git tag --force "$tag" "$GITHUB_SHA"
+          fi
+          printf '%s\n' "$tag" | grep -Eq '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.(0|[1-9][0-9]*))?$'
           git fetch origin main --no-tags
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main
-          remote_tag="$(git ls-remote origin "refs/tags/$TAG^{}")"
-          test "$(printf '%s\n' "$remote_tag" | grep -c .)" -eq 1
-          test "${remote_tag%%[[:space:]]*}" = "$GITHUB_SHA"
-      - name: Bind exact version and reviewed release notes
-        env:
-          TAG: ${{ github.ref_name }}
+          notes="release-notes/$tag.md"
+          python3 tools/check_release_notes.py --tag "$tag" --file "$notes"
+          printf 'RELEASE_VERSION=%s\nRELEASE_TAG=%s\nRELEASE_NOTES=%s\n' \
+            "$version" "$tag" "$notes" >> "$GITHUB_ENV"
+          printf 'commit=%s\ntag=%s\nversion=%s\n' \
+            "$GITHUB_SHA" "$tag" "$version" >> "$GITHUB_OUTPUT"
+      - name: Run Doctor and release-specific checks
         run: |
-          version="${TAG#v}"
-          notes="release-notes/$TAG.md"
-          python3 tools/check_release_notes.py --tag "$TAG" --file "$notes"
-          printf 'RELEASE_VERSION=%s\nRELEASE_NOTES=%s\n' "$version" "$notes" >> "$GITHUB_ENV"
-      - name: Install pinned static-analysis tools
-        timeout-minutes: 8
-        env:
-          GOBIN: ${{ runner.temp }}/quality-tools
-        run: |
-          mkdir -p "$GOBIN"
-          go install honnef.co/go/tools/cmd/staticcheck@2026.1
-          go install golang.org/x/vuln/cmd/govulncheck@v1.5.0
-          python3 -m pip install --disable-pip-version-check --no-deps ruff==0.15.5
-          echo "$GOBIN" >> "$GITHUB_PATH"
-      - name: Install and verify pinned actionlint
-        env:
-          ACTIONLINT_VERSION: 1.7.12
-          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
-        run: |
-          archive="$RUNNER_TEMP/actionlint.tar.gz"
-          curl --fail --location --proto '=https' --tlsv1.2 \
-            --output "$archive" \
-            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
-          echo "$ACTIONLINT_SHA256  $archive" | sha256sum --check --strict
-          mkdir "$RUNNER_TEMP/actionlint"
-          tar -xzf "$archive" -C "$RUNNER_TEMP/actionlint" actionlint
-          "$RUNNER_TEMP/actionlint/actionlint" .github/workflows/*.yml
-      - name: Run exact-commit product and security checks
-        run: |
-          make check
-          go test -race ./...
-          ruff check tools/*.py integrations
-          staticcheck ./...
-          govulncheck -test ./...
-          make docker-check
-          go mod tidy
-          git diff --exit-code -- go.mod go.sum
-          go mod vendor
-          git diff --exit-code -- vendor
+          go test ./internal/cli ./internal/productrun ./internal/report ./internal/transport
+          python3 -m unittest discover -s tools -p 'test_release_*.py'
           git diff --check
-          git diff --exit-code
-      - name: Build deterministic archives without publishing
+      - name: Build six native Doctor archives without publishing
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
         with:
           distribution: goreleaser
           version: v2.17.0
           args: release --clean --skip=publish
-      - name: Generate SPDX SBOM
+      - name: Generate one SPDX release SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           path: ./dist
@@ -125,374 +88,266 @@ jobs:
           syft-version: v1.44.0
           upload-artifact: false
           upload-release-assets: false
-      - name: Generate CycloneDX SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          path: ./dist
-          format: cyclonedx-json
-          output-file: ./dist/agentapi-doctor.cdx.json
-          syft-version: v1.44.0
-          upload-artifact: false
-          upload-release-assets: false
-      - name: Render exact package-manager assets
+      - name: Bind the SPDX SBOM into the checksum manifest
+        shell: bash
         run: |
-          python3 integrations/homebrew/generate.py \
-            --version "$RELEASE_VERSION" --checksums dist/checksums.txt --output-dir dist
-          python3 integrations/scoop/generate.py \
-            --version "$RELEASE_VERSION" --checksums dist/checksums.txt --output-dir dist
           (
             cd dist
-            sha256sum agentapi-doctor.spdx.json agentapi-doctor.cdx.json \
-              agentapi-doctor.rb agentapi-doctor.json >> checksums.txt
+            sha256sum agentapi-doctor.spdx.json >> checksums.txt
             LC_ALL=C sort -k2,2 -o checksums.txt checksums.txt
           )
-      - name: Stage and validate the exact release asset set
+      - name: Stage the exact Doctor-only release asset set
         run: |
           mkdir release-dist
           python3 tools/release_assets.py --stage-from dist --directory release-dist \
             --version "$RELEASE_VERSION" --format json \
             --write-manifest "$RUNNER_TEMP/release-assets.json"
-      - name: Upload verified release artifacts
+      - name: Upload the verified dry-run asset set
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: release-build-${{ github.sha }}
+          name: doctor-release-build-${{ github.sha }}
           path: release-dist/
           if-no-files-found: error
           retention-days: 7
 
   archive-smoke:
-    name: Smoke ${{ matrix.target }}
+    name: Archive smoke / ${{ matrix.target }}
     needs: build
     strategy:
       fail-fast: false
       matrix:
         include:
-          - {runner: ubuntu-24.04, target: linux-amd64}
-          - {runner: ubuntu-24.04-arm, target: linux-arm64}
-          - {runner: macos-15-intel, target: darwin-amd64}
-          - {runner: macos-15, target: darwin-arm64}
-          - {runner: windows-2025, target: windows-amd64}
-          - {runner: windows-11-arm, target: windows-arm64}
+          - {runner: ubuntu-24.04, target: linux-amd64, python: python3}
+          - {runner: macos-15, target: darwin-arm64, python: python3}
+          - {runner: windows-2025, target: windows-amd64, python: python}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
-      - name: Checkout verifier only
+      - name: Checkout the exact smoke verifier
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           fetch-depth: 1
-      - name: Download exact release artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: release-build-${{ github.sha }}
-          path: release-dist
-      - name: Verify exact asset set, checksums, extraction, and binary identity
+      - name: Start the two-minute packaging timer
         shell: bash
         env:
-          VERSION: ${{ github.ref_name }}
+          PYTHON: ${{ matrix.python }}
         run: |
-          python3 tools/release_assets.py --directory release-dist --version "${VERSION#v}" --format json
-          python3 tools/release_smoke.py release-dist \
-            --version "${VERSION#v}" --commit "$GITHUB_SHA"
+          "$PYTHON" -c 'import time; print(f"SMOKE_STARTED_AT={time.time()}")' \
+            >> "$GITHUB_ENV"
+      - name: Download the exact dry-run assets
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: doctor-release-build-${{ github.sha }}
+          path: release-dist
+      - name: Verify archive identity and run the offline demo
+        shell: bash
+        env:
+          COMMIT: ${{ needs.build.outputs.commit }}
+          PYTHON: ${{ matrix.python }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          "$PYTHON" tools/release_assets.py --directory release-dist \
+            --version "$VERSION" --format json
+          "$PYTHON" tools/release_smoke.py release-dist \
+            --version "$VERSION" --commit "$COMMIT" \
+            --started-at-epoch "$SMOKE_STARTED_AT" --max-seconds 120
 
   publish:
-    name: Sign, verify, and publish
-    needs: archive-smoke
+    name: Sign, attest, and publish
+    if: github.event_name == 'push'
+    needs: [build, archive-smoke]
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 20
     environment: release
     permissions:
       contents: write
-      packages: write
       id-token: write
       attestations: write
     steps:
-      - name: Checkout exact tag
+      - name: Checkout the exact tag
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Bind immutable release metadata
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          version="${TAG#v}"
-          built_at="$(git show -s --format=%cI "$GITHUB_SHA")"
-          printf 'RELEASE_VERSION=%s\nRELEASE_NOTES=%s\nBUILT_AT=%s\n' \
-            "$version" "release-notes/$TAG.md" "$built_at" >> "$GITHUB_ENV"
-      - name: Download six-platform verified release artifacts
+      - name: Download the smoke-tested assets
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: release-build-${{ github.sha }}
+          name: doctor-release-build-${{ github.sha }}
           path: release-dist
-      - name: Reverify remote tag and reject published identities
+      - name: Reverify tag ancestry and prepare a recoverable release slot
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ needs.build.outputs.tag }}
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
+          test "$TAG" = "$GITHUB_REF_NAME"
           test "$(git rev-parse "$TAG^{commit}")" = "$GITHUB_SHA"
-          tag_object="$(git rev-parse "$TAG^{tag}")"
-          mapfile -t ref_facts < <(
-            gh api --header 'X-GitHub-Api-Version: 2022-11-28' \
-              "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" \
-              --jq '[.object.type,.object.sha] | .[]'
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+          mapfile -t existing < <(
+            gh api --paginate \
+              "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+              --jq '.[] | select(.tag_name == "'"$TAG"'") | [.id,(.draft|tostring),((.immutable // false)|tostring)] | .[]'
           )
-          test "${#ref_facts[@]}" -eq 2
-          test "${ref_facts[0]}" = tag
-          test "${ref_facts[1]}" = "$tag_object"
-          mapfile -t tag_facts < <(
-            gh api --header 'X-GitHub-Api-Version: 2022-11-28' \
-              "repos/$GITHUB_REPOSITORY/git/tags/$tag_object" \
-              --jq '[.sha,.tag,.object.type,.object.sha,(.verification.verified|tostring),.verification.reason,(.verification.verified_at // "")] | .[]'
-          )
-          test "${#tag_facts[@]}" -eq 7
-          test "${tag_facts[0]}" = "$tag_object"
-          test "${tag_facts[1]}" = "$TAG"
-          test "${tag_facts[2]}" = commit
-          test "${tag_facts[3]}" = "$GITHUB_SHA"
-          test "${tag_facts[4]}" = true
-          test "${tag_facts[5]}" = valid
-          test -n "${tag_facts[6]}"
-          remote_tag="$(git ls-remote origin "refs/tags/$TAG^{}")"
-          test "$(printf '%s\n' "$remote_tag" | grep -c .)" -eq 1
-          test "${remote_tag%%[[:space:]]*}" = "$GITHUB_SHA"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "release already exists; immutable publication refuses overwrite" >&2
-            exit 2
+          if test "${#existing[@]}" -ne 0; then
+            test "${#existing[@]}" -eq 3
+            if test "${existing[1]}" = true && test "${existing[2]}" = false; then
+              gh api --method DELETE \
+                "repos/$GITHUB_REPOSITORY/releases/${existing[0]}"
+            else
+              echo "published or immutable release already exists; refusing overwrite" >&2
+              exit 2
+            fi
           fi
           python3 tools/release_assets.py --directory release-dist \
-            --version "$RELEASE_VERSION" --format json
-      - name: Install keyless signing client
+            --version "$VERSION" --format json
+      - name: Install the keyless signing client
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
         with:
           cosign-release: v3.0.6
-      - name: Set up emulation
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
-      - name: Authenticate to GHCR with scoped token
-        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-      - name: Build and push Doctor image by unique build tag
-        id: doctor-image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: .
-          file: Dockerfile
-          target: doctor
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ghcr.io/${{ github.repository }}:build-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          build-args: |
-            VERSION=${{ env.RELEASE_VERSION }}
-            COMMIT=${{ github.sha }}
-            BUILT_AT=${{ env.BUILT_AT }}
-      - name: Build and push Registry image by unique build tag
-        id: registry-image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: .
-          file: Dockerfile
-          target: registry
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ghcr.io/${{ github.repository }}-registry:build-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          build-args: |
-            VERSION=${{ env.RELEASE_VERSION }}
-            COMMIT=${{ github.sha }}
-            BUILT_AT=${{ env.BUILT_AT }}
-      - name: Generate Doctor image SPDX SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          image: ghcr.io/${{ github.repository }}@${{ steps.doctor-image.outputs.digest }}
-          format: spdx-json
-          output-file: ./release-dist/agentapi-doctor-image.spdx.json
-          syft-version: v1.44.0
-          upload-artifact: false
-          upload-release-assets: false
-      - name: Generate Registry image SPDX SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          image: ghcr.io/${{ github.repository }}-registry@${{ steps.registry-image.outputs.digest }}
-          format: spdx-json
-          output-file: ./release-dist/agentapi-doctor-registry-image.spdx.json
-          syft-version: v1.44.0
-          upload-artifact: false
-          upload-release-assets: false
-      - name: Sign immutable image digests
+      - name: Sign and validate the checksum manifest
         env:
-          DOCTOR_IMAGE: ghcr.io/${{ github.repository }}@${{ steps.doctor-image.outputs.digest }}
-          REGISTRY_IMAGE: ghcr.io/${{ github.repository }}-registry@${{ steps.registry-image.outputs.digest }}
-        run: |
-          cosign sign --yes "$DOCTOR_IMAGE"
-          cosign sign --yes "$REGISTRY_IMAGE"
-      - name: Attest Doctor image
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
-        with:
-          subject-name: ghcr.io/${{ github.repository }}
-          subject-digest: ${{ steps.doctor-image.outputs.digest }}
-          push-to-registry: true
-      - name: Attest Registry image
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
-        with:
-          subject-name: ghcr.io/${{ github.repository }}-registry
-          subject-digest: ${{ steps.registry-image.outputs.digest }}
-          push-to-registry: true
-      - name: Smoke immutable image digests and exact version
-        env:
-          DOCTOR_IMAGE: ghcr.io/${{ github.repository }}@${{ steps.doctor-image.outputs.digest }}
-          REGISTRY_IMAGE: ghcr.io/${{ github.repository }}-registry@${{ steps.registry-image.outputs.digest }}
-        run: |
-          for platform in linux/amd64 linux/arm64; do
-            architecture="${platform#*/}"
-            output="$RUNNER_TEMP/doctor-version-$architecture.json"
-            docker run --platform "$platform" --rm --network=none --read-only \
-              --cap-drop ALL --security-opt no-new-privileges \
-              "$DOCTOR_IMAGE" version --json > "$output"
-            python3 - "$output" "$RELEASE_VERSION" "$GITHUB_SHA" "$platform" <<'PY'
-          import json
-          import pathlib
-          import sys
-          payload = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-          identity = payload.get("data", {})
-          if payload.get("status") != "pass" or identity.get("version") != sys.argv[2] or identity.get("commit") != sys.argv[3]:
-              raise SystemExit(f"Doctor OCI identity mismatch for {sys.argv[4]}")
-          PY
-            output="$RUNNER_TEMP/registry-version-$architecture.json"
-            docker run --platform "$platform" --rm --network=none --read-only \
-              --cap-drop ALL --security-opt no-new-privileges \
-              "$REGISTRY_IMAGE" version > "$output"
-            python3 - "$output" "$RELEASE_VERSION" "$GITHUB_SHA" "$platform" <<'PY'
-          import json
-          import pathlib
-          import sys
-          identity = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-          if identity.get("version") != sys.argv[2] or identity.get("commit") != sys.argv[3]:
-              raise SystemExit(f"Registry OCI identity mismatch for {sys.argv[4]}")
-          PY
-          done
-      - name: Bind OCI digest subjects into the signed release assets
-        env:
-          DOCTOR_DIGEST: ${{ steps.doctor-image.outputs.digest }}
-          DOCTOR_NAME: ghcr.io/${{ github.repository }}
-          REGISTRY_DIGEST: ${{ steps.registry-image.outputs.digest }}
-          REGISTRY_NAME: ghcr.io/${{ github.repository }}-registry
-        run: |
-          python3 - "$RELEASE_VERSION" "$GITHUB_SHA" \
-            "$DOCTOR_NAME" "$DOCTOR_DIGEST" \
-            "$REGISTRY_NAME" "$REGISTRY_DIGEST" \
-            > release-dist/oci-images.json <<'PY'
-          import json
-          import re
-          import sys
-
-          version, commit, doctor_name, doctor_digest, registry_name, registry_digest = sys.argv[1:]
-          if re.fullmatch(r"[0-9a-f]{40}", commit) is None:
-              raise SystemExit("OCI subject commit is not a full SHA-1")
-          images = []
-          for role, name, digest in (
-              ("doctor", doctor_name, doctor_digest),
-              ("registry", registry_name, registry_digest),
-          ):
-              if re.fullmatch(r"ghcr\.io/[a-z0-9][a-z0-9._/-]*", name) is None:
-                  raise SystemExit(f"unsafe OCI name for {role}")
-              if re.fullmatch(r"sha256:[0-9a-f]{64}", digest) is None:
-                  raise SystemExit(f"unsafe OCI digest for {role}")
-              images.append({"digest": digest, "name": name, "role": role, "subject": f"{name}@{digest}"})
-          payload = {
-              "commit": commit,
-              "images": images,
-              "schema": "urn:agentapi-doctor:oci-release-subjects:v1",
-              "version": version,
-          }
-          print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
-          PY
-          (
-            cd release-dist
-            sha256sum oci-images.json agentapi-doctor-image.spdx.json \
-              agentapi-doctor-registry-image.spdx.json >> checksums.txt
-            LC_ALL=C sort -k2,2 -o checksums.txt checksums.txt
-          )
-          python3 tools/release_assets.py --directory release-dist \
-            --version "$RELEASE_VERSION" --format json
-          printf '### OCI digest subjects\n\n- %s@%s\n- %s@%s\n' \
-            "$DOCTOR_NAME" "$DOCTOR_DIGEST" "$REGISTRY_NAME" "$REGISTRY_DIGEST" \
-            >> "$GITHUB_STEP_SUMMARY"
-      - name: Sign and validate the final release checksum manifest
+          TAG: ${{ needs.build.outputs.tag }}
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
           cosign sign-blob --yes --bundle release-dist/checksums.txt.sigstore.json \
             release-dist/checksums.txt
+          cosign verify-blob \
+            --bundle release-dist/checksums.txt.sigstore.json \
+            --certificate-identity "https://github.com/$GITHUB_REPOSITORY/.github/workflows/release.yml@refs/tags/$TAG" \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+            release-dist/checksums.txt
           python3 tools/release_assets.py --directory release-dist \
-            --version "$RELEASE_VERSION" --format json
-      - name: Attest every final release file
+            --version "$VERSION" --format json
+      - name: Generate GitHub build provenance for every release file
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: release-dist/*
-      - name: Create verified draft from an exact file allowlist
+      - name: Create a draft from the exact file allowlist
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          NOTES: release-notes/${{ needs.build.outputs.tag }}.md
+          TAG: ${{ needs.build.outputs.tag }}
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
           mapfile -t assets < <(
             python3 tools/release_assets.py --directory release-dist \
-              --version "$RELEASE_VERSION" --format lines
+              --version "$VERSION" --format lines
           )
-          test "${#assets[@]}" -gt 0
+          test "${#assets[@]}" -eq 9
           channel_flags=()
           case "$TAG" in
             *-rc.*) channel_flags+=(--prerelease) ;;
           esac
           gh release create "$TAG" --verify-tag --draft "${channel_flags[@]}" \
-            --notes-file "$RELEASE_NOTES" --title "$TAG" "${assets[@]}"
+            --notes-file "$NOTES" --title "$TAG" "${assets[@]}"
       - name: Publish once with the final release channel
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ needs.build.outputs.tag }}
         run: gh release edit "$TAG" --draft=false
-      - name: Verify the public download location and Sigstore identity
+      - name: Verify immutable public release metadata
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          mapfile -t release_facts < <(
+          mapfile -t facts < <(
             gh api --header 'X-GitHub-Api-Version: 2022-11-28' \
               "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" \
-              --jq '[.tag_name,(.draft|tostring),(.prerelease|tostring),(.immutable|tostring)] | .[]'
+              --jq '[.tag_name,(.draft|tostring),(.prerelease|tostring),(.immutable|tostring),(.assets|length|tostring)] | .[]'
           )
-          test "${#release_facts[@]}" -eq 4
-          test "${release_facts[0]}" = "$TAG"
-          test "${release_facts[1]}" = false
+          test "${#facts[@]}" -eq 5
+          test "${facts[0]}" = "$TAG"
+          test "${facts[1]}" = false
           case "$TAG" in
-            *-rc.*) test "${release_facts[2]}" = true ;;
-            *) test "${release_facts[2]}" = false ;;
+            *-rc.*) test "${facts[2]}" = true ;;
+            *) test "${facts[2]}" = false ;;
           esac
-          test "${release_facts[3]}" = true
+          test "${facts[3]}" = true
+          test "${facts[4]}" = 9
+
+  public-smoke:
+    name: Anonymous public smoke / ${{ matrix.target }}
+    if: github.event_name == 'push'
+    needs: [build, publish]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-24.04, target: linux-amd64, os: linux, arch: amd64, extension: tar.gz, python: python3}
+          - {runner: macos-15, target: darwin-arm64, os: darwin, arch: arm64, extension: tar.gz, python: python3}
+          - {runner: windows-2025, target: windows-amd64, os: windows, arch: amd64, extension: zip, python: python}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the exact public smoke verifier
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Install the Sigstore verifier
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.0.6
+      - name: Download the public files anonymously
+        shell: bash
+        env:
+          ARCH: ${{ matrix.arch }}
+          EXTENSION: ${{ matrix.extension }}
+          PYTHON: ${{ matrix.python }}
+          TAG: ${{ needs.build.outputs.tag }}
+          TARGET_OS: ${{ matrix.os }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          started_at="$($PYTHON -c 'import time; print(time.time())')"
+          printf 'SMOKE_STARTED_AT=%s\n' "$started_at" >> "$GITHUB_ENV"
+          archive="agentapi-doctor_${VERSION}_${TARGET_OS}_${ARCH}.${EXTENSION}"
+          base="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
           mkdir public-dist
-          gh release download "$TAG" --dir public-dist
-          python3 tools/release_assets.py --directory public-dist \
-            --version "$RELEASE_VERSION" --format json
+          for asset in "$archive" checksums.txt checksums.txt.sigstore.json; do
+            curl --fail --location --proto '=https' --tlsv1.2 \
+              --output "public-dist/$asset" "$base/$asset"
+          done
+      - name: Verify the signed checksum manifest
+        shell: bash
+        env:
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
           cosign verify-blob \
             --bundle public-dist/checksums.txt.sigstore.json \
             --certificate-identity "https://github.com/$GITHUB_REPOSITORY/.github/workflows/release.yml@refs/tags/$TAG" \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
             public-dist/checksums.txt
-          python3 tools/release_smoke.py public-dist \
-            --version "$RELEASE_VERSION" --commit "$GITHUB_SHA"
-      - name: Install again through the public verified installer
-        id: public-install
-        uses: ./integrations/github-action
-        with:
-          version: ${{ env.RELEASE_VERSION }}
-          cosign-path: cosign
-      - name: Smoke the publicly installed binary
+      - name: Run the anonymously downloaded Doctor demo
+        shell: bash
         env:
-          DOCTOR_PATH: ${{ steps.public-install.outputs.doctor-path }}
+          COMMIT: ${{ needs.build.outputs.commit }}
+          PYTHON: ${{ matrix.python }}
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
-          "$DOCTOR_PATH" version --json > "$RUNNER_TEMP/public-version.json"
-          python3 - "$RUNNER_TEMP/public-version.json" "$RELEASE_VERSION" <<'PY'
+          "$PYTHON" tools/release_smoke.py public-dist \
+            --version "$VERSION" --commit "$COMMIT" \
+            --started-at-epoch "$SMOKE_STARTED_AT" --max-seconds 120
+      - name: Smoke the public fixed-tag installer
+        if: matrix.target == 'linux-amd64'
+        shell: bash
+        env:
+          TAG: ${{ needs.build.outputs.tag }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          installer="$RUNNER_TEMP/install.sh"
+          install_root="$RUNNER_TEMP/doctor-installer-bin"
+          curl --fail --location --proto '=https' --tlsv1.2 \
+            --output "$installer" \
+            "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$TAG/install.sh"
+          AGENTAPI_DOCTOR_VERSION="$VERSION" \
+            AGENTAPI_DOCTOR_INSTALL_DIR="$install_root" \
+            sh "$installer"
+          "$install_root/doctor" version --json > "$RUNNER_TEMP/installer-version.json"
+          python3 - "$RUNNER_TEMP/installer-version.json" "$VERSION" <<'PY'
           import json
           import pathlib
           import sys
@@ -500,3 +355,8 @@ jobs:
           if payload.get("status") != "pass" or payload.get("data", {}).get("version") != sys.argv[2]:
               raise SystemExit("public installer returned the wrong release version")
           PY
+          mkdir "$RUNNER_TEMP/installer-demo"
+          (
+            cd "$RUNNER_TEMP/installer-demo"
+            "$install_root/doctor" demo --format terminal
+          )

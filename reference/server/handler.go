@@ -99,12 +99,17 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	default:
 	}
 	if handler.transformer != nil {
-		if err := handler.transformer.Apply(&exchange); err != nil {
-			writeError(writer, http.StatusUnprocessableEntity, "mutation_not_applicable")
+		transformed := cloneExchange(exchange)
+		err := handler.transformer.Apply(&transformed)
+		if err != nil && !errors.Is(err, ErrTransformerNotApplicable) {
+			writeError(writer, http.StatusUnprocessableEntity, "transformer_failed")
 			return
 		}
-		exchange.MutationID = handler.transformer.ID()
-		writer.Header().Set("X-AgentAPI-Mutant", exchange.MutationID)
+		if err == nil {
+			exchange = transformed
+			exchange.MutationID = handler.transformer.ID()
+			writer.Header().Set("X-AgentAPI-Mutant", exchange.MutationID)
+		}
 	}
 	select {
 	case <-ctx.Done():
