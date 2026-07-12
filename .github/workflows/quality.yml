@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   analyze:
-    name: Static and vulnerability analysis
+    name: Go quality / static and vulnerability analysis
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:

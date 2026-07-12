@@ -97,7 +97,7 @@ jobs:
         run: make -f Product.mk docker-build-check
 
   aggregate:
-    name: aggregate
+    name: Product CI / aggregate
     if: always()
     needs: [go-platform, product-gate, containers]
     runs-on: ubuntu-24.04
