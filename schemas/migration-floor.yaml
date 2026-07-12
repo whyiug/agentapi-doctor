@@ -1,0 +1,5 @@
+schemaVersion: urn:agentapi-doctor:migration-floor:v1alpha1
+kind: MigrationFloor
+status: provisional
+preStableArtifacts: []
+note: No pre-1.0 artifact has been promised as a stable public compatibility floor.

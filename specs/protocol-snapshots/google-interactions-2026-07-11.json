@@ -1,0 +1,25 @@
+{
+  "schema_version": "urn:agentapi-doctor:protocol-snapshot:v1",
+  "protocol": "google-interactions",
+  "revision": "content-lock-set-2026-07-11",
+  "status": "candidate",
+  "review_status": "pending_review",
+  "sources": [
+    {
+      "source_id": "google-interactions-api",
+      "content_sha256": "sha256:914e6c6f31dcc23a7fe7aacfb2879d9999370113338b3b9eed3d39bbc2284a58"
+    },
+    {
+      "source_id": "google-interactions-function-calling",
+      "content_sha256": "sha256:9022fb0084b7aa4e8f8bc43f14ac338fcf94ba3728ccad97274ac1302ff70546"
+    },
+    {
+      "source_id": "google-interactions-overview",
+      "content_sha256": "sha256:c4658f8b11acb12bab8b1347da09d171c5e53f25f67bdeba36fad7422a5886d1"
+    },
+    {
+      "source_id": "google-interactions-streaming",
+      "content_sha256": "sha256:dd8dbf5d9e32c2897325fe37e3fe5dcf3cff1ecc348c1d123a3991b30200e4e4"
+    }
+  ]
+}

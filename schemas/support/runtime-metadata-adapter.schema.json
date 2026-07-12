@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "urn:agentapi-doctor:schema:runtime-metadata-adapter:v1",
+  "type": "object", "additionalProperties": false, "required": ["schemaVersion", "kind", "status", "metadata", "spec"],
+  "properties": {
+    "schemaVersion": {"const": "urn:agentapi-doctor:runtime-metadata-adapter:v1"}, "kind": {"const": "RuntimeMetadataAdapter"}, "status": {"const": "candidate"},
+    "metadata": {"type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": {"id": {"type": "string"}, "version": {"type": "string"}}},
+    "spec": {"type": "object", "additionalProperties": false, "required": ["runtime", "behavior", "outputFields", "fixtureContract", "gate"], "properties": {
+      "runtime": {"type": "object", "additionalProperties": false, "required": ["name", "versionResolution", "exactVersions"], "properties": {"name": {"type": "string"}, "versionResolution": {"enum": ["unresolved", "resolved"]}, "exactVersions": {"type": "array", "items": {"type": "string"}}}},
+      "behavior": {"type": "object", "additionalProperties": false, "required": ["sendsClientRequests", "modifiesNormativeTruth", "protocolConformanceLabel"], "properties": {"sendsClientRequests": {"const": false}, "modifiesNormativeTruth": {"const": false}, "protocolConformanceLabel": {"const": false}}},
+      "outputFields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+      "fixtureContract": {"type": "object", "additionalProperties": false, "required": ["valid", "invalid", "requiredFields", "forbiddenFields"], "properties": {"valid": {"type": "string"}, "invalid": {"type": "string"}, "requiredFields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}, "forbiddenFields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}}},
+      "gate": {"type": "object", "additionalProperties": false, "required": ["status", "reason", "evidenceRefs"], "properties": {"status": {"enum": ["pending", "passed"]}, "reason": {"type": "string"}, "evidenceRefs": {"type": "array", "items": {"type": "string"}}}}
+    }}
+  }
+}

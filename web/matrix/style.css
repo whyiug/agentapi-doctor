@@ -1,0 +1,19 @@
+:root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+body { margin: 0; color: #19202a; background: #f5f7fa; }
+header, main, footer { max-width: 1180px; margin: auto; padding: 1.5rem; }
+header { padding-top: 4rem; }
+h1 { margin: .2rem 0; font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -.04em; }
+.eyebrow { color: #3559d6; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; }
+form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .8rem; padding: 1rem; border: 1px solid #cad2df; border-radius: 12px; background: #fff; }
+label { display: grid; gap: .3rem; font-size: .85rem; font-weight: 650; }
+input, button { font: inherit; padding: .65rem; border: 1px solid #9da9b8; border-radius: 7px; }
+button { align-self: end; cursor: pointer; background: #253e9e; color: white; border-color: #253e9e; }
+.table-wrap { overflow-x: auto; background: #fff; border: 1px solid #cad2df; border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; min-width: 900px; }
+th, td { text-align: left; padding: .75rem; border-bottom: 1px solid #e2e6ed; vertical-align: top; }
+th { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+.digest { max-width: 22rem; overflow-wrap: anywhere; font-family: ui-monospace, monospace; font-size: .78rem; }
+.outcome-pass, .outcome-compatible { color: #08753b; font-weight: 700; }
+.outcome-fail, .outcome-incompatible { color: #a12121; font-weight: 700; }
+footer a { color: inherit; }
+@media (prefers-color-scheme: dark) { body { color: #e8ebf0; background: #10141b; } form, .table-wrap { background: #171d27; border-color: #3b4656; } th, td { border-color: #333d4b; } input { background: #10141b; color: inherit; } }

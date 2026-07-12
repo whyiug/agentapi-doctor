@@ -1,0 +1,13 @@
+{
+  "schema_version": "urn:agentapi-doctor:protocol-snapshot:v1",
+  "protocol": "mcp-2025-11-25",
+  "revision": "2025-11-25",
+  "status": "candidate",
+  "review_status": "pending_review",
+  "sources": [
+    {
+      "source_id": "mcp-2025-11-25-spec",
+      "content_sha256": "sha256:cb0a5d4b4ed6062ea5d3a46b897ea5baa3b4f86c66124a8d75c5aa01633652ab"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "urn:agentapi-doctor:schema:release-components:v1",
+  "type": "object", "additionalProperties": false, "required": ["schemaVersion", "kind", "releaseTarget", "manifestStatus", "components"],
+  "properties": {"schemaVersion": {"const": "urn:agentapi-doctor:release-components:v1"}, "kind": {"const": "ReleaseComponents"}, "releaseTarget": {"const": "v1.0"}, "manifestStatus": {"enum": ["candidate", "approved"]}, "components": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["id", "kind", "required", "targetMaturity", "status", "d30Criteria"], "properties": {"id": {"type": "string"}, "kind": {"type": "string"}, "required": {"type": "boolean"}, "targetMaturity": {"enum": ["stable", "experimental"]}, "status": {"enum": ["pending", "passed"]}, "d30Criteria": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^D30-[A-Z0-9-]+$"}}}}}}
+}

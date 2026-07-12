@@ -1,0 +1,41 @@
+name: Targeted mutant proposal
+description: Add one minimal incorrect behavior that a normative assertion must kill.
+title: "mutant: "
+body:
+  - type: input
+    id: requirement
+    attributes:
+      label: Requirement Catalog entry
+      placeholder: requirement://protocol/behavior
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Minimal incorrect behavior
+      description: Describe one fault and the exact boundary it violates.
+    validations:
+      required: true
+  - type: textarea
+    id: reference
+    attributes:
+      label: Reference behavior
+      description: Explain which valid fixture remains passing.
+    validations:
+      required: true
+  - type: textarea
+    id: failure
+    attributes:
+      label: Expected targeted failure
+      description: Name the assertion, failure ID, and evidence pointer that should reject the mutant.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Boundaries
+      options:
+        - label: The mutant is local, bounded, non-destructive, and does not contain a weaponized payload.
+          required: true
+        - label: The proposal does not weaken a denominator or convert missing evidence into PASS.
+          required: true

@@ -1,0 +1,56 @@
+apiVersion: urn:agentapi-doctor:scenario:v1beta1
+kind: Scenario
+metadata:
+  id: ollama-native-015-streamed-tool-call
+  version: 0.1.0
+  title: "Candidate: Ollama native API / streamed-tool-call"
+  labels:
+    generator: catalog-v1
+    protocol: ollama-native
+    taxonomy: tool-function-calling
+    review: pending-review
+    reference: ref-ollama-native-015
+    mutant: mut-ollama-native-015
+spec:
+  protocol:
+    family: ollama-native
+    snapshot: "content-lock-set-2026-07-11"
+    digest: sha256:9cd84cd099fc9802fee2cc92265d46b70319d5094fa23f6395d7d764ba1a99a7
+  classification:
+    type: normative
+    stability: experimental
+    sideEffects: none
+    idempotent: true
+  requirements:
+    - id: OLLAMA-REQ-015
+      level: MUST
+  requires:
+    all:
+      - offline-fixture
+  budgets:
+    timeout: 30s
+    maxRequests: 2
+    maxInputTokens: 128
+    maxOutputTokens: 128
+    maxResponseBytes: 64KiB
+    maxArtifactBytes: 1MiB
+  steps:
+    - id: reference
+      replay:
+        fixture: canonical/ollama-native-015.json
+        as: reference-pass
+    - id: mutant
+      replay:
+        fixture: mutation/ollama-native-015.json
+        as: targeted-mutant
+    - id: assertion
+      assert:
+        - use: catalog.streamed-tool-call
+          equals: true
+          assertionRole: normative
+          requirement: OLLAMA-REQ-015
+  repetition:
+    count: 1
+    policy: all
+  publication:
+    dataClass: synthetic-only

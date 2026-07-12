@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:source-lock-set:v1",
+  "title": "AgentAPI Doctor first-party source lock set",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "review_status", "sources"],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:source-lock-set:v1"},
+    "status": {"const": "candidate"},
+    "review_status": {"const": "pending_review"},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/source"}
+    }
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "protocol", "source_type", "original_url", "resolved_url", "retrieved_at", "revision", "content_sha256", "license", "reuse_status"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{2,127}$"},
+        "protocol": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{2,255}$"},
+        "source_type": {"const": "official_documentation"},
+        "original_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "resolved_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "retrieved_at": {"type": "string", "format": "date-time", "pattern": "Z$"},
+        "revision": {"oneOf": [{"type": "string", "pattern": "^content-sha256:[0-9a-f]{64}$"}, {"const": "2025-11-25"}]},
+        "content_sha256": {"$ref": "#/$defs/digest"},
+        "license": {"type": "string", "minLength": 1},
+        "reuse_status": {"const": "metadata-only-no-mirroring"}
+      }
+    }
+  }
+}

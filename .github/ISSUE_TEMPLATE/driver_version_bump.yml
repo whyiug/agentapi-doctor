@@ -1,0 +1,52 @@
+name: Driver or SDK version update
+description: Propose a support-manifest update backed by official release facts and matrix tests.
+title: "driver: update "
+body:
+  - type: input
+    id: driver
+    attributes:
+      label: Driver or client identity
+      placeholder: ecosystem/package/profile
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Current and proposed versions
+      placeholder: current 1.2.3; proposed 1.3.0
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Official release source
+      placeholder: https://example.org/upstream/releases/tag/v1.3.0
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: Relevant upstream changes
+      description: Summarize protocol, parser, dependency, security, and runtime changes with primary links.
+    validations:
+      required: true
+  - type: textarea
+    id: lock
+    attributes:
+      label: Lock and distribution updates
+      description: Identify lockfiles, package digests, runtime image, and support-manifest cells that change.
+    validations:
+      required: true
+  - type: textarea
+    id: matrix
+    attributes:
+      label: Matrix verification
+      description: Cover previous/current Tier 1 versions, candidate cells, contract tests, real client execution, and affected fixtures.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Compatibility, security, and migration risks
+    validations:
+      required: true

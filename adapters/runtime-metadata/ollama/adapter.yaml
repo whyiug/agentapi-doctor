@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:runtime-metadata-adapter:v1",
+  "kind": "RuntimeMetadataAdapter", "status": "candidate",
+  "metadata": {"id": "ollama", "version": "0.1.0"},
+  "spec": {
+    "runtime": {"name": "ollama", "versionResolution": "unresolved", "exactVersions": []},
+    "behavior": {"sendsClientRequests": false, "modifiesNormativeTruth": false, "protocolConformanceLabel": false},
+    "outputFields": ["runtime", "exact_version", "configuration_digest", "model_revision", "template", "backend", "quantization"],
+    "fixtureContract": {"valid": "adapters/runtime-metadata/ollama/fixtures/valid.json", "invalid": "adapters/runtime-metadata/ollama/fixtures/invalid.json", "requiredFields": ["synthetic", "runtime", "reportedVersion", "configuration"], "forbiddenFields": ["authorization", "apiKey", "token", "cookie", "secret"]},
+    "gate": {"status": "pending", "reason": "only synthetic contract fixtures exist; no exact upstream version or runtime observation is claimed", "evidenceRefs": []}
+  }
+}

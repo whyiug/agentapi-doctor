@@ -1,0 +1,73 @@
+name: Specification or ecosystem drift
+description: Record a source-backed upstream change without automatically changing verdicts.
+title: "spec-drift: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A drift report is a candidate for maintainer classification. It does not itself change a requirement, support tier, pack digest, or compatibility verdict.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Source checks
+      options:
+        - label: The source is a primary specification, official release, or upstream repository record.
+          required: true
+        - label: I have not copied material whose reuse rights are unclear.
+          required: true
+        - label: Any ambiguity is called out rather than silently resolved.
+          required: true
+  - type: input
+    id: claim
+    attributes:
+      label: Claim or source-lock ID
+      placeholder: claim://protocol/example
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Primary HTTPS source
+      placeholder: https://example.org/specification
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Revision and retrieval date
+      description: Include commit, tag, API/spec revision, and an actual UTC retrieval date.
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: Observed change
+      description: Paraphrase the change and use only a minimal quotation when necessary.
+    validations:
+      required: true
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Proposed classification
+      options:
+        - Normative
+        - Additive
+        - Clarification
+        - Breaking
+        - Ambiguous or unknown
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Candidate impact
+      description: Identify requirements, scenarios, reference/mutant fixtures, migrations, profiles, and support manifests that may be affected.
+    validations:
+      required: true
+  - type: input
+    id: license
+    attributes:
+      label: Source license or reuse status
+      description: State the verified reuse status; do not guess.
+    validations:
+      required: true

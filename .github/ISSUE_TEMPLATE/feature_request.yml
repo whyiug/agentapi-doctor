@@ -1,0 +1,68 @@
+name: Feature proposal
+description: Propose a scoped capability with evidence, boundaries, and tests.
+title: "feature: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Features that affect schemas, scoring, protocol tiers, Registry trust/privacy, driver ABI, telemetry, governance, licensing, or breaking CLI/config behavior require an RFC.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Preparation
+      options:
+        - label: I searched existing issues, the roadmap, and RFCs.
+          required: true
+        - label: This proposal does not require testing an unauthorized public target.
+          required: true
+        - label: I have not represented an unverified external party as an adopter or endorser.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: User or system problem
+      description: Explain the concrete problem before describing the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Included and excluded scope
+      description: State both what this proposal changes and what it deliberately does not change.
+    validations:
+      required: true
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirement and source basis
+      description: Link primary sources, Requirement Catalog entries, RFCs, or ADRs.
+    validations:
+      required: true
+  - type: textarea
+    id: interfaces
+    attributes:
+      label: Public interfaces and compatibility
+      description: Identify CLI, config, schema, RPC, API, pack/profile identity, or artifact impact.
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security, privacy, and data impact
+      description: Cover secrets, network, files, tool execution, sandbox, retention, and public claims as applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Verification plan
+      description: Include reference-pass, mutant-fail, negative, migration, and cross-platform coverage as applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and consequences
+      description: Explain simpler approaches, collaboration opportunities, and operational cost.
+    validations:
+      required: true

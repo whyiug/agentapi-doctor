@@ -1,0 +1,21 @@
+apiVersion: urn:agentapi-doctor:pack:v1
+kind: ProtocolPack
+metadata:
+  name: google-interactions
+  version: 2026.07.0
+spec:
+  engine:
+    minVersion: 0.1.0
+    maxMajor: 1
+  protocolSnapshot:
+    ref: specs/protocol-snapshots/google-interactions-2026-07-11.json
+  scenarios:
+    include:
+      - scenarios/*.yaml
+  conformanceSuites:
+    candidate-normative:
+      requirements:
+        - catalog-normative
+  defaultBudget:
+    maxRequests: 64
+    maxDuration: 15m0s

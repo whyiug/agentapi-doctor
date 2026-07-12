@@ -1,0 +1,4690 @@
+{
+  "schema_version": "urn:agentapi-doctor:catalog-fixture-set:v1",
+  "generator": {
+    "name": "agentapi-doctor-catalog-generator",
+    "version": "1.0.0"
+  },
+  "kind": "targeted_mutant",
+  "fixtures": [
+    {
+      "id": "mut-openai-chat-001",
+      "ref": "mutation/openai-chat-001.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-001-endpoint-method",
+      "requirement_id": "OAI-CHAT-REQ-001",
+      "semantic_key": "openai-chat/endpoint-discovery/endpoint-method",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-endpoint-method",
+      "kills_requirement": "OAI-CHAT-REQ-001",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-endpoint-method",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-002",
+      "ref": "mutation/openai-chat-002.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-002-terminal-status",
+      "requirement_id": "OAI-CHAT-REQ-002",
+      "semantic_key": "openai-chat/nonstream-output/terminal-status",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-terminal-status",
+      "kills_requirement": "OAI-CHAT-REQ-002",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-terminal-status",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-003",
+      "ref": "mutation/openai-chat-003.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-003-tool-loop-bound",
+      "requirement_id": "OAI-CHAT-REQ-003",
+      "semantic_key": "openai-chat/tool-function-calling/tool-loop-bound",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-tool-loop-bound",
+      "kills_requirement": "OAI-CHAT-REQ-003",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation disable-tool-loop-bound",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-004",
+      "ref": "mutation/openai-chat-004.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-004-public-reasoning-summary",
+      "requirement_id": "OAI-CHAT-REQ-004",
+      "semantic_key": "openai-chat/reasoning-thinking/public-reasoning-summary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "expose-hidden-reasoning-as-summary",
+      "kills_requirement": "OAI-CHAT-REQ-004",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation expose-hidden-reasoning-as-summary",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-005",
+      "ref": "mutation/openai-chat-005.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-005-multi-turn-order",
+      "requirement_id": "OAI-CHAT-REQ-005",
+      "semantic_key": "openai-chat/messages-roles/multi-turn-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reverse-multi-turn-order",
+      "kills_requirement": "OAI-CHAT-REQ-005",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation reverse-multi-turn-order",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-006",
+      "ref": "mutation/openai-chat-006.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-006-tool-error-result",
+      "requirement_id": "OAI-CHAT-REQ-006",
+      "semantic_key": "openai-chat/tool-function-calling/tool-error-result",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "erase-tool-error-marker",
+      "kills_requirement": "OAI-CHAT-REQ-006",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation erase-tool-error-marker",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-007",
+      "ref": "mutation/openai-chat-007.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-007-inline-media-canary",
+      "requirement_id": "OAI-CHAT-REQ-007",
+      "semantic_key": "openai-chat/multimodal/inline-media-canary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-inline-media-mime",
+      "kills_requirement": "OAI-CHAT-REQ-007",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation rewrite-inline-media-mime",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-008",
+      "ref": "mutation/openai-chat-008.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-008-content-part-order",
+      "requirement_id": "OAI-CHAT-REQ-008",
+      "semantic_key": "openai-chat/messages-roles/content-part-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "sort-content-parts",
+      "kills_requirement": "OAI-CHAT-REQ-008",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation sort-content-parts",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-009",
+      "ref": "mutation/openai-chat-009.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-009-parallel-tool-order",
+      "requirement_id": "OAI-CHAT-REQ-009",
+      "semantic_key": "openai-chat/tool-function-calling/parallel-tool-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-parallel-call-index",
+      "kills_requirement": "OAI-CHAT-REQ-009",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation swap-parallel-call-index",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-010",
+      "ref": "mutation/openai-chat-010.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-010-usage-self-consistency",
+      "requirement_id": "OAI-CHAT-REQ-010",
+      "semantic_key": "openai-chat/usage/usage-self-consistency",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "corrupt-usage-total",
+      "kills_requirement": "OAI-CHAT-REQ-010",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation corrupt-usage-total",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-011",
+      "ref": "mutation/openai-chat-011.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-011-response-size-bound",
+      "requirement_id": "OAI-CHAT-REQ-011",
+      "semantic_key": "openai-chat/http-json-forward-compatibility/response-size-bound",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-response-size-bound",
+      "kills_requirement": "OAI-CHAT-REQ-011",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation disable-response-size-bound",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-012",
+      "ref": "mutation/openai-chat-012.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-012-tool-choice",
+      "requirement_id": "OAI-CHAT-REQ-012",
+      "semantic_key": "openai-chat/tool-function-calling/tool-choice",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-tool-choice",
+      "kills_requirement": "OAI-CHAT-REQ-012",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-tool-choice",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-013",
+      "ref": "mutation/openai-chat-013.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-013-retry-after",
+      "requirement_id": "OAI-CHAT-REQ-013",
+      "semantic_key": "openai-chat/errors-retry/retry-after",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "ignore-retry-after",
+      "kills_requirement": "OAI-CHAT-REQ-013",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation ignore-retry-after",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-014",
+      "ref": "mutation/openai-chat-014.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-014-unknown-optional-field",
+      "requirement_id": "OAI-CHAT-REQ-014",
+      "semantic_key": "openai-chat/http-json-forward-compatibility/unknown-optional-field",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reject-unknown-optional-field",
+      "kills_requirement": "OAI-CHAT-REQ-014",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation reject-unknown-optional-field",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-015",
+      "ref": "mutation/openai-chat-015.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-015-post-terminal-data",
+      "requirement_id": "OAI-CHAT-REQ-015",
+      "semantic_key": "openai-chat/streaming/post-terminal-data",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-post-terminal-data",
+      "kills_requirement": "OAI-CHAT-REQ-015",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-post-terminal-data",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-016",
+      "ref": "mutation/openai-chat-016.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-016-http-error-status",
+      "requirement_id": "OAI-CHAT-REQ-016",
+      "semantic_key": "openai-chat/errors-retry/http-error-status",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-http-error-status",
+      "kills_requirement": "OAI-CHAT-REQ-016",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-http-error-status",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-017",
+      "ref": "mutation/openai-chat-017.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-017-utf8-roundtrip",
+      "requirement_id": "OAI-CHAT-REQ-017",
+      "semantic_key": "openai-chat/http-json-forward-compatibility/utf8-roundtrip",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "truncate-multibyte-codepoint",
+      "kills_requirement": "OAI-CHAT-REQ-017",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation truncate-multibyte-codepoint",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-018",
+      "ref": "mutation/openai-chat-018.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-018-unknown-stream-event",
+      "requirement_id": "OAI-CHAT-REQ-018",
+      "semantic_key": "openai-chat/streaming/unknown-stream-event",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "panic-on-unknown-event",
+      "kills_requirement": "OAI-CHAT-REQ-018",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation panic-on-unknown-event",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-019",
+      "ref": "mutation/openai-chat-019.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-019-storage-mode",
+      "requirement_id": "OAI-CHAT-REQ-019",
+      "semantic_key": "openai-chat/state-multiturn/storage-mode",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "force-store-enabled",
+      "kills_requirement": "OAI-CHAT-REQ-019",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation force-store-enabled",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-020",
+      "ref": "mutation/openai-chat-020.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-020-missing-authentication",
+      "requirement_id": "OAI-CHAT-REQ-020",
+      "semantic_key": "openai-chat/authentication-versioning/missing-authentication",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-missing-authentication",
+      "kills_requirement": "OAI-CHAT-REQ-020",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-missing-authentication",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-021",
+      "ref": "mutation/openai-chat-021.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-021-utf8-across-chunks",
+      "requirement_id": "OAI-CHAT-REQ-021",
+      "semantic_key": "openai-chat/streaming/utf8-across-chunks",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "decode-each-chunk-independently",
+      "kills_requirement": "OAI-CHAT-REQ-021",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation decode-each-chunk-independently",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-022",
+      "ref": "mutation/openai-chat-022.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-022-stateless-continuation",
+      "requirement_id": "OAI-CHAT-REQ-022",
+      "semantic_key": "openai-chat/state-multiturn/stateless-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-continuation-item",
+      "kills_requirement": "OAI-CHAT-REQ-022",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-continuation-item",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-023",
+      "ref": "mutation/openai-chat-023.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-023-reported-model-identity",
+      "requirement_id": "OAI-CHAT-REQ-023",
+      "semantic_key": "openai-chat/endpoint-discovery/reported-model-identity",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-reported-model",
+      "kills_requirement": "OAI-CHAT-REQ-023",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation rewrite-reported-model",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-024",
+      "ref": "mutation/openai-chat-024.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-024-stream-media-type",
+      "requirement_id": "OAI-CHAT-REQ-024",
+      "semantic_key": "openai-chat/streaming/stream-media-type",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-wrong-stream-media-type",
+      "kills_requirement": "OAI-CHAT-REQ-024",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-wrong-stream-media-type",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-025",
+      "ref": "mutation/openai-chat-025.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-025-additional-properties",
+      "requirement_id": "OAI-CHAT-REQ-025",
+      "semantic_key": "openai-chat/structured-output/additional-properties",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "allow-forbidden-property",
+      "kills_requirement": "OAI-CHAT-REQ-025",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation allow-forbidden-property",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-026",
+      "ref": "mutation/openai-chat-026.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-026-request-content-type",
+      "requirement_id": "OAI-CHAT-REQ-026",
+      "semantic_key": "openai-chat/endpoint-discovery/request-content-type",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-request-content-type",
+      "kills_requirement": "OAI-CHAT-REQ-026",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-request-content-type",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-027",
+      "ref": "mutation/openai-chat-027.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-027-unique-output-index",
+      "requirement_id": "OAI-CHAT-REQ-027",
+      "semantic_key": "openai-chat/nonstream-output/unique-output-index",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "duplicate-output-index",
+      "kills_requirement": "OAI-CHAT-REQ-027",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation duplicate-output-index",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-028",
+      "ref": "mutation/openai-chat-028.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-028-json-mode-validity",
+      "requirement_id": "OAI-CHAT-REQ-028",
+      "semantic_key": "openai-chat/structured-output/json-mode-validity",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "equate-json-mode-with-schema",
+      "kills_requirement": "OAI-CHAT-REQ-028",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation equate-json-mode-with-schema",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-029",
+      "ref": "mutation/openai-chat-029.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-029-cancel-and-timeout",
+      "requirement_id": "OAI-CHAT-REQ-029",
+      "semantic_key": "openai-chat/cancellation-resources/cancel-and-timeout",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "map-cancel-to-completion",
+      "kills_requirement": "OAI-CHAT-REQ-029",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation map-cancel-to-completion",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-030",
+      "ref": "mutation/openai-chat-030.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-030-required-response-envelope",
+      "requirement_id": "OAI-CHAT-REQ-030",
+      "semantic_key": "openai-chat/nonstream-output/required-response-envelope",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-response-envelope",
+      "kills_requirement": "OAI-CHAT-REQ-030",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-response-envelope",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-031",
+      "ref": "mutation/openai-chat-031.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-031-nested-tool-schema",
+      "requirement_id": "OAI-CHAT-REQ-031",
+      "semantic_key": "openai-chat/tool-function-calling/nested-tool-schema",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-nested-required",
+      "kills_requirement": "OAI-CHAT-REQ-031",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-nested-required",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-032",
+      "ref": "mutation/openai-chat-032.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-032-opaque-reasoning-continuation",
+      "requirement_id": "OAI-CHAT-REQ-032",
+      "semantic_key": "openai-chat/reasoning-thinking/opaque-reasoning-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "alter-opaque-reasoning-artifact",
+      "kills_requirement": "OAI-CHAT-REQ-032",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation alter-opaque-reasoning-artifact",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-033",
+      "ref": "mutation/openai-chat-033.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-033-tool-result-association",
+      "requirement_id": "OAI-CHAT-REQ-033",
+      "semantic_key": "openai-chat/messages-roles/tool-result-association",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-tool-result-call-id",
+      "kills_requirement": "OAI-CHAT-REQ-033",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation swap-tool-result-call-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-034",
+      "ref": "mutation/openai-chat-034.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-034-streamed-arguments",
+      "requirement_id": "OAI-CHAT-REQ-034",
+      "semantic_key": "openai-chat/tool-function-calling/streamed-arguments",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-argument-delta",
+      "kills_requirement": "OAI-CHAT-REQ-034",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-argument-delta",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-035",
+      "ref": "mutation/openai-chat-035.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-035-streaming-usage-position",
+      "requirement_id": "OAI-CHAT-REQ-035",
+      "semantic_key": "openai-chat/usage/streaming-usage-position",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "move-usage-after-terminal",
+      "kills_requirement": "OAI-CHAT-REQ-035",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation move-usage-after-terminal",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-036",
+      "ref": "mutation/openai-chat-036.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-036-protocol-role-set",
+      "requirement_id": "OAI-CHAT-REQ-036",
+      "semantic_key": "openai-chat/messages-roles/protocol-role-set",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "coerce-protocol-role",
+      "kills_requirement": "OAI-CHAT-REQ-036",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation coerce-protocol-role",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-037",
+      "ref": "mutation/openai-chat-037.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-037-call-id-uniqueness",
+      "requirement_id": "OAI-CHAT-REQ-037",
+      "semantic_key": "openai-chat/tool-function-calling/call-id-uniqueness",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "duplicate-call-id",
+      "kills_requirement": "OAI-CHAT-REQ-037",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation duplicate-call-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-038",
+      "ref": "mutation/openai-chat-038.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-038-nonidempotent-retry",
+      "requirement_id": "OAI-CHAT-REQ-038",
+      "semantic_key": "openai-chat/errors-retry/nonidempotent-retry",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "retry-nonidempotent-request",
+      "kills_requirement": "OAI-CHAT-REQ-038",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation retry-nonidempotent-request",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-039",
+      "ref": "mutation/openai-chat-039.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-039-malformed-json-boundary",
+      "requirement_id": "OAI-CHAT-REQ-039",
+      "semantic_key": "openai-chat/http-json-forward-compatibility/malformed-json-boundary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "treat-truncated-json-as-success",
+      "kills_requirement": "OAI-CHAT-REQ-039",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation treat-truncated-json-as-success",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-040",
+      "ref": "mutation/openai-chat-040.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-040-single-tool-call",
+      "requirement_id": "OAI-CHAT-REQ-040",
+      "semantic_key": "openai-chat/tool-function-calling/single-tool-call",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "coerce-tool-arguments",
+      "kills_requirement": "OAI-CHAT-REQ-040",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation coerce-tool-arguments",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-041",
+      "ref": "mutation/openai-chat-041.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-041-error-envelope",
+      "requirement_id": "OAI-CHAT-REQ-041",
+      "semantic_key": "openai-chat/errors-retry/error-envelope",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-error-envelope",
+      "kills_requirement": "OAI-CHAT-REQ-041",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-error-envelope",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-chat-042",
+      "ref": "mutation/openai-chat-042.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-chat",
+      "scenario_id": "openai-chat-042-null-empty-distinction",
+      "requirement_id": "OAI-CHAT-REQ-042",
+      "semantic_key": "openai-chat/http-json-forward-compatibility/null-empty-distinction",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-null-and-empty",
+      "kills_requirement": "OAI-CHAT-REQ-042",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-null-and-empty",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-001",
+      "ref": "mutation/openai-responses-http-001.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-001-utf8-roundtrip",
+      "requirement_id": "OAI-RESP-REQ-001",
+      "semantic_key": "openai-responses-http/http-json-forward-compatibility/utf8-roundtrip",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "truncate-multibyte-codepoint",
+      "kills_requirement": "OAI-RESP-REQ-001",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation truncate-multibyte-codepoint",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-002",
+      "ref": "mutation/openai-responses-http-002.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-002-unknown-stream-event",
+      "requirement_id": "OAI-RESP-REQ-002",
+      "semantic_key": "openai-responses-http/streaming/unknown-stream-event",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "panic-on-unknown-event",
+      "kills_requirement": "OAI-RESP-REQ-002",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation panic-on-unknown-event",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-003",
+      "ref": "mutation/openai-responses-http-003.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-003-storage-mode",
+      "requirement_id": "OAI-RESP-REQ-003",
+      "semantic_key": "openai-responses-http/state-multiturn/storage-mode",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "force-store-enabled",
+      "kills_requirement": "OAI-RESP-REQ-003",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation force-store-enabled",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-004",
+      "ref": "mutation/openai-responses-http-004.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-004-missing-authentication",
+      "requirement_id": "OAI-RESP-REQ-004",
+      "semantic_key": "openai-responses-http/authentication-versioning/missing-authentication",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-missing-authentication",
+      "kills_requirement": "OAI-RESP-REQ-004",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-missing-authentication",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-005",
+      "ref": "mutation/openai-responses-http-005.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-005-utf8-across-chunks",
+      "requirement_id": "OAI-RESP-REQ-005",
+      "semantic_key": "openai-responses-http/streaming/utf8-across-chunks",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "decode-each-chunk-independently",
+      "kills_requirement": "OAI-RESP-REQ-005",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation decode-each-chunk-independently",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-006",
+      "ref": "mutation/openai-responses-http-006.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-006-stateless-continuation",
+      "requirement_id": "OAI-RESP-REQ-006",
+      "semantic_key": "openai-responses-http/state-multiturn/stateless-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-continuation-item",
+      "kills_requirement": "OAI-RESP-REQ-006",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-continuation-item",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-007",
+      "ref": "mutation/openai-responses-http-007.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-007-reported-model-identity",
+      "requirement_id": "OAI-RESP-REQ-007",
+      "semantic_key": "openai-responses-http/endpoint-discovery/reported-model-identity",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-reported-model",
+      "kills_requirement": "OAI-RESP-REQ-007",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation rewrite-reported-model",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-008",
+      "ref": "mutation/openai-responses-http-008.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-008-stream-media-type",
+      "requirement_id": "OAI-RESP-REQ-008",
+      "semantic_key": "openai-responses-http/streaming/stream-media-type",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-wrong-stream-media-type",
+      "kills_requirement": "OAI-RESP-REQ-008",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-wrong-stream-media-type",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-009",
+      "ref": "mutation/openai-responses-http-009.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-009-additional-properties",
+      "requirement_id": "OAI-RESP-REQ-009",
+      "semantic_key": "openai-responses-http/structured-output/additional-properties",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "allow-forbidden-property",
+      "kills_requirement": "OAI-RESP-REQ-009",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation allow-forbidden-property",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-010",
+      "ref": "mutation/openai-responses-http-010.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-010-request-content-type",
+      "requirement_id": "OAI-RESP-REQ-010",
+      "semantic_key": "openai-responses-http/endpoint-discovery/request-content-type",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-request-content-type",
+      "kills_requirement": "OAI-RESP-REQ-010",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-request-content-type",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-011",
+      "ref": "mutation/openai-responses-http-011.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-011-unique-output-index",
+      "requirement_id": "OAI-RESP-REQ-011",
+      "semantic_key": "openai-responses-http/nonstream-output/unique-output-index",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "duplicate-output-index",
+      "kills_requirement": "OAI-RESP-REQ-011",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation duplicate-output-index",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-012",
+      "ref": "mutation/openai-responses-http-012.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-012-json-mode-validity",
+      "requirement_id": "OAI-RESP-REQ-012",
+      "semantic_key": "openai-responses-http/structured-output/json-mode-validity",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "equate-json-mode-with-schema",
+      "kills_requirement": "OAI-RESP-REQ-012",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation equate-json-mode-with-schema",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-013",
+      "ref": "mutation/openai-responses-http-013.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-013-cancel-and-timeout",
+      "requirement_id": "OAI-RESP-REQ-013",
+      "semantic_key": "openai-responses-http/cancellation-resources/cancel-and-timeout",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "map-cancel-to-completion",
+      "kills_requirement": "OAI-RESP-REQ-013",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation map-cancel-to-completion",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-014",
+      "ref": "mutation/openai-responses-http-014.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-014-required-response-envelope",
+      "requirement_id": "OAI-RESP-REQ-014",
+      "semantic_key": "openai-responses-http/nonstream-output/required-response-envelope",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-response-envelope",
+      "kills_requirement": "OAI-RESP-REQ-014",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-response-envelope",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-015",
+      "ref": "mutation/openai-responses-http-015.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-015-nested-tool-schema",
+      "requirement_id": "OAI-RESP-REQ-015",
+      "semantic_key": "openai-responses-http/tool-function-calling/nested-tool-schema",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-nested-required",
+      "kills_requirement": "OAI-RESP-REQ-015",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-nested-required",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-016",
+      "ref": "mutation/openai-responses-http-016.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-016-opaque-reasoning-continuation",
+      "requirement_id": "OAI-RESP-REQ-016",
+      "semantic_key": "openai-responses-http/reasoning-thinking/opaque-reasoning-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "alter-opaque-reasoning-artifact",
+      "kills_requirement": "OAI-RESP-REQ-016",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation alter-opaque-reasoning-artifact",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-017",
+      "ref": "mutation/openai-responses-http-017.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-017-tool-result-association",
+      "requirement_id": "OAI-RESP-REQ-017",
+      "semantic_key": "openai-responses-http/messages-roles/tool-result-association",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-tool-result-call-id",
+      "kills_requirement": "OAI-RESP-REQ-017",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation swap-tool-result-call-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-018",
+      "ref": "mutation/openai-responses-http-018.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-018-streamed-arguments",
+      "requirement_id": "OAI-RESP-REQ-018",
+      "semantic_key": "openai-responses-http/tool-function-calling/streamed-arguments",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-argument-delta",
+      "kills_requirement": "OAI-RESP-REQ-018",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-argument-delta",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-019",
+      "ref": "mutation/openai-responses-http-019.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-019-streaming-usage-position",
+      "requirement_id": "OAI-RESP-REQ-019",
+      "semantic_key": "openai-responses-http/usage/streaming-usage-position",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "move-usage-after-terminal",
+      "kills_requirement": "OAI-RESP-REQ-019",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation move-usage-after-terminal",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-020",
+      "ref": "mutation/openai-responses-http-020.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-020-protocol-role-set",
+      "requirement_id": "OAI-RESP-REQ-020",
+      "semantic_key": "openai-responses-http/messages-roles/protocol-role-set",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "coerce-protocol-role",
+      "kills_requirement": "OAI-RESP-REQ-020",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation coerce-protocol-role",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-021",
+      "ref": "mutation/openai-responses-http-021.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-021-call-id-uniqueness",
+      "requirement_id": "OAI-RESP-REQ-021",
+      "semantic_key": "openai-responses-http/tool-function-calling/call-id-uniqueness",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "duplicate-call-id",
+      "kills_requirement": "OAI-RESP-REQ-021",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation duplicate-call-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-022",
+      "ref": "mutation/openai-responses-http-022.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-022-nonidempotent-retry",
+      "requirement_id": "OAI-RESP-REQ-022",
+      "semantic_key": "openai-responses-http/errors-retry/nonidempotent-retry",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "retry-nonidempotent-request",
+      "kills_requirement": "OAI-RESP-REQ-022",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation retry-nonidempotent-request",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-023",
+      "ref": "mutation/openai-responses-http-023.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-023-malformed-json-boundary",
+      "requirement_id": "OAI-RESP-REQ-023",
+      "semantic_key": "openai-responses-http/http-json-forward-compatibility/malformed-json-boundary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "treat-truncated-json-as-success",
+      "kills_requirement": "OAI-RESP-REQ-023",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation treat-truncated-json-as-success",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-024",
+      "ref": "mutation/openai-responses-http-024.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-024-single-tool-call",
+      "requirement_id": "OAI-RESP-REQ-024",
+      "semantic_key": "openai-responses-http/tool-function-calling/single-tool-call",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "coerce-tool-arguments",
+      "kills_requirement": "OAI-RESP-REQ-024",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation coerce-tool-arguments",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-025",
+      "ref": "mutation/openai-responses-http-025.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-025-error-envelope",
+      "requirement_id": "OAI-RESP-REQ-025",
+      "semantic_key": "openai-responses-http/errors-retry/error-envelope",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-error-envelope",
+      "kills_requirement": "OAI-RESP-REQ-025",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-error-envelope",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-026",
+      "ref": "mutation/openai-responses-http-026.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-026-null-empty-distinction",
+      "requirement_id": "OAI-RESP-REQ-026",
+      "semantic_key": "openai-responses-http/http-json-forward-compatibility/null-empty-distinction",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-null-and-empty",
+      "kills_requirement": "OAI-RESP-REQ-026",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-null-and-empty",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-027",
+      "ref": "mutation/openai-responses-http-027.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-027-sudden-eof",
+      "requirement_id": "OAI-RESP-REQ-027",
+      "semantic_key": "openai-responses-http/streaming/sudden-eof",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "treat-eof-as-completion",
+      "kills_requirement": "OAI-RESP-REQ-027",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation treat-eof-as-completion",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-028",
+      "ref": "mutation/openai-responses-http-028.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-028-branching-continuation",
+      "requirement_id": "OAI-RESP-REQ-028",
+      "semantic_key": "openai-responses-http/state-multiturn/branching-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "merge-continuation-branches",
+      "kills_requirement": "OAI-RESP-REQ-028",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation merge-continuation-branches",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-029",
+      "ref": "mutation/openai-responses-http-029.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-029-version-header",
+      "requirement_id": "OAI-RESP-REQ-029",
+      "semantic_key": "openai-responses-http/authentication-versioning/version-header",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-version-with-floating-value",
+      "kills_requirement": "OAI-RESP-REQ-029",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-version-with-floating-value",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-030",
+      "ref": "mutation/openai-responses-http-030.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-030-terminal-exactly-once",
+      "requirement_id": "OAI-RESP-REQ-030",
+      "semantic_key": "openai-responses-http/streaming/terminal-exactly-once",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-duplicate-terminal",
+      "kills_requirement": "OAI-RESP-REQ-030",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-duplicate-terminal",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-031",
+      "ref": "mutation/openai-responses-http-031.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-031-previous-id-continuation",
+      "requirement_id": "OAI-RESP-REQ-031",
+      "semantic_key": "openai-responses-http/state-multiturn/previous-id-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-previous-id",
+      "kills_requirement": "OAI-RESP-REQ-031",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-previous-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-032",
+      "ref": "mutation/openai-responses-http-032.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-032-authentication-header",
+      "requirement_id": "OAI-RESP-REQ-032",
+      "semantic_key": "openai-responses-http/authentication-versioning/authentication-header",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "move-authentication-to-payload",
+      "kills_requirement": "OAI-RESP-REQ-032",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation move-authentication-to-payload",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-033",
+      "ref": "mutation/openai-responses-http-033.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-033-arbitrary-rechunk",
+      "requirement_id": "OAI-RESP-REQ-033",
+      "semantic_key": "openai-responses-http/streaming/arbitrary-rechunk",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "bind-parser-to-chunk-boundary",
+      "kills_requirement": "OAI-RESP-REQ-033",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation bind-parser-to-chunk-boundary",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-034",
+      "ref": "mutation/openai-responses-http-034.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-034-structured-refusal",
+      "requirement_id": "OAI-RESP-REQ-034",
+      "semantic_key": "openai-responses-http/structured-output/structured-refusal",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "validate-refusal-as-schema-output",
+      "kills_requirement": "OAI-RESP-REQ-034",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation validate-refusal-as-schema-output",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-035",
+      "ref": "mutation/openai-responses-http-035.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-035-stream-accept",
+      "requirement_id": "OAI-RESP-REQ-035",
+      "semantic_key": "openai-responses-http/endpoint-discovery/stream-accept",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-stream-accept",
+      "kills_requirement": "OAI-RESP-REQ-035",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-stream-accept",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-036",
+      "ref": "mutation/openai-responses-http-036.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-036-mixed-output-types",
+      "requirement_id": "OAI-RESP-REQ-036",
+      "semantic_key": "openai-responses-http/nonstream-output/mixed-output-types",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-nontext-output",
+      "kills_requirement": "OAI-RESP-REQ-036",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-nontext-output",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-037",
+      "ref": "mutation/openai-responses-http-037.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-037-schema-required",
+      "requirement_id": "OAI-RESP-REQ-037",
+      "semantic_key": "openai-responses-http/structured-output/schema-required",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "ignore-required-property",
+      "kills_requirement": "OAI-RESP-REQ-037",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation ignore-required-property",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-038",
+      "ref": "mutation/openai-responses-http-038.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-038-endpoint-method",
+      "requirement_id": "OAI-RESP-REQ-038",
+      "semantic_key": "openai-responses-http/endpoint-discovery/endpoint-method",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-endpoint-method",
+      "kills_requirement": "OAI-RESP-REQ-038",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-endpoint-method",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-039",
+      "ref": "mutation/openai-responses-http-039.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-039-terminal-status",
+      "requirement_id": "OAI-RESP-REQ-039",
+      "semantic_key": "openai-responses-http/nonstream-output/terminal-status",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-terminal-status",
+      "kills_requirement": "OAI-RESP-REQ-039",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-terminal-status",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-040",
+      "ref": "mutation/openai-responses-http-040.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-040-tool-loop-bound",
+      "requirement_id": "OAI-RESP-REQ-040",
+      "semantic_key": "openai-responses-http/tool-function-calling/tool-loop-bound",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-tool-loop-bound",
+      "kills_requirement": "OAI-RESP-REQ-040",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation disable-tool-loop-bound",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-041",
+      "ref": "mutation/openai-responses-http-041.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-041-public-reasoning-summary",
+      "requirement_id": "OAI-RESP-REQ-041",
+      "semantic_key": "openai-responses-http/reasoning-thinking/public-reasoning-summary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "expose-hidden-reasoning-as-summary",
+      "kills_requirement": "OAI-RESP-REQ-041",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation expose-hidden-reasoning-as-summary",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-042",
+      "ref": "mutation/openai-responses-http-042.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-042-multi-turn-order",
+      "requirement_id": "OAI-RESP-REQ-042",
+      "semantic_key": "openai-responses-http/messages-roles/multi-turn-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reverse-multi-turn-order",
+      "kills_requirement": "OAI-RESP-REQ-042",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation reverse-multi-turn-order",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-043",
+      "ref": "mutation/openai-responses-http-043.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-043-tool-error-result",
+      "requirement_id": "OAI-RESP-REQ-043",
+      "semantic_key": "openai-responses-http/tool-function-calling/tool-error-result",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "erase-tool-error-marker",
+      "kills_requirement": "OAI-RESP-REQ-043",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation erase-tool-error-marker",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-044",
+      "ref": "mutation/openai-responses-http-044.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-044-inline-media-canary",
+      "requirement_id": "OAI-RESP-REQ-044",
+      "semantic_key": "openai-responses-http/multimodal/inline-media-canary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-inline-media-mime",
+      "kills_requirement": "OAI-RESP-REQ-044",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation rewrite-inline-media-mime",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-045",
+      "ref": "mutation/openai-responses-http-045.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-045-content-part-order",
+      "requirement_id": "OAI-RESP-REQ-045",
+      "semantic_key": "openai-responses-http/messages-roles/content-part-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "sort-content-parts",
+      "kills_requirement": "OAI-RESP-REQ-045",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation sort-content-parts",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-046",
+      "ref": "mutation/openai-responses-http-046.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-046-parallel-tool-order",
+      "requirement_id": "OAI-RESP-REQ-046",
+      "semantic_key": "openai-responses-http/tool-function-calling/parallel-tool-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-parallel-call-index",
+      "kills_requirement": "OAI-RESP-REQ-046",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation swap-parallel-call-index",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-047",
+      "ref": "mutation/openai-responses-http-047.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-047-usage-self-consistency",
+      "requirement_id": "OAI-RESP-REQ-047",
+      "semantic_key": "openai-responses-http/usage/usage-self-consistency",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "corrupt-usage-total",
+      "kills_requirement": "OAI-RESP-REQ-047",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation corrupt-usage-total",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-openai-responses-http-048",
+      "ref": "mutation/openai-responses-http-048.json",
+      "kind": "targeted_mutant",
+      "protocol": "openai-responses-http",
+      "scenario_id": "openai-responses-http-048-response-size-bound",
+      "requirement_id": "OAI-RESP-REQ-048",
+      "semantic_key": "openai-responses-http/http-json-forward-compatibility/response-size-bound",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-response-size-bound",
+      "kills_requirement": "OAI-RESP-REQ-048",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation disable-response-size-bound",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-001",
+      "ref": "mutation/anthropic-messages-001.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-001-content-part-order",
+      "requirement_id": "ANTH-MSG-REQ-001",
+      "semantic_key": "anthropic-messages/messages-roles/content-part-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "sort-content-parts",
+      "kills_requirement": "ANTH-MSG-REQ-001",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation sort-content-parts",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-002",
+      "ref": "mutation/anthropic-messages-002.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-002-parallel-tool-order",
+      "requirement_id": "ANTH-MSG-REQ-002",
+      "semantic_key": "anthropic-messages/tool-function-calling/parallel-tool-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-parallel-call-index",
+      "kills_requirement": "ANTH-MSG-REQ-002",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation swap-parallel-call-index",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-003",
+      "ref": "mutation/anthropic-messages-003.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-003-usage-self-consistency",
+      "requirement_id": "ANTH-MSG-REQ-003",
+      "semantic_key": "anthropic-messages/usage/usage-self-consistency",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "corrupt-usage-total",
+      "kills_requirement": "ANTH-MSG-REQ-003",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation corrupt-usage-total",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-004",
+      "ref": "mutation/anthropic-messages-004.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-004-response-size-bound",
+      "requirement_id": "ANTH-MSG-REQ-004",
+      "semantic_key": "anthropic-messages/http-json-forward-compatibility/response-size-bound",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-response-size-bound",
+      "kills_requirement": "ANTH-MSG-REQ-004",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation disable-response-size-bound",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-005",
+      "ref": "mutation/anthropic-messages-005.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-005-tool-choice",
+      "requirement_id": "ANTH-MSG-REQ-005",
+      "semantic_key": "anthropic-messages/tool-function-calling/tool-choice",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-tool-choice",
+      "kills_requirement": "ANTH-MSG-REQ-005",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-tool-choice",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-006",
+      "ref": "mutation/anthropic-messages-006.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-006-retry-after",
+      "requirement_id": "ANTH-MSG-REQ-006",
+      "semantic_key": "anthropic-messages/errors-retry/retry-after",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "ignore-retry-after",
+      "kills_requirement": "ANTH-MSG-REQ-006",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation ignore-retry-after",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-007",
+      "ref": "mutation/anthropic-messages-007.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-007-unknown-optional-field",
+      "requirement_id": "ANTH-MSG-REQ-007",
+      "semantic_key": "anthropic-messages/http-json-forward-compatibility/unknown-optional-field",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reject-unknown-optional-field",
+      "kills_requirement": "ANTH-MSG-REQ-007",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation reject-unknown-optional-field",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-008",
+      "ref": "mutation/anthropic-messages-008.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-008-post-terminal-data",
+      "requirement_id": "ANTH-MSG-REQ-008",
+      "semantic_key": "anthropic-messages/streaming/post-terminal-data",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-post-terminal-data",
+      "kills_requirement": "ANTH-MSG-REQ-008",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-post-terminal-data",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-009",
+      "ref": "mutation/anthropic-messages-009.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-009-http-error-status",
+      "requirement_id": "ANTH-MSG-REQ-009",
+      "semantic_key": "anthropic-messages/errors-retry/http-error-status",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-http-error-status",
+      "kills_requirement": "ANTH-MSG-REQ-009",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-http-error-status",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-010",
+      "ref": "mutation/anthropic-messages-010.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-010-utf8-roundtrip",
+      "requirement_id": "ANTH-MSG-REQ-010",
+      "semantic_key": "anthropic-messages/http-json-forward-compatibility/utf8-roundtrip",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "truncate-multibyte-codepoint",
+      "kills_requirement": "ANTH-MSG-REQ-010",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation truncate-multibyte-codepoint",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-011",
+      "ref": "mutation/anthropic-messages-011.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-011-unknown-stream-event",
+      "requirement_id": "ANTH-MSG-REQ-011",
+      "semantic_key": "anthropic-messages/streaming/unknown-stream-event",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "panic-on-unknown-event",
+      "kills_requirement": "ANTH-MSG-REQ-011",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation panic-on-unknown-event",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-012",
+      "ref": "mutation/anthropic-messages-012.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-012-storage-mode",
+      "requirement_id": "ANTH-MSG-REQ-012",
+      "semantic_key": "anthropic-messages/state-multiturn/storage-mode",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "force-store-enabled",
+      "kills_requirement": "ANTH-MSG-REQ-012",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation force-store-enabled",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-013",
+      "ref": "mutation/anthropic-messages-013.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-013-missing-authentication",
+      "requirement_id": "ANTH-MSG-REQ-013",
+      "semantic_key": "anthropic-messages/authentication-versioning/missing-authentication",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-missing-authentication",
+      "kills_requirement": "ANTH-MSG-REQ-013",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-missing-authentication",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-014",
+      "ref": "mutation/anthropic-messages-014.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-014-utf8-across-chunks",
+      "requirement_id": "ANTH-MSG-REQ-014",
+      "semantic_key": "anthropic-messages/streaming/utf8-across-chunks",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "decode-each-chunk-independently",
+      "kills_requirement": "ANTH-MSG-REQ-014",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation decode-each-chunk-independently",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-015",
+      "ref": "mutation/anthropic-messages-015.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-015-stateless-continuation",
+      "requirement_id": "ANTH-MSG-REQ-015",
+      "semantic_key": "anthropic-messages/state-multiturn/stateless-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-continuation-item",
+      "kills_requirement": "ANTH-MSG-REQ-015",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-continuation-item",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-016",
+      "ref": "mutation/anthropic-messages-016.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-016-reported-model-identity",
+      "requirement_id": "ANTH-MSG-REQ-016",
+      "semantic_key": "anthropic-messages/endpoint-discovery/reported-model-identity",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-reported-model",
+      "kills_requirement": "ANTH-MSG-REQ-016",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation rewrite-reported-model",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-017",
+      "ref": "mutation/anthropic-messages-017.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-017-stream-media-type",
+      "requirement_id": "ANTH-MSG-REQ-017",
+      "semantic_key": "anthropic-messages/streaming/stream-media-type",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-wrong-stream-media-type",
+      "kills_requirement": "ANTH-MSG-REQ-017",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-wrong-stream-media-type",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-018",
+      "ref": "mutation/anthropic-messages-018.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-018-additional-properties",
+      "requirement_id": "ANTH-MSG-REQ-018",
+      "semantic_key": "anthropic-messages/structured-output/additional-properties",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "allow-forbidden-property",
+      "kills_requirement": "ANTH-MSG-REQ-018",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation allow-forbidden-property",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-019",
+      "ref": "mutation/anthropic-messages-019.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-019-request-content-type",
+      "requirement_id": "ANTH-MSG-REQ-019",
+      "semantic_key": "anthropic-messages/endpoint-discovery/request-content-type",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-request-content-type",
+      "kills_requirement": "ANTH-MSG-REQ-019",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-request-content-type",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-020",
+      "ref": "mutation/anthropic-messages-020.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-020-unique-output-index",
+      "requirement_id": "ANTH-MSG-REQ-020",
+      "semantic_key": "anthropic-messages/nonstream-output/unique-output-index",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "duplicate-output-index",
+      "kills_requirement": "ANTH-MSG-REQ-020",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation duplicate-output-index",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-021",
+      "ref": "mutation/anthropic-messages-021.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-021-json-mode-validity",
+      "requirement_id": "ANTH-MSG-REQ-021",
+      "semantic_key": "anthropic-messages/structured-output/json-mode-validity",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "equate-json-mode-with-schema",
+      "kills_requirement": "ANTH-MSG-REQ-021",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation equate-json-mode-with-schema",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-022",
+      "ref": "mutation/anthropic-messages-022.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-022-cancel-and-timeout",
+      "requirement_id": "ANTH-MSG-REQ-022",
+      "semantic_key": "anthropic-messages/cancellation-resources/cancel-and-timeout",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "map-cancel-to-completion",
+      "kills_requirement": "ANTH-MSG-REQ-022",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation map-cancel-to-completion",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-023",
+      "ref": "mutation/anthropic-messages-023.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-023-required-response-envelope",
+      "requirement_id": "ANTH-MSG-REQ-023",
+      "semantic_key": "anthropic-messages/nonstream-output/required-response-envelope",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-response-envelope",
+      "kills_requirement": "ANTH-MSG-REQ-023",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-response-envelope",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-024",
+      "ref": "mutation/anthropic-messages-024.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-024-nested-tool-schema",
+      "requirement_id": "ANTH-MSG-REQ-024",
+      "semantic_key": "anthropic-messages/tool-function-calling/nested-tool-schema",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-nested-required",
+      "kills_requirement": "ANTH-MSG-REQ-024",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-nested-required",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-025",
+      "ref": "mutation/anthropic-messages-025.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-025-opaque-reasoning-continuation",
+      "requirement_id": "ANTH-MSG-REQ-025",
+      "semantic_key": "anthropic-messages/reasoning-thinking/opaque-reasoning-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "alter-opaque-reasoning-artifact",
+      "kills_requirement": "ANTH-MSG-REQ-025",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation alter-opaque-reasoning-artifact",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-026",
+      "ref": "mutation/anthropic-messages-026.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-026-tool-result-association",
+      "requirement_id": "ANTH-MSG-REQ-026",
+      "semantic_key": "anthropic-messages/messages-roles/tool-result-association",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-tool-result-call-id",
+      "kills_requirement": "ANTH-MSG-REQ-026",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation swap-tool-result-call-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-027",
+      "ref": "mutation/anthropic-messages-027.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-027-streamed-arguments",
+      "requirement_id": "ANTH-MSG-REQ-027",
+      "semantic_key": "anthropic-messages/tool-function-calling/streamed-arguments",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-argument-delta",
+      "kills_requirement": "ANTH-MSG-REQ-027",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-argument-delta",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-028",
+      "ref": "mutation/anthropic-messages-028.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-028-streaming-usage-position",
+      "requirement_id": "ANTH-MSG-REQ-028",
+      "semantic_key": "anthropic-messages/usage/streaming-usage-position",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "move-usage-after-terminal",
+      "kills_requirement": "ANTH-MSG-REQ-028",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation move-usage-after-terminal",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-029",
+      "ref": "mutation/anthropic-messages-029.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-029-protocol-role-set",
+      "requirement_id": "ANTH-MSG-REQ-029",
+      "semantic_key": "anthropic-messages/messages-roles/protocol-role-set",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "coerce-protocol-role",
+      "kills_requirement": "ANTH-MSG-REQ-029",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation coerce-protocol-role",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-030",
+      "ref": "mutation/anthropic-messages-030.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-030-call-id-uniqueness",
+      "requirement_id": "ANTH-MSG-REQ-030",
+      "semantic_key": "anthropic-messages/tool-function-calling/call-id-uniqueness",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "duplicate-call-id",
+      "kills_requirement": "ANTH-MSG-REQ-030",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation duplicate-call-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-031",
+      "ref": "mutation/anthropic-messages-031.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-031-nonidempotent-retry",
+      "requirement_id": "ANTH-MSG-REQ-031",
+      "semantic_key": "anthropic-messages/errors-retry/nonidempotent-retry",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "retry-nonidempotent-request",
+      "kills_requirement": "ANTH-MSG-REQ-031",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation retry-nonidempotent-request",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-032",
+      "ref": "mutation/anthropic-messages-032.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-032-malformed-json-boundary",
+      "requirement_id": "ANTH-MSG-REQ-032",
+      "semantic_key": "anthropic-messages/http-json-forward-compatibility/malformed-json-boundary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "treat-truncated-json-as-success",
+      "kills_requirement": "ANTH-MSG-REQ-032",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation treat-truncated-json-as-success",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-033",
+      "ref": "mutation/anthropic-messages-033.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-033-single-tool-call",
+      "requirement_id": "ANTH-MSG-REQ-033",
+      "semantic_key": "anthropic-messages/tool-function-calling/single-tool-call",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "coerce-tool-arguments",
+      "kills_requirement": "ANTH-MSG-REQ-033",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation coerce-tool-arguments",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-034",
+      "ref": "mutation/anthropic-messages-034.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-034-error-envelope",
+      "requirement_id": "ANTH-MSG-REQ-034",
+      "semantic_key": "anthropic-messages/errors-retry/error-envelope",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-error-envelope",
+      "kills_requirement": "ANTH-MSG-REQ-034",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-error-envelope",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-035",
+      "ref": "mutation/anthropic-messages-035.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-035-null-empty-distinction",
+      "requirement_id": "ANTH-MSG-REQ-035",
+      "semantic_key": "anthropic-messages/http-json-forward-compatibility/null-empty-distinction",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-null-and-empty",
+      "kills_requirement": "ANTH-MSG-REQ-035",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-null-and-empty",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-036",
+      "ref": "mutation/anthropic-messages-036.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-036-sudden-eof",
+      "requirement_id": "ANTH-MSG-REQ-036",
+      "semantic_key": "anthropic-messages/streaming/sudden-eof",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "treat-eof-as-completion",
+      "kills_requirement": "ANTH-MSG-REQ-036",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation treat-eof-as-completion",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-037",
+      "ref": "mutation/anthropic-messages-037.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-037-branching-continuation",
+      "requirement_id": "ANTH-MSG-REQ-037",
+      "semantic_key": "anthropic-messages/state-multiturn/branching-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "merge-continuation-branches",
+      "kills_requirement": "ANTH-MSG-REQ-037",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation merge-continuation-branches",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-038",
+      "ref": "mutation/anthropic-messages-038.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-038-version-header",
+      "requirement_id": "ANTH-MSG-REQ-038",
+      "semantic_key": "anthropic-messages/authentication-versioning/version-header",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-version-with-floating-value",
+      "kills_requirement": "ANTH-MSG-REQ-038",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-version-with-floating-value",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-039",
+      "ref": "mutation/anthropic-messages-039.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-039-terminal-exactly-once",
+      "requirement_id": "ANTH-MSG-REQ-039",
+      "semantic_key": "anthropic-messages/streaming/terminal-exactly-once",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-duplicate-terminal",
+      "kills_requirement": "ANTH-MSG-REQ-039",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-duplicate-terminal",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-040",
+      "ref": "mutation/anthropic-messages-040.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-040-previous-id-continuation",
+      "requirement_id": "ANTH-MSG-REQ-040",
+      "semantic_key": "anthropic-messages/state-multiturn/previous-id-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-previous-id",
+      "kills_requirement": "ANTH-MSG-REQ-040",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-previous-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-041",
+      "ref": "mutation/anthropic-messages-041.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-041-authentication-header",
+      "requirement_id": "ANTH-MSG-REQ-041",
+      "semantic_key": "anthropic-messages/authentication-versioning/authentication-header",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "move-authentication-to-payload",
+      "kills_requirement": "ANTH-MSG-REQ-041",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation move-authentication-to-payload",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-anthropic-messages-042",
+      "ref": "mutation/anthropic-messages-042.json",
+      "kind": "targeted_mutant",
+      "protocol": "anthropic-messages",
+      "scenario_id": "anthropic-messages-042-arbitrary-rechunk",
+      "requirement_id": "ANTH-MSG-REQ-042",
+      "semantic_key": "anthropic-messages/streaming/arbitrary-rechunk",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "bind-parser-to-chunk-boundary",
+      "kills_requirement": "ANTH-MSG-REQ-042",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation bind-parser-to-chunk-boundary",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-001",
+      "ref": "mutation/google-generate-content-001.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-001-mixed-output-types",
+      "requirement_id": "GGL-GEN-REQ-001",
+      "semantic_key": "google-generate-content/nonstream-output/mixed-output-types",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-nontext-output",
+      "kills_requirement": "GGL-GEN-REQ-001",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-nontext-output",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-002",
+      "ref": "mutation/google-generate-content-002.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-002-schema-required",
+      "requirement_id": "GGL-GEN-REQ-002",
+      "semantic_key": "google-generate-content/structured-output/schema-required",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "ignore-required-property",
+      "kills_requirement": "GGL-GEN-REQ-002",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation ignore-required-property",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-003",
+      "ref": "mutation/google-generate-content-003.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-003-endpoint-method",
+      "requirement_id": "GGL-GEN-REQ-003",
+      "semantic_key": "google-generate-content/endpoint-discovery/endpoint-method",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-endpoint-method",
+      "kills_requirement": "GGL-GEN-REQ-003",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-endpoint-method",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-004",
+      "ref": "mutation/google-generate-content-004.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-004-terminal-status",
+      "requirement_id": "GGL-GEN-REQ-004",
+      "semantic_key": "google-generate-content/nonstream-output/terminal-status",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-terminal-status",
+      "kills_requirement": "GGL-GEN-REQ-004",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-terminal-status",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-005",
+      "ref": "mutation/google-generate-content-005.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-005-tool-loop-bound",
+      "requirement_id": "GGL-GEN-REQ-005",
+      "semantic_key": "google-generate-content/tool-function-calling/tool-loop-bound",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-tool-loop-bound",
+      "kills_requirement": "GGL-GEN-REQ-005",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation disable-tool-loop-bound",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-006",
+      "ref": "mutation/google-generate-content-006.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-006-public-reasoning-summary",
+      "requirement_id": "GGL-GEN-REQ-006",
+      "semantic_key": "google-generate-content/reasoning-thinking/public-reasoning-summary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "expose-hidden-reasoning-as-summary",
+      "kills_requirement": "GGL-GEN-REQ-006",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation expose-hidden-reasoning-as-summary",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-007",
+      "ref": "mutation/google-generate-content-007.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-007-multi-turn-order",
+      "requirement_id": "GGL-GEN-REQ-007",
+      "semantic_key": "google-generate-content/messages-roles/multi-turn-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reverse-multi-turn-order",
+      "kills_requirement": "GGL-GEN-REQ-007",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation reverse-multi-turn-order",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-008",
+      "ref": "mutation/google-generate-content-008.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-008-tool-error-result",
+      "requirement_id": "GGL-GEN-REQ-008",
+      "semantic_key": "google-generate-content/tool-function-calling/tool-error-result",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "erase-tool-error-marker",
+      "kills_requirement": "GGL-GEN-REQ-008",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation erase-tool-error-marker",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-009",
+      "ref": "mutation/google-generate-content-009.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-009-inline-media-canary",
+      "requirement_id": "GGL-GEN-REQ-009",
+      "semantic_key": "google-generate-content/multimodal/inline-media-canary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-inline-media-mime",
+      "kills_requirement": "GGL-GEN-REQ-009",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation rewrite-inline-media-mime",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-010",
+      "ref": "mutation/google-generate-content-010.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-010-content-part-order",
+      "requirement_id": "GGL-GEN-REQ-010",
+      "semantic_key": "google-generate-content/messages-roles/content-part-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "sort-content-parts",
+      "kills_requirement": "GGL-GEN-REQ-010",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation sort-content-parts",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-011",
+      "ref": "mutation/google-generate-content-011.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-011-parallel-tool-order",
+      "requirement_id": "GGL-GEN-REQ-011",
+      "semantic_key": "google-generate-content/tool-function-calling/parallel-tool-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-parallel-call-index",
+      "kills_requirement": "GGL-GEN-REQ-011",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation swap-parallel-call-index",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-012",
+      "ref": "mutation/google-generate-content-012.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-012-usage-self-consistency",
+      "requirement_id": "GGL-GEN-REQ-012",
+      "semantic_key": "google-generate-content/usage/usage-self-consistency",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "corrupt-usage-total",
+      "kills_requirement": "GGL-GEN-REQ-012",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation corrupt-usage-total",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-013",
+      "ref": "mutation/google-generate-content-013.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-013-response-size-bound",
+      "requirement_id": "GGL-GEN-REQ-013",
+      "semantic_key": "google-generate-content/http-json-forward-compatibility/response-size-bound",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-response-size-bound",
+      "kills_requirement": "GGL-GEN-REQ-013",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation disable-response-size-bound",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-014",
+      "ref": "mutation/google-generate-content-014.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-014-tool-choice",
+      "requirement_id": "GGL-GEN-REQ-014",
+      "semantic_key": "google-generate-content/tool-function-calling/tool-choice",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-tool-choice",
+      "kills_requirement": "GGL-GEN-REQ-014",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-tool-choice",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-015",
+      "ref": "mutation/google-generate-content-015.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-015-retry-after",
+      "requirement_id": "GGL-GEN-REQ-015",
+      "semantic_key": "google-generate-content/errors-retry/retry-after",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "ignore-retry-after",
+      "kills_requirement": "GGL-GEN-REQ-015",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation ignore-retry-after",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-016",
+      "ref": "mutation/google-generate-content-016.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-016-unknown-optional-field",
+      "requirement_id": "GGL-GEN-REQ-016",
+      "semantic_key": "google-generate-content/http-json-forward-compatibility/unknown-optional-field",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reject-unknown-optional-field",
+      "kills_requirement": "GGL-GEN-REQ-016",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation reject-unknown-optional-field",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-017",
+      "ref": "mutation/google-generate-content-017.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-017-post-terminal-data",
+      "requirement_id": "GGL-GEN-REQ-017",
+      "semantic_key": "google-generate-content/streaming/post-terminal-data",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-post-terminal-data",
+      "kills_requirement": "GGL-GEN-REQ-017",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-post-terminal-data",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-018",
+      "ref": "mutation/google-generate-content-018.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-018-http-error-status",
+      "requirement_id": "GGL-GEN-REQ-018",
+      "semantic_key": "google-generate-content/errors-retry/http-error-status",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-http-error-status",
+      "kills_requirement": "GGL-GEN-REQ-018",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-http-error-status",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-019",
+      "ref": "mutation/google-generate-content-019.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-019-utf8-roundtrip",
+      "requirement_id": "GGL-GEN-REQ-019",
+      "semantic_key": "google-generate-content/http-json-forward-compatibility/utf8-roundtrip",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "truncate-multibyte-codepoint",
+      "kills_requirement": "GGL-GEN-REQ-019",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation truncate-multibyte-codepoint",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-020",
+      "ref": "mutation/google-generate-content-020.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-020-unknown-stream-event",
+      "requirement_id": "GGL-GEN-REQ-020",
+      "semantic_key": "google-generate-content/streaming/unknown-stream-event",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "panic-on-unknown-event",
+      "kills_requirement": "GGL-GEN-REQ-020",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation panic-on-unknown-event",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-021",
+      "ref": "mutation/google-generate-content-021.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-021-storage-mode",
+      "requirement_id": "GGL-GEN-REQ-021",
+      "semantic_key": "google-generate-content/state-multiturn/storage-mode",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "force-store-enabled",
+      "kills_requirement": "GGL-GEN-REQ-021",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation force-store-enabled",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-022",
+      "ref": "mutation/google-generate-content-022.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-022-missing-authentication",
+      "requirement_id": "GGL-GEN-REQ-022",
+      "semantic_key": "google-generate-content/authentication-versioning/missing-authentication",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-missing-authentication",
+      "kills_requirement": "GGL-GEN-REQ-022",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-missing-authentication",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-023",
+      "ref": "mutation/google-generate-content-023.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-023-utf8-across-chunks",
+      "requirement_id": "GGL-GEN-REQ-023",
+      "semantic_key": "google-generate-content/streaming/utf8-across-chunks",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "decode-each-chunk-independently",
+      "kills_requirement": "GGL-GEN-REQ-023",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation decode-each-chunk-independently",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-024",
+      "ref": "mutation/google-generate-content-024.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-024-stateless-continuation",
+      "requirement_id": "GGL-GEN-REQ-024",
+      "semantic_key": "google-generate-content/state-multiturn/stateless-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-continuation-item",
+      "kills_requirement": "GGL-GEN-REQ-024",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-continuation-item",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-025",
+      "ref": "mutation/google-generate-content-025.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-025-reported-model-identity",
+      "requirement_id": "GGL-GEN-REQ-025",
+      "semantic_key": "google-generate-content/endpoint-discovery/reported-model-identity",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-reported-model",
+      "kills_requirement": "GGL-GEN-REQ-025",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation rewrite-reported-model",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-026",
+      "ref": "mutation/google-generate-content-026.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-026-stream-media-type",
+      "requirement_id": "GGL-GEN-REQ-026",
+      "semantic_key": "google-generate-content/streaming/stream-media-type",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-wrong-stream-media-type",
+      "kills_requirement": "GGL-GEN-REQ-026",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-wrong-stream-media-type",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-027",
+      "ref": "mutation/google-generate-content-027.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-027-additional-properties",
+      "requirement_id": "GGL-GEN-REQ-027",
+      "semantic_key": "google-generate-content/structured-output/additional-properties",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "allow-forbidden-property",
+      "kills_requirement": "GGL-GEN-REQ-027",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation allow-forbidden-property",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-028",
+      "ref": "mutation/google-generate-content-028.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-028-request-content-type",
+      "requirement_id": "GGL-GEN-REQ-028",
+      "semantic_key": "google-generate-content/endpoint-discovery/request-content-type",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-request-content-type",
+      "kills_requirement": "GGL-GEN-REQ-028",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-request-content-type",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-029",
+      "ref": "mutation/google-generate-content-029.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-029-unique-output-index",
+      "requirement_id": "GGL-GEN-REQ-029",
+      "semantic_key": "google-generate-content/nonstream-output/unique-output-index",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "duplicate-output-index",
+      "kills_requirement": "GGL-GEN-REQ-029",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation duplicate-output-index",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-030",
+      "ref": "mutation/google-generate-content-030.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-030-json-mode-validity",
+      "requirement_id": "GGL-GEN-REQ-030",
+      "semantic_key": "google-generate-content/structured-output/json-mode-validity",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "equate-json-mode-with-schema",
+      "kills_requirement": "GGL-GEN-REQ-030",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation equate-json-mode-with-schema",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-031",
+      "ref": "mutation/google-generate-content-031.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-031-cancel-and-timeout",
+      "requirement_id": "GGL-GEN-REQ-031",
+      "semantic_key": "google-generate-content/cancellation-resources/cancel-and-timeout",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "map-cancel-to-completion",
+      "kills_requirement": "GGL-GEN-REQ-031",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation map-cancel-to-completion",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-032",
+      "ref": "mutation/google-generate-content-032.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-032-required-response-envelope",
+      "requirement_id": "GGL-GEN-REQ-032",
+      "semantic_key": "google-generate-content/nonstream-output/required-response-envelope",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-response-envelope",
+      "kills_requirement": "GGL-GEN-REQ-032",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-response-envelope",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-033",
+      "ref": "mutation/google-generate-content-033.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-033-nested-tool-schema",
+      "requirement_id": "GGL-GEN-REQ-033",
+      "semantic_key": "google-generate-content/tool-function-calling/nested-tool-schema",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-nested-required",
+      "kills_requirement": "GGL-GEN-REQ-033",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-nested-required",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-034",
+      "ref": "mutation/google-generate-content-034.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-034-opaque-reasoning-continuation",
+      "requirement_id": "GGL-GEN-REQ-034",
+      "semantic_key": "google-generate-content/reasoning-thinking/opaque-reasoning-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "alter-opaque-reasoning-artifact",
+      "kills_requirement": "GGL-GEN-REQ-034",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation alter-opaque-reasoning-artifact",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-035",
+      "ref": "mutation/google-generate-content-035.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-035-tool-result-association",
+      "requirement_id": "GGL-GEN-REQ-035",
+      "semantic_key": "google-generate-content/messages-roles/tool-result-association",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-tool-result-call-id",
+      "kills_requirement": "GGL-GEN-REQ-035",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation swap-tool-result-call-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-generate-content-036",
+      "ref": "mutation/google-generate-content-036.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-generate-content",
+      "scenario_id": "google-generate-content-036-streamed-arguments",
+      "requirement_id": "GGL-GEN-REQ-036",
+      "semantic_key": "google-generate-content/tool-function-calling/streamed-arguments",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-argument-delta",
+      "kills_requirement": "GGL-GEN-REQ-036",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-argument-delta",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-001",
+      "ref": "mutation/google-interactions-001.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-001-terminal-exactly-once",
+      "requirement_id": "GGL-INT-REQ-001",
+      "semantic_key": "google-interactions/streaming/terminal-exactly-once",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-duplicate-terminal",
+      "kills_requirement": "GGL-INT-REQ-001",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-duplicate-terminal",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-002",
+      "ref": "mutation/google-interactions-002.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-002-previous-id-continuation",
+      "requirement_id": "GGL-INT-REQ-002",
+      "semantic_key": "google-interactions/state-multiturn/previous-id-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-previous-id",
+      "kills_requirement": "GGL-INT-REQ-002",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-previous-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-003",
+      "ref": "mutation/google-interactions-003.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-003-authentication-header",
+      "requirement_id": "GGL-INT-REQ-003",
+      "semantic_key": "google-interactions/authentication-versioning/authentication-header",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "move-authentication-to-payload",
+      "kills_requirement": "GGL-INT-REQ-003",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation move-authentication-to-payload",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-004",
+      "ref": "mutation/google-interactions-004.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-004-arbitrary-rechunk",
+      "requirement_id": "GGL-INT-REQ-004",
+      "semantic_key": "google-interactions/streaming/arbitrary-rechunk",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "bind-parser-to-chunk-boundary",
+      "kills_requirement": "GGL-INT-REQ-004",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation bind-parser-to-chunk-boundary",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-005",
+      "ref": "mutation/google-interactions-005.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-005-structured-refusal",
+      "requirement_id": "GGL-INT-REQ-005",
+      "semantic_key": "google-interactions/structured-output/structured-refusal",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "validate-refusal-as-schema-output",
+      "kills_requirement": "GGL-INT-REQ-005",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation validate-refusal-as-schema-output",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-006",
+      "ref": "mutation/google-interactions-006.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-006-stream-accept",
+      "requirement_id": "GGL-INT-REQ-006",
+      "semantic_key": "google-interactions/endpoint-discovery/stream-accept",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-stream-accept",
+      "kills_requirement": "GGL-INT-REQ-006",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-stream-accept",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-007",
+      "ref": "mutation/google-interactions-007.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-007-mixed-output-types",
+      "requirement_id": "GGL-INT-REQ-007",
+      "semantic_key": "google-interactions/nonstream-output/mixed-output-types",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-nontext-output",
+      "kills_requirement": "GGL-INT-REQ-007",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-nontext-output",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-008",
+      "ref": "mutation/google-interactions-008.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-008-schema-required",
+      "requirement_id": "GGL-INT-REQ-008",
+      "semantic_key": "google-interactions/structured-output/schema-required",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "ignore-required-property",
+      "kills_requirement": "GGL-INT-REQ-008",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation ignore-required-property",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-009",
+      "ref": "mutation/google-interactions-009.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-009-endpoint-method",
+      "requirement_id": "GGL-INT-REQ-009",
+      "semantic_key": "google-interactions/endpoint-discovery/endpoint-method",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-endpoint-method",
+      "kills_requirement": "GGL-INT-REQ-009",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation replace-endpoint-method",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-010",
+      "ref": "mutation/google-interactions-010.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-010-terminal-status",
+      "requirement_id": "GGL-INT-REQ-010",
+      "semantic_key": "google-interactions/nonstream-output/terminal-status",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-terminal-status",
+      "kills_requirement": "GGL-INT-REQ-010",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-terminal-status",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-011",
+      "ref": "mutation/google-interactions-011.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-011-tool-loop-bound",
+      "requirement_id": "GGL-INT-REQ-011",
+      "semantic_key": "google-interactions/tool-function-calling/tool-loop-bound",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-tool-loop-bound",
+      "kills_requirement": "GGL-INT-REQ-011",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation disable-tool-loop-bound",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-012",
+      "ref": "mutation/google-interactions-012.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-012-public-reasoning-summary",
+      "requirement_id": "GGL-INT-REQ-012",
+      "semantic_key": "google-interactions/reasoning-thinking/public-reasoning-summary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "expose-hidden-reasoning-as-summary",
+      "kills_requirement": "GGL-INT-REQ-012",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation expose-hidden-reasoning-as-summary",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-013",
+      "ref": "mutation/google-interactions-013.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-013-multi-turn-order",
+      "requirement_id": "GGL-INT-REQ-013",
+      "semantic_key": "google-interactions/messages-roles/multi-turn-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reverse-multi-turn-order",
+      "kills_requirement": "GGL-INT-REQ-013",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation reverse-multi-turn-order",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-014",
+      "ref": "mutation/google-interactions-014.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-014-tool-error-result",
+      "requirement_id": "GGL-INT-REQ-014",
+      "semantic_key": "google-interactions/tool-function-calling/tool-error-result",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "erase-tool-error-marker",
+      "kills_requirement": "GGL-INT-REQ-014",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation erase-tool-error-marker",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-015",
+      "ref": "mutation/google-interactions-015.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-015-inline-media-canary",
+      "requirement_id": "GGL-INT-REQ-015",
+      "semantic_key": "google-interactions/multimodal/inline-media-canary",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-inline-media-mime",
+      "kills_requirement": "GGL-INT-REQ-015",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation rewrite-inline-media-mime",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-016",
+      "ref": "mutation/google-interactions-016.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-016-content-part-order",
+      "requirement_id": "GGL-INT-REQ-016",
+      "semantic_key": "google-interactions/messages-roles/content-part-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "sort-content-parts",
+      "kills_requirement": "GGL-INT-REQ-016",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation sort-content-parts",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-017",
+      "ref": "mutation/google-interactions-017.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-017-parallel-tool-order",
+      "requirement_id": "GGL-INT-REQ-017",
+      "semantic_key": "google-interactions/tool-function-calling/parallel-tool-order",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-parallel-call-index",
+      "kills_requirement": "GGL-INT-REQ-017",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation swap-parallel-call-index",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-018",
+      "ref": "mutation/google-interactions-018.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-018-usage-self-consistency",
+      "requirement_id": "GGL-INT-REQ-018",
+      "semantic_key": "google-interactions/usage/usage-self-consistency",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "corrupt-usage-total",
+      "kills_requirement": "GGL-INT-REQ-018",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation corrupt-usage-total",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-019",
+      "ref": "mutation/google-interactions-019.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-019-response-size-bound",
+      "requirement_id": "GGL-INT-REQ-019",
+      "semantic_key": "google-interactions/http-json-forward-compatibility/response-size-bound",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-response-size-bound",
+      "kills_requirement": "GGL-INT-REQ-019",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation disable-response-size-bound",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-020",
+      "ref": "mutation/google-interactions-020.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-020-tool-choice",
+      "requirement_id": "GGL-INT-REQ-020",
+      "semantic_key": "google-interactions/tool-function-calling/tool-choice",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-tool-choice",
+      "kills_requirement": "GGL-INT-REQ-020",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-tool-choice",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-021",
+      "ref": "mutation/google-interactions-021.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-021-retry-after",
+      "requirement_id": "GGL-INT-REQ-021",
+      "semantic_key": "google-interactions/errors-retry/retry-after",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "ignore-retry-after",
+      "kills_requirement": "GGL-INT-REQ-021",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation ignore-retry-after",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-022",
+      "ref": "mutation/google-interactions-022.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-022-unknown-optional-field",
+      "requirement_id": "GGL-INT-REQ-022",
+      "semantic_key": "google-interactions/http-json-forward-compatibility/unknown-optional-field",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reject-unknown-optional-field",
+      "kills_requirement": "GGL-INT-REQ-022",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation reject-unknown-optional-field",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-023",
+      "ref": "mutation/google-interactions-023.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-023-post-terminal-data",
+      "requirement_id": "GGL-INT-REQ-023",
+      "semantic_key": "google-interactions/streaming/post-terminal-data",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-post-terminal-data",
+      "kills_requirement": "GGL-INT-REQ-023",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-post-terminal-data",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-024",
+      "ref": "mutation/google-interactions-024.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-024-http-error-status",
+      "requirement_id": "GGL-INT-REQ-024",
+      "semantic_key": "google-interactions/errors-retry/http-error-status",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-http-error-status",
+      "kills_requirement": "GGL-INT-REQ-024",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation collapse-http-error-status",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-025",
+      "ref": "mutation/google-interactions-025.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-025-utf8-roundtrip",
+      "requirement_id": "GGL-INT-REQ-025",
+      "semantic_key": "google-interactions/http-json-forward-compatibility/utf8-roundtrip",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "truncate-multibyte-codepoint",
+      "kills_requirement": "GGL-INT-REQ-025",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation truncate-multibyte-codepoint",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-026",
+      "ref": "mutation/google-interactions-026.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-026-unknown-stream-event",
+      "requirement_id": "GGL-INT-REQ-026",
+      "semantic_key": "google-interactions/streaming/unknown-stream-event",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "panic-on-unknown-event",
+      "kills_requirement": "GGL-INT-REQ-026",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation panic-on-unknown-event",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-027",
+      "ref": "mutation/google-interactions-027.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-027-storage-mode",
+      "requirement_id": "GGL-INT-REQ-027",
+      "semantic_key": "google-interactions/state-multiturn/storage-mode",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "force-store-enabled",
+      "kills_requirement": "GGL-INT-REQ-027",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation force-store-enabled",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-028",
+      "ref": "mutation/google-interactions-028.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-028-missing-authentication",
+      "requirement_id": "GGL-INT-REQ-028",
+      "semantic_key": "google-interactions/authentication-versioning/missing-authentication",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-missing-authentication",
+      "kills_requirement": "GGL-INT-REQ-028",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-missing-authentication",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-029",
+      "ref": "mutation/google-interactions-029.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-029-utf8-across-chunks",
+      "requirement_id": "GGL-INT-REQ-029",
+      "semantic_key": "google-interactions/streaming/utf8-across-chunks",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "decode-each-chunk-independently",
+      "kills_requirement": "GGL-INT-REQ-029",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation decode-each-chunk-independently",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-030",
+      "ref": "mutation/google-interactions-030.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-030-stateless-continuation",
+      "requirement_id": "GGL-INT-REQ-030",
+      "semantic_key": "google-interactions/state-multiturn/stateless-continuation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-continuation-item",
+      "kills_requirement": "GGL-INT-REQ-030",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation drop-continuation-item",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-031",
+      "ref": "mutation/google-interactions-031.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-031-reported-model-identity",
+      "requirement_id": "GGL-INT-REQ-031",
+      "semantic_key": "google-interactions/endpoint-discovery/reported-model-identity",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-reported-model",
+      "kills_requirement": "GGL-INT-REQ-031",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation rewrite-reported-model",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-google-interactions-032",
+      "ref": "mutation/google-interactions-032.json",
+      "kind": "targeted_mutant",
+      "protocol": "google-interactions",
+      "scenario_id": "google-interactions-032-stream-media-type",
+      "requirement_id": "GGL-INT-REQ-032",
+      "semantic_key": "google-interactions/streaming/stream-media-type",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-wrong-stream-media-type",
+      "kills_requirement": "GGL-INT-REQ-032",
+      "synthetic_evidence": {
+        "transport": "http-sse",
+        "observation": "single targeted semantic mutation accept-wrong-stream-media-type",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-001",
+      "ref": "mutation/mcp-2025-11-25-001.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-001-jsonrpc-version",
+      "requirement_id": "MCP-20251125-REQ-001",
+      "semantic_key": "mcp-2025-11-25/http-json-forward-compatibility/jsonrpc-version",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-jsonrpc-version",
+      "kills_requirement": "MCP-20251125-REQ-001",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation replace-jsonrpc-version",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-002",
+      "ref": "mutation/mcp-2025-11-25-002.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-002-request-id-correlation",
+      "requirement_id": "MCP-20251125-REQ-002",
+      "semantic_key": "mcp-2025-11-25/nonstream-output/request-id-correlation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-jsonrpc-request-id",
+      "kills_requirement": "MCP-20251125-REQ-002",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation swap-jsonrpc-request-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-003",
+      "ref": "mutation/mcp-2025-11-25-003.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-003-notification-without-id",
+      "requirement_id": "MCP-20251125-REQ-003",
+      "semantic_key": "mcp-2025-11-25/messages-roles/notification-without-id",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "add-notification-id",
+      "kills_requirement": "MCP-20251125-REQ-003",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation add-notification-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-004",
+      "ref": "mutation/mcp-2025-11-25-004.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-004-error-object-shape",
+      "requirement_id": "MCP-20251125-REQ-004",
+      "semantic_key": "mcp-2025-11-25/errors-retry/error-object-shape",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-jsonrpc-error-code",
+      "kills_requirement": "MCP-20251125-REQ-004",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation drop-jsonrpc-error-code",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-005",
+      "ref": "mutation/mcp-2025-11-25-005.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-005-initialize-first",
+      "requirement_id": "MCP-20251125-REQ-005",
+      "semantic_key": "mcp-2025-11-25/state-multiturn/initialize-first",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "allow-operation-before-initialize",
+      "kills_requirement": "MCP-20251125-REQ-005",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation allow-operation-before-initialize",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-006",
+      "ref": "mutation/mcp-2025-11-25-006.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-006-protocol-version-negotiation",
+      "requirement_id": "MCP-20251125-REQ-006",
+      "semantic_key": "mcp-2025-11-25/authentication-versioning/protocol-version-negotiation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-floating-protocol-version",
+      "kills_requirement": "MCP-20251125-REQ-006",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation accept-floating-protocol-version",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-007",
+      "ref": "mutation/mcp-2025-11-25-007.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-007-initialized-notification",
+      "requirement_id": "MCP-20251125-REQ-007",
+      "semantic_key": "mcp-2025-11-25/state-multiturn/initialized-notification",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-initialized-notification",
+      "kills_requirement": "MCP-20251125-REQ-007",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation drop-initialized-notification",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-008",
+      "ref": "mutation/mcp-2025-11-25-008.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-008-capability-declaration",
+      "requirement_id": "MCP-20251125-REQ-008",
+      "semantic_key": "mcp-2025-11-25/endpoint-discovery/capability-declaration",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "ignore-capability-negotiation",
+      "kills_requirement": "MCP-20251125-REQ-008",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation ignore-capability-negotiation",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-009",
+      "ref": "mutation/mcp-2025-11-25-009.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-009-stdio-framing",
+      "requirement_id": "MCP-20251125-REQ-009",
+      "semantic_key": "mcp-2025-11-25/streaming/stdio-framing",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "write-log-to-stdio-protocol",
+      "kills_requirement": "MCP-20251125-REQ-009",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation write-log-to-stdio-protocol",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-010",
+      "ref": "mutation/mcp-2025-11-25-010.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-010-stdio-no-embedded-newline",
+      "requirement_id": "MCP-20251125-REQ-010",
+      "semantic_key": "mcp-2025-11-25/streaming/stdio-no-embedded-newline",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "split-stdio-json-string",
+      "kills_requirement": "MCP-20251125-REQ-010",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation split-stdio-json-string",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-011",
+      "ref": "mutation/mcp-2025-11-25-011.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-011-streamable-http-methods",
+      "requirement_id": "MCP-20251125-REQ-011",
+      "semantic_key": "mcp-2025-11-25/endpoint-discovery/streamable-http-methods",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-streamable-http-method",
+      "kills_requirement": "MCP-20251125-REQ-011",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation replace-streamable-http-method",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-012",
+      "ref": "mutation/mcp-2025-11-25-012.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-012-streamable-http-session",
+      "requirement_id": "MCP-20251125-REQ-012",
+      "semantic_key": "mcp-2025-11-25/state-multiturn/streamable-http-session",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reuse-wrong-mcp-session",
+      "kills_requirement": "MCP-20251125-REQ-012",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation reuse-wrong-mcp-session",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-013",
+      "ref": "mutation/mcp-2025-11-25-013.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-013-protocol-version-header",
+      "requirement_id": "MCP-20251125-REQ-013",
+      "semantic_key": "mcp-2025-11-25/authentication-versioning/protocol-version-header",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-mcp-version-header",
+      "kills_requirement": "MCP-20251125-REQ-013",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation drop-mcp-version-header",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-014",
+      "ref": "mutation/mcp-2025-11-25-014.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-014-last-event-id",
+      "requirement_id": "MCP-20251125-REQ-014",
+      "semantic_key": "mcp-2025-11-25/state-multiturn/last-event-id",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-last-event-id",
+      "kills_requirement": "MCP-20251125-REQ-014",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation replace-last-event-id",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-015",
+      "ref": "mutation/mcp-2025-11-25-015.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-015-origin-validation",
+      "requirement_id": "MCP-20251125-REQ-015",
+      "semantic_key": "mcp-2025-11-25/authentication-versioning/origin-validation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-origin-validation",
+      "kills_requirement": "MCP-20251125-REQ-015",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation disable-origin-validation",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-016",
+      "ref": "mutation/mcp-2025-11-25-016.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-016-tools-list",
+      "requirement_id": "MCP-20251125-REQ-016",
+      "semantic_key": "mcp-2025-11-25/tool-function-calling/tools-list",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-tool-input-schema",
+      "kills_requirement": "MCP-20251125-REQ-016",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation drop-tool-input-schema",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-017",
+      "ref": "mutation/mcp-2025-11-25-017.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-017-tools-pagination",
+      "requirement_id": "MCP-20251125-REQ-017",
+      "semantic_key": "mcp-2025-11-25/endpoint-discovery/tools-pagination",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reuse-pagination-cursor",
+      "kills_requirement": "MCP-20251125-REQ-017",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation reuse-pagination-cursor",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-018",
+      "ref": "mutation/mcp-2025-11-25-018.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-018-tools-call",
+      "requirement_id": "MCP-20251125-REQ-018",
+      "semantic_key": "mcp-2025-11-25/tool-function-calling/tools-call",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-mcp-tool-arguments",
+      "kills_requirement": "MCP-20251125-REQ-018",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation swap-mcp-tool-arguments",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-019",
+      "ref": "mutation/mcp-2025-11-25-019.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-019-tool-is-error",
+      "requirement_id": "MCP-20251125-REQ-019",
+      "semantic_key": "mcp-2025-11-25/tool-function-calling/tool-is-error",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "erase-mcp-is-error",
+      "kills_requirement": "MCP-20251125-REQ-019",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation erase-mcp-is-error",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-020",
+      "ref": "mutation/mcp-2025-11-25-020.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-020-tool-structured-content",
+      "requirement_id": "MCP-20251125-REQ-020",
+      "semantic_key": "mcp-2025-11-25/structured-output/tool-structured-content",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "skip-output-schema-validation",
+      "kills_requirement": "MCP-20251125-REQ-020",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation skip-output-schema-validation",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-021",
+      "ref": "mutation/mcp-2025-11-25-021.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-021-resources-list",
+      "requirement_id": "MCP-20251125-REQ-021",
+      "semantic_key": "mcp-2025-11-25/endpoint-discovery/resources-list",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-resource-uri",
+      "kills_requirement": "MCP-20251125-REQ-021",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation rewrite-resource-uri",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-022",
+      "ref": "mutation/mcp-2025-11-25-022.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-022-resources-read",
+      "requirement_id": "MCP-20251125-REQ-022",
+      "semantic_key": "mcp-2025-11-25/multimodal/resources-read",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-resource-content-type",
+      "kills_requirement": "MCP-20251125-REQ-022",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation collapse-resource-content-type",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-023",
+      "ref": "mutation/mcp-2025-11-25-023.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-023-resource-subscription",
+      "requirement_id": "MCP-20251125-REQ-023",
+      "semantic_key": "mcp-2025-11-25/streaming/resource-subscription",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "notify-unsubscribed-resource",
+      "kills_requirement": "MCP-20251125-REQ-023",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation notify-unsubscribed-resource",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-024",
+      "ref": "mutation/mcp-2025-11-25-024.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-024-prompts-list",
+      "requirement_id": "MCP-20251125-REQ-024",
+      "semantic_key": "mcp-2025-11-25/endpoint-discovery/prompts-list",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-required-prompt-argument",
+      "kills_requirement": "MCP-20251125-REQ-024",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation drop-required-prompt-argument",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-025",
+      "ref": "mutation/mcp-2025-11-25-025.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-025-prompts-get",
+      "requirement_id": "MCP-20251125-REQ-025",
+      "semantic_key": "mcp-2025-11-25/messages-roles/prompts-get",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reorder-prompt-messages",
+      "kills_requirement": "MCP-20251125-REQ-025",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation reorder-prompt-messages",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-026",
+      "ref": "mutation/mcp-2025-11-25-026.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-026-roots-list",
+      "requirement_id": "MCP-20251125-REQ-026",
+      "semantic_key": "mcp-2025-11-25/state-multiturn/roots-list",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "inject-unnegotiated-root",
+      "kills_requirement": "MCP-20251125-REQ-026",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation inject-unnegotiated-root",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-027",
+      "ref": "mutation/mcp-2025-11-25-027.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-027-sampling-create-message",
+      "requirement_id": "MCP-20251125-REQ-027",
+      "semantic_key": "mcp-2025-11-25/messages-roles/sampling-create-message",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-sampling-token-limit",
+      "kills_requirement": "MCP-20251125-REQ-027",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation drop-sampling-token-limit",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-028",
+      "ref": "mutation/mcp-2025-11-25-028.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-028-elicitation-result",
+      "requirement_id": "MCP-20251125-REQ-028",
+      "semantic_key": "mcp-2025-11-25/structured-output/elicitation-result",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "collapse-elicitation-action",
+      "kills_requirement": "MCP-20251125-REQ-028",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation collapse-elicitation-action",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-029",
+      "ref": "mutation/mcp-2025-11-25-029.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-029-logging-level",
+      "requirement_id": "MCP-20251125-REQ-029",
+      "semantic_key": "mcp-2025-11-25/errors-retry/logging-level",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "ignore-logging-level",
+      "kills_requirement": "MCP-20251125-REQ-029",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation ignore-logging-level",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-030",
+      "ref": "mutation/mcp-2025-11-25-030.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-030-progress-token",
+      "requirement_id": "MCP-20251125-REQ-030",
+      "semantic_key": "mcp-2025-11-25/streaming/progress-token",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-progress-token",
+      "kills_requirement": "MCP-20251125-REQ-030",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation swap-progress-token",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-031",
+      "ref": "mutation/mcp-2025-11-25-031.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-031-request-cancellation",
+      "requirement_id": "MCP-20251125-REQ-031",
+      "semantic_key": "mcp-2025-11-25/cancellation-resources/request-cancellation",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "cancel-wrong-request",
+      "kills_requirement": "MCP-20251125-REQ-031",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation cancel-wrong-request",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-032",
+      "ref": "mutation/mcp-2025-11-25-032.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-032-task-lifecycle",
+      "requirement_id": "MCP-20251125-REQ-032",
+      "semantic_key": "mcp-2025-11-25/state-multiturn/task-lifecycle",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reopen-terminal-task",
+      "kills_requirement": "MCP-20251125-REQ-032",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation reopen-terminal-task",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-033",
+      "ref": "mutation/mcp-2025-11-25-033.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-033-unknown-method",
+      "requirement_id": "MCP-20251125-REQ-033",
+      "semantic_key": "mcp-2025-11-25/errors-retry/unknown-method",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-unknown-method",
+      "kills_requirement": "MCP-20251125-REQ-033",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation accept-unknown-method",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-034",
+      "ref": "mutation/mcp-2025-11-25-034.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-034-unknown-notification",
+      "requirement_id": "MCP-20251125-REQ-034",
+      "semantic_key": "mcp-2025-11-25/http-json-forward-compatibility/unknown-notification",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "respond-to-unknown-notification",
+      "kills_requirement": "MCP-20251125-REQ-034",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation respond-to-unknown-notification",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-035",
+      "ref": "mutation/mcp-2025-11-25-035.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-035-message-size-budget",
+      "requirement_id": "MCP-20251125-REQ-035",
+      "semantic_key": "mcp-2025-11-25/http-json-forward-compatibility/message-size-budget",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "disable-mcp-message-bound",
+      "kills_requirement": "MCP-20251125-REQ-035",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation disable-mcp-message-bound",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-mcp-2025-11-25-036",
+      "ref": "mutation/mcp-2025-11-25-036.json",
+      "kind": "targeted_mutant",
+      "protocol": "mcp-2025-11-25",
+      "scenario_id": "mcp-2025-11-25-036-shutdown-cleanup",
+      "requirement_id": "MCP-20251125-REQ-036",
+      "semantic_key": "mcp-2025-11-25/cancellation-resources/shutdown-cleanup",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "retain-session-after-close",
+      "kills_requirement": "MCP-20251125-REQ-036",
+      "synthetic_evidence": {
+        "transport": "jsonrpc-stdio-streamable-http",
+        "observation": "single targeted semantic mutation retain-session-after-close",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-001",
+      "ref": "mutation/ollama-native-001.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-001-native-base-url",
+      "requirement_id": "OLLAMA-REQ-001",
+      "semantic_key": "ollama-native/endpoint-discovery/native-base-url",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-native-base-to-v1",
+      "kills_requirement": "OLLAMA-REQ-001",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation rewrite-native-base-to-v1",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-002",
+      "ref": "mutation/ollama-native-002.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-002-generate-endpoint",
+      "requirement_id": "OLLAMA-REQ-002",
+      "semantic_key": "ollama-native/endpoint-discovery/generate-endpoint",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "replace-generate-request-shape",
+      "kills_requirement": "OLLAMA-REQ-002",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation replace-generate-request-shape",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-003",
+      "ref": "mutation/ollama-native-003.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-003-chat-messages",
+      "requirement_id": "OLLAMA-REQ-003",
+      "semantic_key": "ollama-native/messages-roles/chat-messages",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-tool-turn-message",
+      "kills_requirement": "OLLAMA-REQ-003",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation drop-tool-turn-message",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-004",
+      "ref": "mutation/ollama-native-004.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-004-ndjson-media-type",
+      "requirement_id": "OLLAMA-REQ-004",
+      "semantic_key": "ollama-native/streaming/ndjson-media-type",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "parse-ndjson-as-sse",
+      "kills_requirement": "OLLAMA-REQ-004",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation parse-ndjson-as-sse",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-005",
+      "ref": "mutation/ollama-native-005.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-005-stream-default",
+      "requirement_id": "OLLAMA-REQ-005",
+      "semantic_key": "ollama-native/streaming/stream-default",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "invert-stream-default",
+      "kills_requirement": "OLLAMA-REQ-005",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation invert-stream-default",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-006",
+      "ref": "mutation/ollama-native-006.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-006-ndjson-rechunk",
+      "requirement_id": "OLLAMA-REQ-006",
+      "semantic_key": "ollama-native/streaming/ndjson-rechunk",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "bind-ndjson-to-network-chunk",
+      "kills_requirement": "OLLAMA-REQ-006",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation bind-ndjson-to-network-chunk",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-007",
+      "ref": "mutation/ollama-native-007.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-007-done-terminal",
+      "requirement_id": "OLLAMA-REQ-007",
+      "semantic_key": "ollama-native/streaming/done-terminal",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "treat-eof-as-done",
+      "kills_requirement": "OLLAMA-REQ-007",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation treat-eof-as-done",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-008",
+      "ref": "mutation/ollama-native-008.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-008-done-reason",
+      "requirement_id": "OLLAMA-REQ-008",
+      "semantic_key": "ollama-native/nonstream-output/done-reason",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-done-reason",
+      "kills_requirement": "OLLAMA-REQ-008",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation drop-done-reason",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-009",
+      "ref": "mutation/ollama-native-009.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-009-response-content",
+      "requirement_id": "OLLAMA-REQ-009",
+      "semantic_key": "ollama-native/nonstream-output/response-content",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "wrap-native-response-as-choice",
+      "kills_requirement": "OLLAMA-REQ-009",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation wrap-native-response-as-choice",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-010",
+      "ref": "mutation/ollama-native-010.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-010-tool-declarations",
+      "requirement_id": "OLLAMA-REQ-010",
+      "semantic_key": "ollama-native/tool-function-calling/tool-declarations",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-native-tool-schema",
+      "kills_requirement": "OLLAMA-REQ-010",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation drop-native-tool-schema",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-011",
+      "ref": "mutation/ollama-native-011.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-011-tool-call-name",
+      "requirement_id": "OLLAMA-REQ-011",
+      "semantic_key": "ollama-native/tool-function-calling/tool-call-name",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "rewrite-native-tool-name",
+      "kills_requirement": "OLLAMA-REQ-011",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation rewrite-native-tool-name",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-012",
+      "ref": "mutation/ollama-native-012.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-012-tool-call-arguments",
+      "requirement_id": "OLLAMA-REQ-012",
+      "semantic_key": "ollama-native/tool-function-calling/tool-call-arguments",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "stringify-native-tool-arguments",
+      "kills_requirement": "OLLAMA-REQ-012",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation stringify-native-tool-arguments",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-013",
+      "ref": "mutation/ollama-native-013.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-013-parallel-tools",
+      "requirement_id": "OLLAMA-REQ-013",
+      "semantic_key": "ollama-native/tool-function-calling/parallel-tools",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "merge-parallel-native-tools",
+      "kills_requirement": "OLLAMA-REQ-013",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation merge-parallel-native-tools",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-014",
+      "ref": "mutation/ollama-native-014.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-014-tool-result-turn",
+      "requirement_id": "OLLAMA-REQ-014",
+      "semantic_key": "ollama-native/tool-function-calling/tool-result-turn",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "attach-tool-result-to-wrong-turn",
+      "kills_requirement": "OLLAMA-REQ-014",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation attach-tool-result-to-wrong-turn",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-015",
+      "ref": "mutation/ollama-native-015.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-015-streamed-tool-call",
+      "requirement_id": "OLLAMA-REQ-015",
+      "semantic_key": "ollama-native/tool-function-calling/streamed-tool-call",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "execute-partial-tool-call",
+      "kills_requirement": "OLLAMA-REQ-015",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation execute-partial-tool-call",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-016",
+      "ref": "mutation/ollama-native-016.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-016-thinking-field",
+      "requirement_id": "OLLAMA-REQ-016",
+      "semantic_key": "ollama-native/reasoning-thinking/thinking-field",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "merge-thinking-into-content",
+      "kills_requirement": "OLLAMA-REQ-016",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation merge-thinking-into-content",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-017",
+      "ref": "mutation/ollama-native-017.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-017-thinking-history",
+      "requirement_id": "OLLAMA-REQ-017",
+      "semantic_key": "ollama-native/reasoning-thinking/thinking-history",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "drop-native-thinking-history",
+      "kills_requirement": "OLLAMA-REQ-017",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation drop-native-thinking-history",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-018",
+      "ref": "mutation/ollama-native-018.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-018-format-json",
+      "requirement_id": "OLLAMA-REQ-018",
+      "semantic_key": "ollama-native/structured-output/format-json",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "ignore-native-format",
+      "kills_requirement": "OLLAMA-REQ-018",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation ignore-native-format",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-019",
+      "ref": "mutation/ollama-native-019.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-019-usage-duration-fields",
+      "requirement_id": "OLLAMA-REQ-019",
+      "semantic_key": "ollama-native/usage/usage-duration-fields",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "swap-native-usage-fields",
+      "kills_requirement": "OLLAMA-REQ-019",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation swap-native-usage-fields",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-020",
+      "ref": "mutation/ollama-native-020.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-020-error-envelope",
+      "requirement_id": "OLLAMA-REQ-020",
+      "semantic_key": "ollama-native/errors-retry/error-envelope",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "accept-native-error-as-output",
+      "kills_requirement": "OLLAMA-REQ-020",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation accept-native-error-as-output",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-021",
+      "ref": "mutation/ollama-native-021.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-021-utf8-content",
+      "requirement_id": "OLLAMA-REQ-021",
+      "semantic_key": "ollama-native/http-json-forward-compatibility/utf8-content",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "truncate-native-utf8",
+      "kills_requirement": "OLLAMA-REQ-021",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation truncate-native-utf8",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-022",
+      "ref": "mutation/ollama-native-022.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-022-unknown-field",
+      "requirement_id": "OLLAMA-REQ-022",
+      "semantic_key": "ollama-native/http-json-forward-compatibility/unknown-field",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "reject-native-unknown-field",
+      "kills_requirement": "OLLAMA-REQ-022",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation reject-native-unknown-field",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-023",
+      "ref": "mutation/ollama-native-023.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-023-inline-image",
+      "requirement_id": "OLLAMA-REQ-023",
+      "semantic_key": "ollama-native/multimodal/inline-image",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "corrupt-native-inline-image",
+      "kills_requirement": "OLLAMA-REQ-023",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation corrupt-native-inline-image",
+        "data_class": "synthetic-only"
+      }
+    },
+    {
+      "id": "mut-ollama-native-024",
+      "ref": "mutation/ollama-native-024.json",
+      "kind": "targeted_mutant",
+      "protocol": "ollama-native",
+      "scenario_id": "ollama-native-024-client-cancel",
+      "requirement_id": "OLLAMA-REQ-024",
+      "semantic_key": "ollama-native/cancellation-resources/client-cancel",
+      "assertion_role": "normative",
+      "expected_verdict": "fail",
+      "mutation_operator": "map-native-cancel-to-done",
+      "kills_requirement": "OLLAMA-REQ-024",
+      "synthetic_evidence": {
+        "transport": "http-ndjson",
+        "observation": "single targeted semantic mutation map-native-cancel-to-done",
+        "data_class": "synthetic-only"
+      }
+    }
+  ]
+}

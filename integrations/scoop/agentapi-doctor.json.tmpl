@@ -1,0 +1,17 @@
+{
+  "version": "{{VERSION}}",
+  "description": "Evidence-first API compatibility diagnostics",
+  "homepage": "https://github.com/whyiug/agentapi-doctor",
+  "license": "Apache-2.0",
+  "architecture": {
+    "64bit": {
+      "url": "{{WINDOWS_AMD64_URL}}",
+      "hash": "{{WINDOWS_AMD64_SHA256}}"
+    },
+    "arm64": {
+      "url": "{{WINDOWS_ARM64_URL}}",
+      "hash": "{{WINDOWS_ARM64_SHA256}}"
+    }
+  },
+  "bin": "doctor.exe"
+}

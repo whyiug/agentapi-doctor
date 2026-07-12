@@ -1,0 +1,76 @@
+schemaVersion: urn:agentapi-doctor:schema-index:v1alpha1
+kind: SchemaIndex
+status: provisional
+entries:
+    - id: urn:agentapi-doctor:schema:capability-observation:v1alpha1
+      path: schemas/plan/capability-observation.schema.json
+      digest: sha256:8dba504c67bda2492e2fa1ca9005aa5d87256ff11fc10c18c4a99acad2d4c0a0
+    - id: urn:agentapi-doctor:schema:catalog-statistics:v1
+      path: schemas/result/catalog-statistics.schema.json
+      digest: sha256:93f938f571e00185584853975efa680cc0b7a986dc2cbc3305fa8a63e41d13af
+    - id: urn:agentapi-doctor:schema:common:envelope:v1alpha1
+      path: schemas/common/envelope.schema.json
+      digest: sha256:2cf6399e644d31c45b0fd8e9f845ba0da019d89f972337e91a87f32310d791ed
+    - id: urn:agentapi-doctor:schema:config:v1beta1
+      path: schemas/config/config.schema.json
+      digest: sha256:0a7832c86702bc7fc698780fc86b694445328f28bbbbbc18fe9956b0ce004daa
+    - id: urn:agentapi-doctor:schema:consumer-profile:v1beta1
+      path: schemas/profile/consumer-compatibility-profile.schema.json
+      digest: sha256:f286cc22f7997e96ae3d01ad97408c3416f4415dd3fa650d09224270483e316f
+    - id: urn:agentapi-doctor:schema:driver-control-frame:v1alpha1
+      path: schemas/driver/control-frame.schema.json
+      digest: sha256:781d6f1d8138d45b86920b78c055492686c716679f75f6fe8b73fe738354d5ac
+    - id: urn:agentapi-doctor:schema:driver-data-frame-header:v1alpha1
+      path: schemas/driver/data-frame-header.schema.json
+      digest: sha256:2c47e148b1ba381972accd13607501abb4d2b6d54023ae4ebb7b4903f93dbd4d
+    - id: urn:agentapi-doctor:schema:driver-manifest:v1
+      path: schemas/support/driver-manifest.schema.json
+      digest: sha256:dfba9517965fab71a1cfc8546696ee4700527c60e69af5ddfe00b223f47977bb
+    - id: urn:agentapi-doctor:schema:evidence:v1alpha1
+      path: schemas/evidence/evidence.schema.json
+      digest: sha256:0921ddd94b9b7d78041f5f68e9e5081d1e0dcaf4d0bd7541ea60a22cfddb7bbe
+    - id: urn:agentapi-doctor:schema:external-suite-adapter:v1
+      path: schemas/support/external-suite-adapter.schema.json
+      digest: sha256:3e3be2d4fa67ea382750bb93fdf6418c33bf39dfb1ae3d324490a57aca29d21d
+    - id: urn:agentapi-doctor:schema:intent-plan:v1alpha1
+      path: schemas/plan/intent-plan.schema.json
+      digest: sha256:fcd3a84955bceca97318b1f2c548272edc28c07459e6eed9d32def14dd39152e
+    - id: urn:agentapi-doctor:schema:observation:v1
+      path: schemas/registry/observation.schema.json
+      digest: sha256:43cb48290c3e93659beda103cb2d159f8e834a6da05b6c5a714634cdf473e53b
+    - id: urn:agentapi-doctor:schema:pack-candidate-status:v1
+      path: schemas/pack/candidate-status.schema.json
+      digest: sha256:1efec0bbb76b1fc5c7c74178508c466d824e39a1f85dd5911393d753ed0d36a4
+    - id: urn:agentapi-doctor:schema:protocol-snapshot:v1
+      path: schemas/pack/protocol-snapshot.schema.json
+      digest: sha256:3fa540ba7959026cb6ae337b6caece4e85e40b71550478a90beb9156a5af199c
+    - id: urn:agentapi-doctor:schema:release-components:v1
+      path: schemas/support/release-components.schema.json
+      digest: sha256:d3d1f873694eb45c15669ea58858ef85c5da66d31ee62aa290c026064b49a844
+    - id: urn:agentapi-doctor:schema:report-bundle:v1alpha1
+      path: schemas/report/report-bundle.schema.json
+      digest: sha256:5aad4a152d3ee3c36a993a8457a7b93225eddcdf5b79862602907564f1514cb9
+    - id: urn:agentapi-doctor:schema:requirement-catalog:v1
+      path: schemas/pack/requirement-catalog.schema.json
+      digest: sha256:ab661eb2f9c66f4d57056c028261b82aadf16d3b9a18c20f583395d1d254126f
+    - id: urn:agentapi-doctor:schema:resolved-run-plan:v1alpha1
+      path: schemas/plan/resolved-run-plan.schema.json
+      digest: sha256:531eeb114a0102fd9e89b21d019da38652e4f25b568b78ed4ad862859e7ab67f
+    - id: urn:agentapi-doctor:schema:result:v1alpha1
+      path: schemas/result/result.schema.json
+      digest: sha256:cb30840ab0288486a98601186697a6a6c612729d1b80e268aa3340c41a648ee2
+    - id: urn:agentapi-doctor:schema:runtime-metadata-adapter:v1
+      path: schemas/support/runtime-metadata-adapter.schema.json
+      digest: sha256:cf2540c1c33666a98ce37dc9c5242497e4f25bae0f17cc00a82df73cf62ecc4d
+    - id: urn:agentapi-doctor:schema:scenario:v1beta1
+      path: schemas/scenario/scenario.schema.json
+      digest: sha256:f2771cbdcf139e03e17a7612b4ef9b44e34b8f3a572081d00bf352596b272c05
+    - id: urn:agentapi-doctor:schema:source-lock-set:v1
+      path: schemas/pack/source-lock.schema.json
+      digest: sha256:48dbaed2cca78453b8d8cb0282abb366d4ef77c4fff450f9b71a70fa2a595521
+    - id: urn:agentapi-doctor:schema:support-lock:v1
+      path: schemas/support/support-lock.schema.json
+      digest: sha256:90486b24b3ac6e18d6c8c9aaacfd02c0d8afd1ffaadfa9162c4f4077de9a5a21
+    - id: urn:agentapi-doctor:schema:support-manifest:v1
+      path: schemas/support/support-manifest.schema.json
+      digest: sha256:2422d5507e2f7aec019ad2f3db1a735bdf22df2b76d553de2372ae4dcda49dba

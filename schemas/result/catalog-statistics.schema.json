@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:catalog-statistics:v1",
+  "title": "AgentAPI Doctor candidate catalog denominator and metadata inventory statistics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generator", "status", "review_status", "scenario_count", "requirement_count", "normative_denominator_count", "unique_semantic_count", "reference_fixture_metadata_count", "targeted_mutant_metadata_count", "fixture_records_executable", "executable_mutation_gate_satisfied", "alias_count", "denominator_digest", "catalog_digest", "packs", "claims"],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:catalog-statistics:v1"},
+    "generator": {
+      "type": "object", "additionalProperties": false, "required": ["name", "version"],
+      "properties": {"name": {"const": "agentapi-doctor-catalog-generator"}, "version": {"const": "1.0.0"}}
+    },
+    "status": {"const": "candidate"},
+    "review_status": {"const": "pending_review"},
+    "scenario_count": {"type": "integer", "minimum": 250},
+    "requirement_count": {"type": "integer", "minimum": 250},
+    "normative_denominator_count": {"type": "integer", "minimum": 250},
+    "unique_semantic_count": {"type": "integer", "minimum": 250},
+    "reference_fixture_metadata_count": {"type": "integer", "minimum": 250, "description": "Candidate reference-fixture metadata records; this is not an executed fixture-result count."},
+    "targeted_mutant_metadata_count": {"type": "integer", "minimum": 250, "description": "Candidate targeted-mutant metadata records; this is not an executed mutant-result count."},
+    "fixture_records_executable": {"const": false, "description": "The catalog fixture records are metadata and are not executable fixture payloads."},
+    "executable_mutation_gate_satisfied": {"const": false, "description": "Metadata inventory does not satisfy the executable reference/mutation gate."},
+    "alias_count": {"const": 0},
+    "denominator_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "catalog_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "packs": {
+      "type": "array", "minItems": 7, "maxItems": 7,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["pack", "protocol", "release_track", "scenario_count", "requirement_count", "snapshot_digest", "compiled_pack_digest"],
+        "properties": {
+          "pack": {"type": "string", "minLength": 3},
+          "protocol": {"type": "string", "minLength": 3},
+          "release_track": {"enum": ["core-candidate", "required-experimental"]},
+          "scenario_count": {"type": "integer", "minimum": 1},
+          "requirement_count": {"type": "integer", "minimum": 1},
+          "snapshot_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "compiled_pack_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "claims": {
+      "type": "object", "additionalProperties": false,
+      "required": ["tier1", "independent_review", "real_sdk_validation", "live_provider_verified"],
+      "properties": {
+        "tier1": {"const": false},
+        "independent_review": {"const": false},
+        "real_sdk_validation": {"const": false},
+        "live_provider_verified": {"const": false}
+      }
+    }
+  }
+}

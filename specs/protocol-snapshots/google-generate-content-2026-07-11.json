@@ -1,0 +1,25 @@
+{
+  "schema_version": "urn:agentapi-doctor:protocol-snapshot:v1",
+  "protocol": "google-generate-content",
+  "revision": "content-lock-set-2026-07-11",
+  "status": "candidate",
+  "review_status": "pending_review",
+  "sources": [
+    {
+      "source_id": "google-generate-api-overview",
+      "content_sha256": "sha256:6a69be885b2323f848ab4cf09e1c13e6ad41fd3e8ff99aa65bce483c7839b391"
+    },
+    {
+      "source_id": "google-generate-api-reference",
+      "content_sha256": "sha256:93d353571a2dd98afbd94783f33989f095bfb22a641ae48a3c786443d7172272"
+    },
+    {
+      "source_id": "google-generate-function-calling",
+      "content_sha256": "sha256:9022fb0084b7aa4e8f8bc43f14ac338fcf94ba3728ccad97274ac1302ff70546"
+    },
+    {
+      "source_id": "google-generate-streaming",
+      "content_sha256": "sha256:dd8dbf5d9e32c2897325fe37e3fe5dcf3cff1ecc348c1d123a3991b30200e4e4"
+    }
+  ]
+}

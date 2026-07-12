@@ -1,0 +1,24 @@
+schemaVersion: urn:agentapi-doctor:identity-grammar:v1alpha1
+kind: IdentityGrammar
+status: provisional
+jsonPublicFieldStyle: snake_case
+authoredYAMLVersionField: apiVersion
+identifiers:
+  instanceID:
+    type: UUIDv7
+    pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+    reservedValues: [latest]
+  contentDigest:
+    algorithm: sha256
+    pattern: '^sha256:[0-9a-f]{64}$'
+  objectRef:
+    fields: [kind, instance_id, content_digest]
+    instanceIDRequiredFor: [RunManifest, Invocation, Attempt, AssertionResult, Finding]
+    contentAddressedKinds: [Evidence, Payload, ProtocolPack, Observation]
+canonicalization:
+  json: RFC8785
+  unicode: valid-UTF-8-I-JSON
+  rejectDuplicateKeys: true
+  rejectNonFiniteNumbers: true
+  rejectAmbiguousTimestamps: true
+  signedProjectionExcludes: [content_digest, object_ref, signature, registry_derived]

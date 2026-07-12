@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:support-lock:v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "lockStatus", "release", "supportManifestDigest", "resolutionPolicy", "cells"],
+  "properties": {
+    "schemaVersion": {"const": "urn:agentapi-doctor:support-lock:v1"}, "kind": {"const": "SupportLock"},
+    "lockStatus": {"enum": ["candidate-unresolved", "resolved"]}, "release": {"type": "string"},
+    "supportManifestDigest": {"type": ["string", "null"]}, "resolutionPolicy": {"type": "string", "minLength": 1},
+    "cells": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/cell"}}
+  },
+  "$defs": {
+    "nullable": {"type": ["string", "null"]},
+    "slot": {"type": "object", "additionalProperties": false, "required": ["slot", "status", "exactVersion", "packageDigest", "runtimeVersion", "imageDigest", "lockfileDigest", "evidenceRefs"], "properties": {"slot": {"enum": ["current", "previous", "candidate", "exact-experimental"]}, "status": {"enum": ["unresolved", "resolved"]}, "exactVersion": {"$ref": "#/$defs/nullable"}, "packageDigest": {"$ref": "#/$defs/nullable"}, "runtimeVersion": {"$ref": "#/$defs/nullable"}, "imageDigest": {"$ref": "#/$defs/nullable"}, "lockfileDigest": {"$ref": "#/$defs/nullable"}, "evidenceRefs": {"type": "array", "items": {"type": "string"}}}},
+    "cell": {"type": "object", "additionalProperties": false, "required": ["cellId", "status", "reasonCode", "artifactVersion", "artifactDigest", "denominatorDigest", "versionSlots", "gateStatus", "evidenceRefs"], "properties": {"cellId": {"type": "string"}, "status": {"enum": ["unresolved", "resolved"]}, "reasonCode": {"type": "string", "minLength": 1}, "artifactVersion": {"$ref": "#/$defs/nullable"}, "artifactDigest": {"$ref": "#/$defs/nullable"}, "denominatorDigest": {"$ref": "#/$defs/nullable"}, "versionSlots": {"type": "array", "items": {"$ref": "#/$defs/slot"}}, "gateStatus": {"enum": ["pending", "passed"]}, "evidenceRefs": {"type": "array", "items": {"type": "string"}}}}
+  }
+}

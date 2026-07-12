@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:resolved-run-plan:v1alpha1",
+  "title": "AgentAPI Doctor provisional ResolvedRunPlan",
+  "description": "Exact immutable execution input. Ordered-DAG and cross-field envelope identity checks are additionally enforced by pkg/schema.ResolvedRunPlan.Validate.",
+  "type": "object",
+  "required": [
+    "schema_version", "kind", "instance_id", "content_digest", "object_ref", "producer", "created_at",
+    "resolved_plan_id", "intent_plan_ref", "resolver", "capability_observation_refs", "support_lock_digest",
+    "artifacts", "target", "scenarios", "denominator_digest", "budget", "runtime"
+  ],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:resolved-run-plan:v1alpha1"},
+    "kind": {"const": "ResolvedRunPlan"},
+    "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "object_ref": {"$ref": "#/$defs/resolvedPlanRef"},
+    "producer": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/producer"},
+    "created_at": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/utcTime"},
+    "extensions": {"type": "object", "propertyNames": {"pattern": "^x-.+"}, "additionalProperties": true},
+    "resolved_plan_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "intent_plan_ref": {"$ref": "#/$defs/intentPlanRef"},
+    "resolver": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/artifactPin"},
+    "capability_observation_refs": {
+      "type": ["array", "null"],
+      "items": {"$ref": "#/$defs/capabilityObservationRef"}
+    },
+    "support_lock_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/artifactPin"}},
+    "target": {"$ref": "#/$defs/target"},
+    "scenarios": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/scenario"}},
+    "denominator_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "budget": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/budgetPolicy"},
+    "runtime": {"$ref": "#/$defs/runtime"},
+    "finalizers": {"type": "array", "items": {"$ref": "#/$defs/finalizer"}}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "resolvedPlanRef": {
+      "type": "object", "required": ["kind", "instance_id", "content_digest"],
+      "properties": {
+        "kind": {"const": "ResolvedRunPlan"},
+        "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "intentPlanRef": {
+      "type": "object", "required": ["kind", "instance_id", "content_digest"],
+      "properties": {
+        "kind": {"const": "IntentPlan"},
+        "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "capabilityObservationRef": {
+      "type": "object", "required": ["kind", "instance_id", "content_digest"],
+      "properties": {
+        "kind": {"const": "CapabilityObservation"},
+        "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": ["identity_level", "observed_fingerprint"],
+      "properties": {
+        "identity_level": {"type": "string", "minLength": 1},
+        "observed_fingerprint": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+        "version": {"type": "string"},
+        "configuration_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+        "model": {"type": "string"},
+        "region": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["scenario_id", "disposition", "driver"],
+      "properties": {
+        "scenario_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"},
+        "disposition": {"enum": ["execute", "skip", "not_applicable"]},
+        "reason_code": {"type": "string", "minLength": 1},
+        "driver": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/artifactPin"},
+        "depends_on": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"}
+        }
+      },
+      "allOf": [
+        {"if": {"properties": {"disposition": {"enum": ["skip", "not_applicable"]}}}, "then": {"required": ["reason_code"]}}
+      ],
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["concurrency", "retries", "timeout", "capture", "sandbox", "network"],
+      "properties": {
+        "concurrency": {"type": "integer", "minimum": 1},
+        "retries": {"type": "integer", "minimum": 0},
+        "timeout": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/duration"},
+        "capture": {"enum": ["metadata_only", "synthetic_content", "standard_fixture_only", "local_private_encrypted"]},
+        "sandbox": {"type": "string"},
+        "network": {"enum": ["offline", "target_only"]}
+      },
+      "additionalProperties": false
+    },
+    "finalizer": {
+      "type": "object",
+      "required": ["lease_id", "resource_type", "operation", "cleanup_budget"],
+      "properties": {
+        "lease_id": {"type": "string"},
+        "resource_type": {"type": "string"},
+        "operation": {"type": "string"},
+        "cleanup_budget": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/hardBudget"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,56 @@
+apiVersion: urn:agentapi-doctor:scenario:v1beta1
+kind: Scenario
+metadata:
+  id: google-generate-content-007-multi-turn-order
+  version: 0.1.0
+  title: "Candidate: Google generateContent / multi-turn-order"
+  labels:
+    generator: catalog-v1
+    protocol: google-generate-content
+    taxonomy: messages-roles
+    review: pending-review
+    reference: ref-google-generate-content-007
+    mutant: mut-google-generate-content-007
+spec:
+  protocol:
+    family: google-generate-content
+    snapshot: "content-lock-set-2026-07-11"
+    digest: sha256:61ba6bf42a4fc85947629bb9d314b1b7a2577e38a558b22bfdf8ea4886f301b0
+  classification:
+    type: normative
+    stability: experimental
+    sideEffects: none
+    idempotent: true
+  requirements:
+    - id: GGL-GEN-REQ-007
+      level: MUST
+  requires:
+    all:
+      - offline-fixture
+  budgets:
+    timeout: 30s
+    maxRequests: 2
+    maxInputTokens: 128
+    maxOutputTokens: 128
+    maxResponseBytes: 64KiB
+    maxArtifactBytes: 1MiB
+  steps:
+    - id: reference
+      replay:
+        fixture: canonical/google-generate-content-007.json
+        as: reference-pass
+    - id: mutant
+      replay:
+        fixture: mutation/google-generate-content-007.json
+        as: targeted-mutant
+    - id: assertion
+      assert:
+        - use: catalog.multi-turn-order
+          equals: true
+          assertionRole: normative
+          requirement: GGL-GEN-REQ-007
+  repetition:
+    count: 1
+    policy: all
+  publication:
+    dataClass: synthetic-only

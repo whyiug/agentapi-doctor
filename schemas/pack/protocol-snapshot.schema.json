@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:protocol-snapshot:v1",
+  "title": "AgentAPI Doctor content-locked protocol snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "protocol", "revision", "status", "review_status", "sources"],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:protocol-snapshot:v1"},
+    "protocol": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{2,255}$"},
+    "revision": {"type": "string", "minLength": 1, "not": {"enum": ["latest", "main", "master", "HEAD"]}},
+    "status": {"const": "candidate"},
+    "review_status": {"const": "pending_review"},
+    "sources": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source_id", "content_sha256"],
+        "properties": {
+          "source_id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{2,127}$"},
+          "content_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+        }
+      }
+    }
+  }
+}

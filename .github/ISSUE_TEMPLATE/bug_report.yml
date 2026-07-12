@@ -1,0 +1,90 @@
+name: Reproducible bug
+description: Report a deterministic defect in AgentAPI Doctor without sensitive data.
+title: "bug: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for preparing a reproducible report. Do not include secrets, private traces, embargoed vulnerabilities, or payloads aimed at a public target.
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Safety and duplicate checks
+      options:
+        - label: This is not a vulnerability or sensitive-data report; those go through private vulnerability reporting.
+          required: true
+        - label: The reproduction uses a local fixture or a system I am authorized to test.
+          required: true
+        - label: I searched existing issues and did not find the same failure.
+          required: true
+        - label: I replaced credentials and private payloads with synthetic values.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or source commit
+      description: Use an exact tag, package version, or full Git commit.
+      placeholder: 0123456789abcdef0123456789abcdef01234567
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - Build, CI, or release tooling
+        - CLI or configuration
+        - Protocol pack or assertion
+        - Recorder, redaction, or evidence
+        - Driver or client profile
+        - Report or baseline
+        - Registry or self-hosting
+        - Documentation or release tooling
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and impact
+      description: Describe the observable defect and who or what it affects.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, architecture, runtime/toolchain, relevant client version, and redacted configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal local reproduction
+      description: Provide deterministic commands or a small synthetic fixture. Do not target a public service.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior and evidence pointers
+      description: Include bounded redacted output, failure IDs, and evidence pointers; avoid full raw payloads.
+    validations:
+      required: true
+  - type: textarea
+    id: requirement
+    attributes:
+      label: Requirement, RFC, ADR, or source
+      description: Link the relevant project contract or primary specification when known.
+  - type: textarea
+    id: regression
+    attributes:
+      label: Suggested regression coverage
+      description: Describe a minimal fixture, reference-pass case, or targeted mutant that would prevent recurrence.

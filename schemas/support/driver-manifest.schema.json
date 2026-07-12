@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "urn:agentapi-doctor:schema:driver-manifest:v1",
+  "type": "object", "additionalProperties": false, "required": ["schemaVersion", "kind", "status", "metadata", "spec"],
+  "properties": {
+    "schemaVersion": {"const": "urn:agentapi-doctor:driver-manifest:v1"}, "kind": {"const": "Driver"}, "status": {"const": "candidate"},
+    "metadata": {"type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": {"id": {"type": "string"}, "version": {"type": "string"}}},
+    "spec": {"type": "object", "additionalProperties": false, "required": ["rpc", "execution", "capabilities", "permissions", "security", "gate"], "properties": {
+      "rpc": {"type": "object", "additionalProperties": false, "required": ["minimum", "maximum", "transport", "maxControlFrameBytes", "defaultDataFrameBytes"], "properties": {"minimum": {"type": "string"}, "maximum": {"type": "string"}, "transport": {"const": "ndjson-stdio"}, "maxControlFrameBytes": {"const": 1048576}, "defaultDataFrameBytes": {"const": 262144}}},
+      "execution": {"type": "object", "additionalProperties": false, "required": ["type", "runtime", "resolutionStatus", "exactRuntimeVersion", "artifactDigest", "lockfileDigest", "imageDigest"], "properties": {"type": {"type": "string"}, "runtime": {"type": "string"}, "resolutionStatus": {"enum": ["unresolved", "resolved"]}, "exactRuntimeVersion": {"type": ["string", "null"]}, "artifactDigest": {"type": ["string", "null"]}, "lockfileDigest": {"type": ["string", "null"]}, "imageDigest": {"type": ["string", "null"]}}},
+      "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}, "permissions": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+      "security": {"type": "object", "additionalProperties": false, "required": ["receivesRealAuth", "casWrite", "stdoutProtocolOnly", "network"], "properties": {"receivesRealAuth": {"const": false}, "casWrite": {"const": false}, "stdoutProtocolOnly": {"const": true}, "network": {"const": "recorder-only"}}},
+      "gate": {"$ref": "#/$defs/gate"}
+    }}
+  },
+  "$defs": {"gate": {"type": "object", "additionalProperties": false, "required": ["status", "reason", "evidenceRefs"], "properties": {"status": {"enum": ["pending", "passed"]}, "reason": {"type": "string", "minLength": 1}, "evidenceRefs": {"type": "array", "items": {"type": "string"}}}}}
+}

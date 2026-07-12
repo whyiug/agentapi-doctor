@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:consumer-profile:v1beta1",
+  "kind": "ConsumerCompatibilityProfile",
+  "status": "candidate",
+  "metadata": {"id": "codex", "version": "0.1.0"},
+  "spec": {
+    "consumer": {"name": "Codex CLI", "category": "agent-client", "upstreamVersionResolution": "unresolved", "exactVersions": []},
+    "driverRef": "runners/agent/driver.yaml",
+    "protocolPacks": ["openai-responses-http"],
+    "apiTypes": ["openai-responses"],
+    "forbiddenFallbacks": ["openai-chat"],
+    "requiredCapabilities": ["responses-http-sse", "reasoning-effort", "reasoning-summary", "single-tool", "multi-tool", "tool-result-continuation", "retry-observation", "stream-idle", "temporary-git-repo", "synthetic-tool-loop", "canary-edit-diff"],
+    "sandbox": {"temporaryHome": true, "temporaryGitRepo": true, "network": "recorder-only", "ambientCredentials": false, "syntheticToolsOnly": true},
+    "supportGate": {"status": "pending", "reason": "current/previous exact CLI executable, runtime, and artifact digests are not independently verified; no Chat fallback is permitted", "evidenceRefs": []}
+  }
+}

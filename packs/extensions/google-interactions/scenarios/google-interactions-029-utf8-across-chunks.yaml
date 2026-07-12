@@ -1,0 +1,56 @@
+apiVersion: urn:agentapi-doctor:scenario:v1beta1
+kind: Scenario
+metadata:
+  id: google-interactions-029-utf8-across-chunks
+  version: 0.1.0
+  title: "Candidate: Google Interactions / utf8-across-chunks"
+  labels:
+    generator: catalog-v1
+    protocol: google-interactions
+    taxonomy: streaming
+    review: pending-review
+    reference: ref-google-interactions-029
+    mutant: mut-google-interactions-029
+spec:
+  protocol:
+    family: google-interactions
+    snapshot: "content-lock-set-2026-07-11"
+    digest: sha256:1bd222a1df836a05103a5d653db11ff7a8faa1b4760eb361ca41596531af4868
+  classification:
+    type: normative
+    stability: experimental
+    sideEffects: none
+    idempotent: true
+  requirements:
+    - id: GGL-INT-REQ-029
+      level: MUST
+  requires:
+    all:
+      - offline-fixture
+  budgets:
+    timeout: 30s
+    maxRequests: 2
+    maxInputTokens: 128
+    maxOutputTokens: 128
+    maxResponseBytes: 64KiB
+    maxArtifactBytes: 1MiB
+  steps:
+    - id: reference
+      replay:
+        fixture: canonical/google-interactions-029.json
+        as: reference-pass
+    - id: mutant
+      replay:
+        fixture: mutation/google-interactions-029.json
+        as: targeted-mutant
+    - id: assertion
+      assert:
+        - use: catalog.utf8-across-chunks
+          equals: true
+          assertionRole: normative
+          requirement: GGL-INT-REQ-029
+  repetition:
+    count: 1
+    policy: all
+  publication:
+    dataClass: synthetic-only

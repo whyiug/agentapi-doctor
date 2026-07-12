@@ -1,0 +1,91 @@
+{
+  "schema_version": "urn:agentapi-doctor:catalog-statistics:v1",
+  "generator": {
+    "name": "agentapi-doctor-catalog-generator",
+    "version": "1.0.0"
+  },
+  "status": "candidate",
+  "review_status": "pending_review",
+  "scenario_count": 260,
+  "requirement_count": 260,
+  "normative_denominator_count": 260,
+  "unique_semantic_count": 260,
+  "reference_fixture_metadata_count": 260,
+  "targeted_mutant_metadata_count": 260,
+  "fixture_records_executable": false,
+  "executable_mutation_gate_satisfied": false,
+  "alias_count": 0,
+  "denominator_digest": "sha256:1c408d0e01d2e3df6c1c30b446412207fd373de8ed8d34b2fc6034232e8ddc5c",
+  "catalog_digest": "sha256:5939941e415808a2699918b7d85c0052bcd122457a031b5d1a03621e58779dcd",
+  "packs": [
+    {
+      "pack": "openai-chat",
+      "protocol": "openai-chat",
+      "release_track": "core-candidate",
+      "scenario_count": 42,
+      "requirement_count": 42,
+      "snapshot_digest": "sha256:66386857b026ddee2115b31fb9c7c1c6476b5fabf6c82cb69a4c054e899a52bf",
+      "compiled_pack_digest": "sha256:810977a72ba8cfd380b55878faf09763c37f1e97cdc368d24ade1222dac59467"
+    },
+    {
+      "pack": "openai-responses-http",
+      "protocol": "openai-responses-http",
+      "release_track": "core-candidate",
+      "scenario_count": 48,
+      "requirement_count": 48,
+      "snapshot_digest": "sha256:f681d4d76c9fb22ac7c4abea3bd9eda48f7e46baea17f68f06af86290b22bf21",
+      "compiled_pack_digest": "sha256:293c08070e93e4754d84b8ad428a16c362a07806645dbb28208003a0e7aa3558"
+    },
+    {
+      "pack": "anthropic-messages",
+      "protocol": "anthropic-messages",
+      "release_track": "core-candidate",
+      "scenario_count": 42,
+      "requirement_count": 42,
+      "snapshot_digest": "sha256:0dc7e9e1021eac8ab1166c449b1fa3f1ab16b93e5aa52917364ce262f8e111b0",
+      "compiled_pack_digest": "sha256:e8f18eaa6db7b6194ac2e91fef7e37dcfb61c6d75492f073a933b1aa7511004b"
+    },
+    {
+      "pack": "google-generate-content",
+      "protocol": "google-generate-content",
+      "release_track": "required-experimental",
+      "scenario_count": 36,
+      "requirement_count": 36,
+      "snapshot_digest": "sha256:61ba6bf42a4fc85947629bb9d314b1b7a2577e38a558b22bfdf8ea4886f301b0",
+      "compiled_pack_digest": "sha256:87cda5092fd51f617df3b703d8887e722569d62d100e89b763832848c4e8dfca"
+    },
+    {
+      "pack": "google-interactions",
+      "protocol": "google-interactions",
+      "release_track": "required-experimental",
+      "scenario_count": 32,
+      "requirement_count": 32,
+      "snapshot_digest": "sha256:1bd222a1df836a05103a5d653db11ff7a8faa1b4760eb361ca41596531af4868",
+      "compiled_pack_digest": "sha256:2fd5d1d00db63553ba690c9ea2bc570bb05b94fe8a1ecf6f8a7855d134a71ceb"
+    },
+    {
+      "pack": "mcp-2025-11-25",
+      "protocol": "mcp-2025-11-25",
+      "release_track": "required-experimental",
+      "scenario_count": 36,
+      "requirement_count": 36,
+      "snapshot_digest": "sha256:a2f09ce0e2985a93930630229fca543fc8f80e0260ff0b5f8fd2e61946ebddef",
+      "compiled_pack_digest": "sha256:f5b692012c6a69402552e9a62f27e201ddd7810b3a256b170f7f018d555f23b9"
+    },
+    {
+      "pack": "ollama-native",
+      "protocol": "ollama-native",
+      "release_track": "required-experimental",
+      "scenario_count": 24,
+      "requirement_count": 24,
+      "snapshot_digest": "sha256:9cd84cd099fc9802fee2cc92265d46b70319d5094fa23f6395d7d764ba1a99a7",
+      "compiled_pack_digest": "sha256:b766ca4e2325c8e3eed6313bf7810c71bbfee602d829e5e64680f28c240b8aa3"
+    }
+  ],
+  "claims": {
+    "tier1": false,
+    "independent_review": false,
+    "real_sdk_validation": false,
+    "live_provider_verified": false
+  }
+}

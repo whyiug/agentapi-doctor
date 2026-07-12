@@ -1,0 +1,103 @@
+schemaVersion: urn:agentapi-doctor:cli-spec:v1alpha1
+kind: CLISpec
+binary: doctor
+stability: provisional
+scope: implemented-candidate-surface
+runReference:
+  syntax: uuidv7-or-latest
+  latestAllowedInCI: false
+exitCodes:
+  0: hard_gates_passed_or_degraded_without_failure
+  1: target_or_profile_failure
+  2: config_dsl_or_input_error
+  3: harness_driver_or_infrastructure_error
+  4: budget_exhausted_or_inconclusive
+  5: authentication_or_permission_error
+  6: baseline_regression
+  130: interrupted
+exitPrecedence: [2, 5, 3, 4, 6, 1, 0]
+commands:
+  - path: [init]
+    operands:
+      - {name: directory, required: false}
+  - path: [self-check]
+    flags:
+      - {name: config, type: path, required: false}
+  - path: [target, add]
+    operands:
+      - {name: name, required: true}
+    flags:
+      - {name: base-url, type: url, required: true}
+      - {name: protocol, type: string, required: true}
+      - {name: model, type: string, required: true}
+      - {name: auth-ref, type: secret-ref, required: false}
+      - {name: config, type: path, required: false}
+  - path: [target, list]
+    flags:
+      - {name: config, type: path, required: false}
+  - path: [target, inspect]
+    operands:
+      - {name: target, required: true}
+    flags:
+      - {name: config, type: path, required: false}
+  - path: [test]
+    operands:
+      - {name: target, required: true}
+    flags:
+      - {name: config, type: path, required: false}
+      - {name: data-root, type: path, required: false}
+      - {name: plan-only, type: boolean, default: false}
+      - {name: resolve, type: boolean, default: false, requires: [plan-only]}
+      - {name: output, type: path, required: false}
+  - path: [run, inspect]
+    operands:
+      - {name: run-ref, required: true}
+    flags:
+      - {name: store, type: path, required: false}
+      - {name: allow-latest, type: boolean, default: true}
+  - path: [compare]
+    operands:
+      - {name: left-run-ref, required: true}
+      - {name: right-run-ref, required: true}
+  - path: [baseline, accept]
+    operands:
+      - {name: run-ref, required: true}
+    flags:
+      - {name: name, type: string, required: true}
+      - {name: store, type: path, required: false}
+      - {name: baseline-dir, type: path, required: false}
+  - path: [baseline, list]
+    flags:
+      - {name: baseline-dir, type: path, required: false}
+  - path: [baseline, inspect]
+    operands:
+      - {name: name, required: true}
+    flags:
+      - {name: baseline-dir, type: path, required: false}
+  - path: [baseline, compare]
+    operands:
+      - {name: run-ref, required: true}
+    flags:
+      - {name: baseline, type: string, required: true}
+      - {name: store, type: path, required: false}
+      - {name: baseline-dir, type: path, required: false}
+  - path: [report]
+    operands:
+      - {name: format, required: true, enum: [terminal, json, junit, sarif, markdown, html]}
+      - {name: run-ref, required: true}
+    flags:
+      - {name: output, type: path, required: false}
+      - {name: store, type: path, required: false}
+      - {name: allow-latest, type: boolean, default: true}
+  - path: [dev, scaffold]
+    operands:
+      - {name: kind, required: true, enum: [requirement, scenario, fixture, profile, driver]}
+      - {name: name, required: true}
+    flags:
+      - {name: output, type: path, required: true}
+  - path: [completion]
+    operands:
+      - {name: shell, required: true, enum: [bash, zsh, fish, powershell]}
+  - path: [version]
+    flags:
+      - {name: json, type: boolean, default: false}

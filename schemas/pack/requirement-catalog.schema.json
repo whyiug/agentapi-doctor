@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:requirement-catalog:v1",
+  "title": "AgentAPI Doctor candidate Requirement Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generator", "status", "review_status", "denominator_rule", "requirements"],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:requirement-catalog:v1"},
+    "generator": {"$ref": "#/$defs/generator"},
+    "status": {"const": "candidate"},
+    "review_status": {"const": "pending_review"},
+    "denominator_rule": {"const": "unique-semantic-key-and-assertion-fingerprint-v1"},
+    "requirements": {"type": "array", "minItems": 250, "items": {"$ref": "#/$defs/requirement"}}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "generator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {"name": {"const": "agentapi-doctor-catalog-generator"}, "version": {"const": "1.0.0"}}
+    },
+    "budget": {
+      "type": "object", "additionalProperties": false,
+      "required": ["timeout", "max_requests", "max_input_tokens", "max_output_tokens", "max_response_bytes", "max_artifact_bytes"],
+      "properties": {
+        "timeout": {"type": "string", "minLength": 2},
+        "max_requests": {"type": "integer", "minimum": 1},
+        "max_input_tokens": {"type": "integer", "minimum": 0},
+        "max_output_tokens": {"type": "integer", "minimum": 0},
+        "max_response_bytes": {"type": "integer", "minimum": 1},
+        "max_artifact_bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "requirement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "protocol", "pack", "level", "category", "taxonomy", "assertion_role", "source", "interpretation", "semantic_key", "assertion_fingerprint", "scenario_id", "reference_pass_id", "targeted_mutant_id", "budget", "status", "review_status"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Z][A-Z0-9._-]{2,127}$"},
+        "protocol": {"type": "string", "minLength": 3},
+        "pack": {"type": "string", "minLength": 3},
+        "level": {"const": "MUST"},
+        "category": {"const": "normative"},
+        "taxonomy": {"enum": ["endpoint-discovery", "authentication-versioning", "http-json-forward-compatibility", "messages-roles", "nonstream-output", "streaming", "tool-function-calling", "structured-output", "state-multiturn", "errors-retry", "usage", "multimodal", "reasoning-thinking", "cancellation-resources"]},
+        "assertion_role": {"const": "normative"},
+        "source": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source_id", "locator"],
+          "properties": {"source_id": {"type": "string", "minLength": 3}, "locator": {"type": "string", "minLength": 1, "maxLength": 512}}
+        },
+        "interpretation": {"type": "string", "minLength": 1, "maxLength": 1024},
+        "semantic_key": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{2,255}$"},
+        "assertion_fingerprint": {"$ref": "#/$defs/digest"},
+        "scenario_id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{2,127}$"},
+        "reference_pass_id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{2,127}$"},
+        "targeted_mutant_id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{2,127}$"},
+        "budget": {"$ref": "#/$defs/budget"},
+        "status": {"const": "candidate"},
+        "review_status": {"const": "pending_review"}
+      }
+    }
+  }
+}

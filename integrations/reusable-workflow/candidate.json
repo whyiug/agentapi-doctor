@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:reusable-workflow-distribution:v1",
+  "kind": "ReusableWorkflowDistribution",
+  "status": "candidate-unpublished",
+  "workflowPath": ".github/workflows/doctor.yml",
+  "sourceTemplatePath": "integrations/reusable-workflow/workflow.yml",
+  "publishedWorkflowCommit": null,
+  "requiredPins": {
+    "actionCommit": "full-lowercase-git-sha",
+    "releaseVersion": "exact-semver-or-rc",
+    "permissions": [
+      "contents:read"
+    ]
+  },
+  "publishedEvidence": []
+}

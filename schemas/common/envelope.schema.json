@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:common:envelope:v1alpha1",
+  "title": "AgentAPI Doctor immutable envelope",
+  "type": "object",
+  "required": ["schema_version", "kind", "content_digest", "object_ref", "producer", "created_at"],
+  "properties": {
+    "schema_version": {"type": "string", "pattern": "^urn:agentapi-doctor:[a-z0-9][a-z0-9:._-]*$"},
+    "kind": {"type": "string", "pattern": "^[A-Z][A-Za-z0-9]{1,63}$"},
+    "instance_id": {"$ref": "#/$defs/uuidv7"},
+    "content_digest": {"$ref": "#/$defs/digest"},
+    "object_ref": {"$ref": "#/$defs/objectRef"},
+    "producer": {"$ref": "#/$defs/producer"},
+    "created_at": {"$ref": "#/$defs/utcTime"},
+    "extensions": {
+      "type": "object",
+      "propertyNames": {"pattern": "^x-[a-z0-9][a-z0-9._-]*$"},
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "uuidv7": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", "not": {"const": "latest"}},
+    "utcTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{0,8}[1-9])?Z$"
+    },
+    "duration": {
+      "type": "string",
+      "pattern": "^[0-9]+(?:\\.[0-9]+)?(?:ns|us|µs|ms|s|m|h)(?:[0-9]+(?:\\.[0-9]+)?(?:ns|us|µs|ms|s|m|h))*$"
+    },
+    "producer": {
+      "type": "object",
+      "required": ["name", "version", "artifact_digest"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"},
+        "version": {"type": "string", "minLength": 1, "maxLength": 128},
+        "artifact_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "objectRef": {
+      "type": "object",
+      "required": ["kind", "content_digest"],
+      "properties": {
+        "kind": {"type": "string", "pattern": "^[A-Z][A-Za-z0-9]{1,63}$"},
+        "instance_id": {"$ref": "#/$defs/uuidv7"},
+        "content_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "artifactPin": {
+      "type": "object",
+      "required": ["kind", "name", "version", "digest"],
+      "properties": {
+        "kind": {"type": "string", "pattern": "^[A-Z][A-Za-z0-9]{1,63}$"},
+        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"},
+        "version": {"type": "string", "minLength": 1, "not": {"const": "latest"}},
+        "digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "hardBudget": {
+      "type": "object",
+      "required": ["max_requests", "max_request_bytes", "max_response_bytes", "max_artifact_bytes", "max_processes", "max_duration"],
+      "properties": {
+        "max_requests": {"type": "integer", "minimum": 1},
+        "max_request_bytes": {"type": "integer", "minimum": 1},
+        "max_response_bytes": {"type": "integer", "minimum": 1},
+        "max_artifact_bytes": {"type": "integer", "minimum": 1},
+        "max_processes": {"type": "integer", "minimum": 1},
+        "max_duration": {"$ref": "#/$defs/duration"}
+      },
+      "additionalProperties": false
+    },
+    "budgetPolicy": {
+      "type": "object",
+      "required": ["hard", "reservation", "cleanup"],
+      "properties": {
+        "hard": {"$ref": "#/$defs/hardBudget"},
+        "reservation": {
+          "type": "object",
+          "required": ["max_input_tokens", "max_output_tokens"],
+          "properties": {
+            "max_input_tokens": {"type": "integer", "minimum": 0},
+            "max_output_tokens": {"type": "integer", "minimum": 0}
+          },
+          "additionalProperties": false
+        },
+        "cleanup": {"$ref": "#/$defs/hardBudget"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

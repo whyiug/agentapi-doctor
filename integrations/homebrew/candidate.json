@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:homebrew-distribution-candidate:v1",
+  "kind": "HomebrewDistributionCandidate",
+  "status": "candidate-unpublished",
+  "package": "agentapi-doctor",
+  "formulaTemplate": "integrations/homebrew/agentapi-doctor.rb.tmpl",
+  "version": null,
+  "releaseTag": null,
+  "artifacts": {
+    "darwin-amd64": {
+      "archiveTemplate": "agentapi-doctor_{version}_darwin_amd64.tar.gz",
+      "sha256": null
+    },
+    "darwin-arm64": {
+      "archiveTemplate": "agentapi-doctor_{version}_darwin_arm64.tar.gz",
+      "sha256": null
+    },
+    "linux-amd64": {
+      "archiveTemplate": "agentapi-doctor_{version}_linux_amd64.tar.gz",
+      "sha256": null
+    },
+    "linux-arm64": {
+      "archiveTemplate": "agentapi-doctor_{version}_linux_arm64.tar.gz",
+      "sha256": null
+    }
+  },
+  "verification": {
+    "checksumAlgorithm": "sha256",
+    "checksumManifest": "checksums.txt",
+    "sigstoreBundleRequired": true
+  },
+  "publishedEvidence": []
+}

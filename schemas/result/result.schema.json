@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:result:v1alpha1",
+  "title": "AgentAPI Doctor provisional result contracts",
+  "description": "Union of the public result records. Harness/driver errors remain distinct from target verdicts.",
+  "oneOf": [
+    {"$ref": "#/$defs/assertionResult"},
+    {"$ref": "#/$defs/finding"},
+    {"$ref": "#/$defs/caseResult"},
+    {"$ref": "#/$defs/profileResult"}
+  ],
+  "$defs": {
+    "reasonCode": {
+      "enum": [
+        "unsupported_capability", "transient_error", "spec_ambiguity", "budget_exhausted", "cost_limit",
+        "unsafe_operation", "harness_error", "driver_error", "cancelled_by_user", "flaky_detected",
+        "insufficient_samples", "not_observed"
+      ]
+    },
+    "executionStatus": {"enum": ["planned", "running", "completed", "skipped", "cancelled", "errored"]},
+    "verdict": {"enum": ["pass", "fail", "warn", "inconclusive"]},
+    "budgetConsumption": {
+      "type": "object",
+      "required": ["requests", "request_bytes", "response_bytes", "artifact_bytes"],
+      "properties": {
+        "requests": {"type": "integer"},
+        "request_bytes": {"type": "integer"},
+        "response_bytes": {"type": "integer"},
+        "artifact_bytes": {"type": "integer"},
+        "input_tokens": {"type": "integer"},
+        "output_tokens": {"type": "integer"},
+        "unknown": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "attempt": {
+      "type": "object",
+      "required": ["attempt_id", "invocation_id", "execution_status", "driver", "consumed_budget"],
+      "properties": {
+        "attempt_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "invocation_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "execution_status": {"$ref": "#/$defs/executionStatus"},
+        "reason_code": {"$ref": "#/$defs/reasonCode"},
+        "request_ref": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"},
+        "evidence_refs": {"type": "array", "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}},
+        "driver": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/artifactPin"},
+        "client_observation_refs": {"type": "array", "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}},
+        "consumed_budget": {"$ref": "#/$defs/budgetConsumption"},
+        "residual_lease_refs": {"type": "array", "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}}
+      },
+      "additionalProperties": false
+    },
+    "statisticalEstimate": {
+      "type": "object",
+      "required": ["sample_count", "estimate", "lower_bound", "upper_bound", "method"],
+      "properties": {
+        "sample_count": {"type": "integer"},
+        "estimate": {"type": "number"},
+        "lower_bound": {"type": "number"},
+        "upper_bound": {"type": "number"},
+        "method": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "assertionResult": {
+      "type": "object",
+      "required": ["assertion_result_id", "assertion_id", "assertion_role", "oracle", "verdict", "evidence_refs", "deterministic", "evaluator_digest"],
+      "properties": {
+        "assertion_result_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "assertion_id": {"type": "string", "minLength": 1},
+        "requirement_id": {"type": "string", "minLength": 1},
+        "assertion_role": {"enum": ["precondition", "normative", "consumer_profile", "behavioral", "advisory"]},
+        "oracle": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/artifactPin"},
+        "verdict": {"$ref": "#/$defs/verdict"},
+        "reason_code": {"$ref": "#/$defs/reasonCode"},
+        "expected": true,
+        "observed": true,
+        "evidence_refs": {
+          "type": "array", "minItems": 1,
+          "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}
+        },
+        "deterministic": {"type": "boolean"},
+        "statistical": {"$ref": "#/$defs/statisticalEstimate"},
+        "evaluator_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "allOf": [
+        {"if": {"properties": {"assertion_role": {"const": "normative"}}}, "then": {"required": ["requirement_id"]}},
+        {"if": {"properties": {"deterministic": {"const": true}}}, "then": {"not": {"required": ["statistical"]}}, "else": {"required": ["statistical"]}}
+      ],
+      "additionalProperties": false
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "finding_id", "assertion_result_id", "fault_domain", "fault_family", "category", "severity", "confidence",
+        "calibration_version", "minimal_evidence_refs", "remediation_hint", "fingerprint_version", "fingerprint"
+      ],
+      "properties": {
+        "finding_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "assertion_result_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "fault_domain": {"type": "string"},
+        "fault_family": {"enum": ["transport", "wire", "protocol", "model", "client", "harness", "unknown"]},
+        "category": {"type": "string"},
+        "severity": {"type": "string"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "calibration_version": {"type": "string"},
+        "alternative_domains": {"type": "array", "items": {"type": "string"}},
+        "minimal_evidence_refs": {"type": ["array", "null"], "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}},
+        "repro_refs": {"type": "array", "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}},
+        "requirement_id": {"type": "string"},
+        "ambiguity_id": {"type": "string"},
+        "remediation_hint": {"type": "string"},
+        "upstream_routing_hint": {"type": "string"},
+        "fingerprint_version": {"type": "string"},
+        "fingerprint": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "caseResult": {
+      "type": "object",
+      "required": ["scenario_id", "plan_disposition", "candidate_member", "applicable_member", "executed_member", "attempt_aggregation"],
+      "properties": {
+        "scenario_id": {"type": "string", "minLength": 1},
+        "plan_disposition": {"enum": ["execute", "skip", "not_applicable"]},
+        "attempt_ids": {"type": "array", "minItems": 1, "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"}},
+        "execution_status": {"$ref": "#/$defs/executionStatus"},
+        "verdict": {"$ref": "#/$defs/verdict"},
+        "reason_code": {"$ref": "#/$defs/reasonCode"},
+        "assertion_results": {"type": "array", "items": {"$ref": "#/$defs/assertionResult"}},
+        "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+        "candidate_member": {"type": "boolean"},
+        "applicable_member": {"type": "boolean"},
+        "executed_member": {"type": "boolean"},
+        "attempt_aggregation": {"type": "string"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"plan_disposition": {"const": "execute"}}},
+          "then": {
+            "required": ["attempt_ids"],
+            "allOf": [
+              {"if": {"properties": {"execution_status": {"const": "completed"}}, "required": ["execution_status"]}, "then": {"required": ["verdict"]}},
+              {"if": {"required": ["verdict"]}, "then": {"properties": {"execution_status": {"const": "completed"}}, "required": ["execution_status"]}}
+            ]
+          },
+          "else": {
+            "required": ["reason_code"],
+            "not": {"anyOf": [{"required": ["attempt_ids"]}, {"required": ["verdict"]}]}
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "denominatorSummary": {
+      "type": "object",
+      "required": ["candidate_digest", "candidate_count", "applicable_digest", "applicable_count", "executed_digest", "executed_count"],
+      "properties": {
+        "candidate_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+        "candidate_count": {"type": "integer", "minimum": 0},
+        "applicable_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+        "applicable_count": {"type": "integer", "minimum": 0},
+        "executed_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+        "executed_count": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "profileResultRef": {
+      "type": "object",
+      "required": ["kind", "instance_id", "content_digest"],
+      "properties": {
+        "kind": {"const": "ProfileResult"},
+        "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "profileResult": {
+      "type": "object",
+      "required": [
+        "schema_version", "kind", "instance_id", "content_digest", "object_ref", "producer", "created_at",
+        "profile_result_id", "profile", "support_lock_digest", "denominators", "profile_outcome",
+        "dimension_outcomes", "cases", "hard_gates"
+      ],
+      "properties": {
+        "schema_version": {"const": "urn:agentapi-doctor:profile-result:v1alpha1"},
+        "kind": {"const": "ProfileResult"},
+        "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+        "object_ref": {"$ref": "#/$defs/profileResultRef"},
+        "producer": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/producer"},
+        "created_at": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/utcTime"},
+        "extensions": {"type": "object", "propertyNames": {"pattern": "^x-.+"}, "additionalProperties": true},
+        "profile_result_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "profile": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/artifactPin"},
+        "support_lock_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+        "denominators": {"$ref": "#/$defs/denominatorSummary"},
+        "profile_outcome": {"enum": ["compatible", "degraded", "incompatible", "inconclusive"]},
+        "dimension_outcomes": {
+          "type": ["object", "null"],
+          "propertyNames": {"minLength": 1},
+          "additionalProperties": {"enum": ["pass", "fail", "degraded", "inconclusive", "not_run"]}
+        },
+        "cases": {"type": ["array", "null"], "items": {"$ref": "#/$defs/caseResult"}},
+        "hard_gates": {"type": ["array", "null"], "items": {"$ref": "#/$defs/assertionResult"}},
+        "known_gaps": {"type": "array", "items": {"type": "string"}},
+        "waivers": {"type": "array", "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}},
+        "sample_metadata": {"type": "object", "additionalProperties": true}
+      },
+      "additionalProperties": false
+    }
+  }
+}

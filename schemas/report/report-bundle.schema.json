@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:report-bundle:v1alpha1",
+  "title": "AgentAPI Doctor provisional report Bundle",
+  "description": "Single truth model used by all renderers. It records target findings and harness conditions independently.",
+  "type": "object",
+  "required": [
+    "schema_version", "run_id", "intent_plan_ref", "resolved_plan_ref", "profile", "artifacts",
+    "support_lock_digest", "denominators", "profile_outcome", "dimension_outcomes", "cases",
+    "conditions", "primary_exit_code"
+  ],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:report-bundle:v1alpha1"},
+    "run_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "intent_plan_ref": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"},
+    "resolved_plan_ref": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"},
+    "profile": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/artifactPin"},
+    "artifacts": {
+      "type": "array", "minItems": 1,
+      "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/artifactPin"}
+    },
+    "support_lock_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "denominators": {"$ref": "urn:agentapi-doctor:schema:result:v1alpha1#/$defs/denominatorSummary"},
+    "profile_outcome": {"enum": ["compatible", "degraded", "incompatible", "inconclusive"]},
+    "dimension_outcomes": {
+      "type": ["object", "null"],
+      "propertyNames": {"pattern": ".*\\S.*"},
+      "additionalProperties": {"enum": ["pass", "fail", "degraded", "inconclusive", "not_run"]}
+    },
+    "cases": {
+      "type": ["array", "null"],
+      "items": {"$ref": "urn:agentapi-doctor:schema:result:v1alpha1#/$defs/caseResult"}
+    },
+    "conditions": {"type": ["array", "null"], "items": {"$ref": "#/$defs/condition"}},
+    "primary_exit_code": {"enum": [0, 1, 2, 3, 4, 5, 6, 130]}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "condition": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {"type": "string", "pattern": ".*\\S.*"},
+        "message": {"type": "string", "pattern": ".*\\S.*"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

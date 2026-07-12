@@ -1,0 +1,99 @@
+version: 2
+
+project_name: agentapi-doctor
+
+builds:
+  - id: doctor
+    main: ./cmd/doctor
+    binary: doctor
+    env: [CGO_ENABLED=0, GOPROXY=off, GOSUMDB=off]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags: [-trimpath, -buildvcs=true, -mod=vendor]
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.Version={{.Version}}
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.Commit={{.FullCommit}}
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.BuiltAt={{.CommitDate}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+  - id: registry
+    main: ./cmd/registry
+    binary: agentapi-doctor-registry
+    env: [CGO_ENABLED=0, GOPROXY=off, GOSUMDB=off]
+    goos: [linux]
+    goarch: [amd64, arm64]
+    flags: [-trimpath, -buildvcs=true, -mod=vendor]
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.Version={{.Version}}
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.Commit={{.FullCommit}}
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.BuiltAt={{.CommitDate}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+  - id: reference-server
+    main: ./cmd/reference-server
+    binary: agentapi-doctor-reference-server
+    env: [CGO_ENABLED=0, GOPROXY=off, GOSUMDB=off]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags: [-trimpath, -buildvcs=true, -mod=vendor]
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.Version={{.Version}}
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.Commit={{.FullCommit}}
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.BuiltAt={{.CommitDate}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: doctor
+    ids: [doctor]
+    formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - README.md
+      - LICENSE
+      - NOTICE
+      - THIRD_PARTY_LICENSES.txt
+      - SECURITY.md
+      - DATA_POLICY.md
+  - id: registry
+    ids: [registry]
+    formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_registry_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - README.md
+      - LICENSE
+      - NOTICE
+      - THIRD_PARTY_LICENSES.txt
+      - SECURITY.md
+      - DATA_POLICY.md
+  - id: reference-server
+    ids: [reference-server]
+    formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_reference-server_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - README.md
+      - LICENSE
+      - NOTICE
+      - THIRD_PARTY_LICENSES.txt
+      - SECURITY.md
+      - DATA_POLICY.md
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+source:
+  enabled: true
+  name_template: "{{ .ProjectName }}_{{ .Version }}_source"
+
+changelog:
+  disable: true
+
+release:
+  disable: true

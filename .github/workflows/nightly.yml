@@ -1,0 +1,44 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: '41 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-product
+  cancel-in-progress: false
+
+jobs:
+  stress:
+    name: deterministic stress and fuzz
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Install the pinned Go toolchain
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Repeat deterministic tests
+        run: go test -race -count=10 ./...
+      - name: Fuzz strict Driver RPC decoding
+        run: go test ./pkg/driverprotocol -run '^$' -fuzz '^FuzzDecodeControlFrameNeverPanics$' -fuzztime 2m
+      - name: Fuzz authored pack and scenario compilers
+        run: |
+          go test ./pkg/packapi -run '^$' -fuzz '^FuzzCompileScenarioNeverPanics$' -fuzztime 1m
+          go test ./pkg/packapi -run '^$' -fuzz '^FuzzCompilePackNeverPanics$' -fuzztime 1m
+      - name: Fuzz stream framing and redaction boundaries
+        run: |
+          go test ./internal/recorder -run '^$' -fuzz '^FuzzSSEAssemblerNeverPanicsOrInventsSequence$' -fuzztime 1m
+          go test ./internal/redaction -run '^$' -fuzz '^FuzzRedactionNeverReturnsConfiguredCanary$' -fuzztime 1m
+      - name: Fuzz strict catalog decoding
+        run: go test ./internal/catalog -run '^$' -fuzz '^FuzzDecodeStrictJSONNeverPanics$' -fuzztime 1m

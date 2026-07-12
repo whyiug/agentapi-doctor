@@ -1,0 +1,56 @@
+apiVersion: urn:agentapi-doctor:scenario:v1beta1
+kind: Scenario
+metadata:
+  id: openai-chat-025-additional-properties
+  version: 0.1.0
+  title: "Candidate: OpenAI Chat Completions HTTP/SSE / additional-properties"
+  labels:
+    generator: catalog-v1
+    protocol: openai-chat
+    taxonomy: structured-output
+    review: pending-review
+    reference: ref-openai-chat-025
+    mutant: mut-openai-chat-025
+spec:
+  protocol:
+    family: openai-chat
+    snapshot: "content-lock-set-2026-07-11"
+    digest: sha256:66386857b026ddee2115b31fb9c7c1c6476b5fabf6c82cb69a4c054e899a52bf
+  classification:
+    type: normative
+    stability: incubating
+    sideEffects: none
+    idempotent: true
+  requirements:
+    - id: OAI-CHAT-REQ-025
+      level: MUST
+  requires:
+    all:
+      - offline-fixture
+  budgets:
+    timeout: 30s
+    maxRequests: 2
+    maxInputTokens: 128
+    maxOutputTokens: 128
+    maxResponseBytes: 64KiB
+    maxArtifactBytes: 1MiB
+  steps:
+    - id: reference
+      replay:
+        fixture: canonical/openai-chat-025.json
+        as: reference-pass
+    - id: mutant
+      replay:
+        fixture: mutation/openai-chat-025.json
+        as: targeted-mutant
+    - id: assertion
+      assert:
+        - use: catalog.additional-properties
+          equals: true
+          assertionRole: normative
+          requirement: OAI-CHAT-REQ-025
+  repetition:
+    count: 1
+    policy: all
+  publication:
+    dataClass: synthetic-only

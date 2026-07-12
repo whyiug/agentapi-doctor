@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:scoop-distribution-candidate:v1",
+  "kind": "ScoopDistributionCandidate",
+  "status": "candidate-unpublished",
+  "package": "agentapi-doctor",
+  "manifestTemplate": "integrations/scoop/agentapi-doctor.json.tmpl",
+  "version": null,
+  "releaseTag": null,
+  "artifacts": {
+    "windows-amd64": {
+      "archiveTemplate": "agentapi-doctor_{version}_windows_amd64.tar.gz",
+      "sha256": null
+    },
+    "windows-arm64": {
+      "archiveTemplate": "agentapi-doctor_{version}_windows_arm64.tar.gz",
+      "sha256": null
+    }
+  },
+  "verification": {
+    "checksumAlgorithm": "sha256",
+    "checksumManifest": "checksums.txt",
+    "sigstoreBundleRequired": true
+  },
+  "publishedEvidence": []
+}

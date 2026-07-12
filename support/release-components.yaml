@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:release-components:v1",
+  "kind": "ReleaseComponents",
+  "releaseTarget": "v1.0",
+  "manifestStatus": "candidate",
+  "components": [
+    {"id": "core-cli", "kind": "CoreCLI", "required": true, "targetMaturity": "stable", "status": "pending", "d30Criteria": ["D30-PHASE-STATUS"]},
+    {"id": "tier1-protocol-packs", "kind": "ProtocolPackSet", "required": true, "targetMaturity": "stable", "status": "pending", "d30Criteria": ["D30-PROTOCOL-TIER1"]},
+    {"id": "tier1-consumer-profiles", "kind": "ConsumerProfileSet", "required": true, "targetMaturity": "stable", "status": "pending", "d30Criteria": ["D30-PROFILES-TIER1", "D30-DRIVER-IDENTITIES", "D30-SUPPORT-LOCK"]},
+    {"id": "tier1-runtime-adapters", "kind": "RuntimeMetadataAdapterSet", "required": true, "targetMaturity": "stable", "status": "pending", "d30Criteria": ["D30-RUNTIME-ADAPTERS"]},
+    {"id": "required-tier2-set", "kind": "ExperimentalExtensionSet", "required": true, "targetMaturity": "experimental", "status": "pending", "d30Criteria": ["D30-TIER2-REQUIRED"]},
+    {"id": "self-hosted-registry", "kind": "RegistryDistribution", "required": true, "targetMaturity": "stable", "status": "pending", "d30Criteria": ["D30-PHASE-STATUS"]},
+    {"id": "hosted-registry", "kind": "HostedRegistry", "required": true, "targetMaturity": "stable", "status": "pending", "d30Criteria": ["D30-PHASE-STATUS"]},
+    {"id": "hosted-matrix", "kind": "HostedMatrix", "required": true, "targetMaturity": "stable", "status": "pending", "d30Criteria": ["D30-PHASE-STATUS"]}
+  ]
+}

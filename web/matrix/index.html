@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AgentAPI Doctor Compatibility Matrix</title>
+  <link rel="stylesheet" href="/matrix/style.css">
+  <script src="/matrix/app.js" defer></script>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Evidence, not certification</p>
+    <h1>Compatibility observations</h1>
+    <p>This matrix shows immutable, version-bound observations. Trust, freshness, and disputes are independent of pass/fail results.</p>
+  </header>
+  <main>
+    <form id="filters">
+      <label>Subject <input name="subject" autocomplete="off" maxlength="128" placeholder="owner/project"></label>
+      <label>Pack <input name="pack" autocomplete="off" maxlength="128"></label>
+      <label>Profile <input name="profile" autocomplete="off" maxlength="128"></label>
+      <label>Trust <input name="trust" autocomplete="off" maxlength="64"></label>
+      <button type="submit">Query observations</button>
+    </form>
+    <p id="status" role="status" aria-live="polite">Loading local Registry observations…</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Subject</th><th>Pack</th><th>Profile</th><th>Result</th><th>Trust</th><th>Freshness</th><th>Observation</th></tr></thead>
+        <tbody id="observations"></tbody>
+      </table>
+    </div>
+    <button id="more" type="button" hidden>Load more</button>
+  </main>
+  <footer><a href="https://github.com/whyiug/agentapi-doctor">Source and methodology</a></footer>
+</body>
+</html>
