@@ -15,6 +15,9 @@ func syncDirectoryPlatform(path string) error {
 	if before.Mode()&os.ModeSymlink != 0 || !before.IsDir() {
 		return errors.New("directory sync path must be a non-symlink directory")
 	}
+	if !pinFileIdentity(before) {
+		return errors.New("directory identity is unavailable")
+	}
 	after, err := os.Lstat(path)
 	if err != nil {
 		return err

@@ -70,6 +70,9 @@ func Open(root string, maxObjectBytes int64) (*Store, error) {
 	if err != nil {
 		return nil, fmt.Errorf("stat CAS root identity: %w", err)
 	}
+	if !pinFileIdentity(identity) {
+		return nil, errors.New("capture CAS root identity")
+	}
 	return &Store{root: clean, rootIdentity: identity, maxObjectBytes: maxObjectBytes, syncDir: syncDirectoryPlatform}, nil
 }
 
@@ -81,7 +84,7 @@ func (store *Store) validateRoot() error {
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrRootReplaced, err)
 	}
-	if current.Mode()&os.ModeSymlink != 0 || !current.IsDir() || !os.SameFile(store.rootIdentity, current) {
+	if current.Mode()&os.ModeSymlink != 0 || !current.IsDir() || !pinFileIdentity(current) || !os.SameFile(store.rootIdentity, current) {
 		return ErrRootReplaced
 	}
 	return nil
@@ -559,7 +562,7 @@ func (store *Store) putDigestBytes(path string, data []byte, digest schema.Diges
 			return
 		}
 		current, err := os.Lstat(temporaryName)
-		if err == nil && current.Mode()&os.ModeSymlink == 0 && current.Mode().IsRegular() && os.SameFile(temporaryIdentity, current) {
+		if err == nil && current.Mode()&os.ModeSymlink == 0 && current.Mode().IsRegular() && pinFileIdentity(current) && os.SameFile(temporaryIdentity, current) {
 			_ = os.Remove(temporaryName)
 		}
 	}()
@@ -592,7 +595,7 @@ func (store *Store) putDigestBytes(path string, data []byte, digest schema.Diges
 	if err != nil {
 		return store.rootAwareError(err)
 	}
-	if current.Mode()&os.ModeSymlink != 0 || !current.Mode().IsRegular() || !os.SameFile(temporaryIdentity, current) || current.Size() != int64(len(data)) {
+	if current.Mode()&os.ModeSymlink != 0 || !current.Mode().IsRegular() || !pinFileIdentity(current) || !os.SameFile(temporaryIdentity, current) || current.Size() != int64(len(data)) {
 		return errors.New("CAS temporary object path changed before commit")
 	}
 	if err := os.Link(temporaryName, path); err != nil {
@@ -609,7 +612,7 @@ func (store *Store) putDigestBytes(path string, data []byte, digest schema.Diges
 	if err != nil {
 		return store.rootAwareError(err)
 	}
-	if current.Mode()&os.ModeSymlink != 0 || !current.Mode().IsRegular() || !os.SameFile(temporaryIdentity, current) {
+	if current.Mode()&os.ModeSymlink != 0 || !current.Mode().IsRegular() || !pinFileIdentity(current) || !os.SameFile(temporaryIdentity, current) {
 		return errors.New("CAS temporary object path changed after commit")
 	}
 	if err := os.Remove(temporaryName); err != nil {
@@ -656,6 +659,9 @@ func (store *Store) readBoundedAfterLstat(path string, hook func() error) ([]byt
 	if !store.regularObject(before) {
 		return nil, errors.New("CAS object must be a bounded regular non-symlink file")
 	}
+	if !pinFileIdentity(before) {
+		return nil, errors.New("capture CAS object identity before open")
+	}
 	if hook != nil {
 		if err := hook(); err != nil {
 			return nil, err
@@ -670,7 +676,7 @@ func (store *Store) readBoundedAfterLstat(path string, hook func() error) ([]byt
 	if err != nil {
 		return nil, err
 	}
-	if !store.regularObject(opened) || !os.SameFile(before, opened) || before.Size() != opened.Size() {
+	if !store.regularObject(opened) || !pinFileIdentity(opened) || !os.SameFile(before, opened) || before.Size() != opened.Size() {
 		return nil, errors.New("CAS object changed between lstat and open")
 	}
 	readLimit := store.maxObjectBytes + 1
@@ -693,6 +699,7 @@ func (store *Store) readBoundedAfterLstat(path string, hook func() error) ([]byt
 		return nil, store.rootAwareError(err)
 	}
 	if !store.regularObject(after) || !store.regularObject(pathAfter) ||
+		!pinFileIdentity(after) || !pinFileIdentity(pathAfter) ||
 		!os.SameFile(opened, after) || !os.SameFile(opened, pathAfter) ||
 		opened.Size() != after.Size() || opened.Size() != pathAfter.Size() || int64(len(data)) != opened.Size() {
 		zero(data)

@@ -473,6 +473,9 @@ func TestTemporaryDirectorySyncRejectsReplacement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !pinFileIdentity(identity) {
+		t.Fatal("temporary directory identity is unavailable")
+	}
 	if err := os.Rename(temporary, temporary+".original"); err != nil {
 		t.Fatal(err)
 	}

@@ -120,6 +120,24 @@ func TestStoreRejectsReplacedRootForEveryOperation(t *testing.T) {
 	}
 }
 
+func TestStoreRejectsRootReplacementBeforeFirstOperation(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "cas")
+	store, err := Open(root, 1024)
+	if err != nil {
+		t.Fatal(err)
+	}
+	original := root + ".original"
+	if err := os.Rename(root, original); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(root, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.validateRoot(); !errors.Is(err, ErrRootReplaced) {
+		t.Fatalf("replacement before the first operation was accepted: %v", err)
+	}
+}
+
 func TestReadBoundedRejectsDirectoryAndFileSymlinks(t *testing.T) {
 	redactor, _ := redaction.New(nil, nil)
 	payload, _ := redactor.SanitizeText([]byte("symlink-fixture"))

@@ -90,6 +90,9 @@ func Open(root string, maxBytes int64) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
+	if !pinFileIdentity(identity) {
+		return nil, errors.New("run store root identity is unavailable")
+	}
 	return &Store{root: clean, rootIdentity: identity, maxBytes: maxBytes, syncDir: syncDirectoryPlatform}, nil
 }
 
@@ -208,6 +211,9 @@ func (store *Store) Put(runID schema.InstanceID, payload Payload) (schema.Digest
 	temporaryIdentity, err := os.Lstat(temporaryDirectory)
 	if err != nil {
 		return "", store.rootAwareError(err)
+	}
+	if !pinFileIdentity(temporaryIdentity) {
+		return "", ErrCorrupt
 	}
 	defer func() {
 		if temporaryDirectory == "" || store.validateRoot() != nil {
@@ -455,7 +461,7 @@ func (store *Store) readRunRecord(runID schema.InstanceID) ([]byte, error) {
 	if err != nil {
 		return nil, store.rootAwareError(err)
 	}
-	if before.Mode()&os.ModeSymlink != 0 || !before.IsDir() {
+	if before.Mode()&os.ModeSymlink != 0 || !before.IsDir() || !pinFileIdentity(before) {
 		return nil, ErrCorrupt
 	}
 	if err := store.validateRoot(); err != nil {
@@ -583,6 +589,10 @@ func (store *Store) replaceLatest(data []byte) error {
 		_ = temporary.Close()
 		return store.rootAwareError(err)
 	}
+	if !pinFileIdentity(temporaryIdentity) {
+		_ = temporary.Close()
+		return ErrCorrupt
+	}
 	removeTemporary := true
 	defer func() {
 		_ = temporary.Close()
@@ -640,7 +650,7 @@ func readRegularAfterLstat(path string, limit int64, hook func() error) ([]byte,
 	if err != nil {
 		return nil, err
 	}
-	if !regularWithinLimit(before, limit) {
+	if !regularWithinLimit(before, limit) || !pinFileIdentity(before) {
 		return nil, ErrCorrupt
 	}
 	if hook != nil {
@@ -687,6 +697,15 @@ func readRegularAfterLstat(path string, limit int64, hook func() error) ([]byte,
 func regularWithinLimit(info os.FileInfo, limit int64) bool {
 	return info != nil && info.Mode()&os.ModeSymlink == 0 && info.Mode().IsRegular() && info.Size() > 0 && info.Size() <= limit
 }
+
+// pinFileIdentity forces platforms with lazy path-based FileInfo identities
+// (notably Windows) to resolve the stable volume/file ID before a caller can
+// rename and replace the path. On platforms whose FileInfo already carries a
+// stable inode identity, SameFile is a no-op comparison.
+func pinFileIdentity(info os.FileInfo) bool {
+	return info != nil && os.SameFile(info, info)
+}
+
 func sortIDs(values []schema.InstanceID) {
 	for i := 0; i < len(values); i++ {
 		for j := i + 1; j < len(values); j++ {
