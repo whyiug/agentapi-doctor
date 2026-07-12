@@ -42,74 +42,39 @@ class ReleaseAssetManifestTests(unittest.TestCase):
                 json.dumps(first, sort_keys=True), json.dumps(second, sort_keys=True)
             )
 
-    def test_accepts_only_named_optional_release_assets(self) -> None:
+    def test_accepts_only_the_named_optional_signature_bundle(self) -> None:
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
             self.populate(root)
             for name in release_assets.OPTIONAL_UNCHECKSUMMED_ASSETS:
                 (root / name).write_text(f"optional:{name}\n", encoding="utf-8")
-            for name in release_assets.OPTIONAL_CHECKSUMMED_ASSETS:
-                asset = root / name
-                asset.write_text(f"optional:{name}\n", encoding="utf-8")
-                digest = hashlib.sha256(asset.read_bytes()).hexdigest()
-                with (root / "checksums.txt").open("a", encoding="utf-8") as manifest:
-                    manifest.write(f"{digest}  {name}\n")
             manifest = release_assets.build_manifest(root, self.version)
             kinds = {asset["name"]: asset["kind"] for asset in manifest["assets"]}
             for name, kind in release_assets.OPTIONAL_ASSETS.items():
                 self.assertEqual(kinds[name], kind)
 
-    def test_optional_oci_subjects_must_be_checksummed(self) -> None:
-        with TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            self.populate(root)
-            asset = root / "oci-images.json"
-            asset.write_text('{"schema":"synthetic"}\n', encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "checksum asset set mismatch"):
-                release_assets.build_manifest(root, self.version)
-
-            digest = hashlib.sha256(asset.read_bytes()).hexdigest()
-            with (root / "checksums.txt").open("a", encoding="utf-8") as manifest:
-                manifest.write(f"{digest}  {asset.name}\n")
-            release_assets.build_manifest(root, self.version)
-
-    def test_image_sboms_are_optional_but_must_be_checksummed(self) -> None:
-        with TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            self.populate(root)
-            asset = root / "agentapi-doctor-image.spdx.json"
-            asset.write_text('{"spdxVersion":"SPDX-2.3"}\n', encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "checksum asset set mismatch"):
-                release_assets.build_manifest(root, self.version)
-            digest = hashlib.sha256(asset.read_bytes()).hexdigest()
-            with (root / "checksums.txt").open("a", encoding="utf-8") as manifest:
-                manifest.write(f"{digest}  {asset.name}\n")
-            release_assets.build_manifest(root, self.version)
-
-    def test_required_sboms_and_package_manifests_are_checksummed(self) -> None:
+    def test_one_spdx_sbom_and_six_doctor_archives_are_checksummed(self) -> None:
         covered = release_assets.checksummed_release_assets(self.version)
-        self.assertTrue(
-            {
-                "agentapi-doctor.cdx.json",
-                "agentapi-doctor.spdx.json",
-                "agentapi-doctor.json",
-                "agentapi-doctor.rb",
-            }
-            <= covered
+        archives = {name for name in covered if name.startswith("agentapi-doctor_")}
+        self.assertEqual(len(archives), 6)
+        self.assertIn(
+            f"agentapi-doctor_{self.version}_windows_amd64.zip", archives
         )
+        self.assertNotIn(
+            f"agentapi-doctor_{self.version}_windows_amd64.tar.gz", archives
+        )
+        self.assertIn("agentapi-doctor.spdx.json", covered)
         self.assertNotIn("checksums.txt", covered)
         self.assertTrue(
             set(release_assets.OPTIONAL_UNCHECKSUMMED_ASSETS).isdisjoint(covered)
         )
 
     def test_rejects_unknown_unsafe_missing_and_duplicate_names(self) -> None:
-        cases = ("unknown.bin", "unsafe name", "AGENTAPI-DOCTOR.RB")
+        cases = ("unknown.bin", "unsafe name", "AGENTAPI-DOCTOR.SPDX.JSON")
         for name in cases:
             with self.subTest(name=name), TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 self.populate(root)
-                if name == "AGENTAPI-DOCTOR.RB":
-                    (root / "agentapi-doctor.rb").write_bytes(b"one")
                 (root / name).write_bytes(b"unexpected")
                 with self.assertRaises(ValueError):
                     release_assets.build_manifest(root, self.version)
@@ -168,7 +133,7 @@ class ReleaseAssetManifestTests(unittest.TestCase):
             raw.mkdir()
             staged.mkdir()
             self.populate(raw)
-            selected = raw / "agentapi-doctor.rb"
+            selected = raw / "agentapi-doctor.spdx.json"
             selected.unlink()
             try:
                 os.symlink(raw / "checksums.txt", selected)
@@ -264,15 +229,15 @@ class ReleaseAssetManifestTests(unittest.TestCase):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
             self.populate(root)
-            (root / "agentapi-doctor.rb").unlink()
-            (root / "agentapi-doctor.rb").mkdir()
+            (root / "agentapi-doctor.spdx.json").unlink()
+            (root / "agentapi-doctor.spdx.json").mkdir()
             with self.assertRaises(ValueError):
                 release_assets.build_manifest(root, self.version)
 
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
             self.populate(root)
-            link = root / "agentapi-doctor.rb"
+            link = root / "agentapi-doctor.spdx.json"
             link.unlink()
             try:
                 os.symlink(root / "checksums.txt", link)

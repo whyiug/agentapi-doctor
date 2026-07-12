@@ -5,10 +5,9 @@ product boundaries; they are not hidden compatibility claims.
 
 ## Execution and compatibility
 
-- There is not yet a tagged binary or package release. Install the current
-  source snapshot with
-  `go install github.com/whyiug/agentapi-doctor/cmd/doctor@latest` or build a
-  checkout.
+- `v0.1.0-rc.1` is a release candidate, not a stable compatibility contract.
+  The supported distribution is the `doctor` CLI archive for Linux, macOS, or
+  Windows. Package-manager channels are not yet published.
 - Client-side execution can target an explicitly authorized local,
   private-network, or remote origin. It currently covers raw HTTP behavior for
   `openai-chat`, `openai-responses`, and `anthropic-messages`, with four
@@ -56,9 +55,9 @@ product boundaries; they are not hidden compatibility claims.
 
 ## Distribution and contracts
 
-- Homebrew, Scoop, GitHub Action, reusable-workflow, OCI, SBOM, provenance, and
-  release automation are tested in the repository but remain unpublished until
-  the first tagged release.
+- Release archives include SHA-256 checksums, one SPDX SBOM, and GitHub build
+  provenance. Homebrew, Scoop, GitHub Action, reusable-workflow, OCI, Registry,
+  and reference-server distributions remain unpublished candidates.
 - Public JSON Schemas and Registry OpenAPI are versioned pre-release contracts.
   A stable compatibility and migration floor has not been declared.
 - No external penetration test, privacy/legal review, verified adopter set, or

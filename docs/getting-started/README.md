@@ -2,9 +2,10 @@
 
 [Documentation home](../README.md) | [简体中文](../zh-CN/getting-started.md)
 
-This guide moves from a source checkout to an authorized target run, stored
-evidence, and exported reports. There is no tagged release or published
-package yet, and a passing result is not vendor certification.
+This contributor-oriented guide moves from a source checkout to an authorized
+target run, stored evidence, and exported reports. Most users should install
+the prebuilt CLI through the [Quick Start](../quick-start.md). A passing result
+is not vendor certification.
 
 For the shortest credential-free path, use the one-command
 [Quick Start](../quick-start.md).

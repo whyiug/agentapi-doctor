@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"unicode"
 
+	"github.com/whyiug/agentapi-doctor/internal/buildinfo"
 	"github.com/whyiug/agentapi-doctor/pkg/schema"
 )
 
@@ -28,16 +30,34 @@ func Terminal(bundle Bundle) ([]byte, error) {
 	fmt.Fprintf(&output, "Cases: %d candidate / %d applicable / %d executed\n", bundle.Denominators.CandidateCount, bundle.Denominators.ApplicableCount, bundle.Denominators.ExecutedCount)
 	fmt.Fprintf(&output, "Verdicts: PASS %d | FAIL %d | WARN %d | INCONCLUSIVE %d | SKIPPED %d | ERRORED %d\n", counts.Pass, counts.Fail, counts.Warn, counts.Inconclusive, counts.Skipped, counts.Errored)
 	for _, result := range sortedCases(bundle) {
-		label := strings.ToUpper(string(result.ExecutionStatus))
-		if result.Verdict != nil {
-			label = strings.ToUpper(string(*result.Verdict))
+		item := presentCase(result)
+		if !item.Detailed {
+			fmt.Fprintf(&output, "%-14s %s%s\n", item.Label, item.ScenarioID, parenthesizedReason(item.Reason))
+			continue
 		}
-		reason := ""
-		if result.ReasonCode != "" {
-			reason = " (" + safeLine(string(result.ReasonCode)) + ")"
+		fmt.Fprintf(&output, "%-14s %s [%s]\n", item.Label, item.ScenarioName, item.ScenarioID)
+		if item.Reason != "" {
+			fmt.Fprintf(&output, "  Reason: %s\n", item.Reason)
 		}
-		fmt.Fprintf(&output, "%-14s %s%s\n", label, safeLine(result.ScenarioID), reason)
+		if len(item.Findings) == 0 {
+			fmt.Fprintf(&output, "  Finding category: %s\n  Fault domain: %s\n", item.Category, item.FaultDomain)
+			fmt.Fprintf(&output, "  Next action: %s\n", item.NextAction)
+		}
+		for index, finding := range item.Findings {
+			prefix := "Finding"
+			if len(item.Findings) > 1 {
+				prefix = fmt.Sprintf("Finding %d", index+1)
+			}
+			fmt.Fprintf(&output, "  %s category: %s\n  %s fault domain: %s\n", prefix, finding.Category, prefix, finding.FaultDomain)
+			if finding.Remediation != "" {
+				fmt.Fprintf(&output, "  Remediation: %s\n", finding.Remediation)
+			}
+		}
+		for _, assertion := range item.Assertions {
+			fmt.Fprintf(&output, "  Assertion %s\n    Expected: %s\n    Observed: %s\n", assertion.ID, assertion.Expected, assertion.Observed)
+		}
 	}
+	fmt.Fprintf(&output, "\nNext: export a shareable report with:\n  doctor report markdown %s --output doctor-report.md\n", bundle.RunID)
 	return []byte(output.String()), nil
 }
 
@@ -172,7 +192,7 @@ func SARIF(bundle Bundle) ([]byte, error) {
 			}
 		}
 	}
-	log := sarifLog{Version: "2.1.0", Schema: "https://json.schemastore.org/sarif-2.1.0.json", Runs: []sarifRun{{Tool: sarifTool{Driver: sarifDriver{Name: "agentapi-doctor", InformationURI: "https://github.com/whyiug/agentapi-doctor", SemanticVersion: "0.1.0", Rules: ruleList}}, Results: results}}}
+	log := sarifLog{Version: "2.1.0", Schema: "https://json.schemastore.org/sarif-2.1.0.json", Runs: []sarifRun{{Tool: sarifTool{Driver: sarifDriver{Name: "agentapi-doctor", InformationURI: "https://github.com/whyiug/agentapi-doctor", SemanticVersion: buildinfo.Current().Version, Rules: ruleList}}, Results: results}}}
 	return json.MarshalIndent(log, "", "  ")
 }
 
@@ -186,11 +206,37 @@ func Markdown(bundle Bundle) ([]byte, error) {
 	fmt.Fprintf(&output, "| Pass | Fail | Warn | Inconclusive | Skipped | Errored |\n|---:|---:|---:|---:|---:|---:|\n| %d | %d | %d | %d | %d | %d |\n\n", counts.Pass, counts.Fail, counts.Warn, counts.Inconclusive, counts.Skipped, counts.Errored)
 	output.WriteString("| Scenario | Disposition | Execution | Verdict | Reason |\n|---|---|---|---|---|\n")
 	for _, result := range sortedCases(bundle) {
-		verdict := "—"
-		if result.Verdict != nil {
-			verdict = string(*result.Verdict)
+		item := presentCase(result)
+		scenario := item.ScenarioID
+		if item.Detailed {
+			scenario = item.ScenarioName + " (" + item.ScenarioID + ")"
 		}
-		fmt.Fprintf(&output, "| %s | %s | %s | %s | %s |\n", markdownCell(result.ScenarioID), result.PlanDisposition, result.ExecutionStatus, verdict, markdownCell(string(result.ReasonCode)))
+		fmt.Fprintf(&output, "| %s | %s | %s | %s | %s |\n", markdownCell(scenario), result.PlanDisposition, result.ExecutionStatus, markdownCell(item.Label), markdownCell(item.Reason))
+	}
+	for _, result := range sortedCases(bundle) {
+		item := presentCase(result)
+		if !item.Detailed {
+			continue
+		}
+		fmt.Fprintf(&output, "\n## %s — %s\n\n", markdownInline(item.Label), markdownInline(item.ScenarioName))
+		fmt.Fprintf(&output, "- Scenario ID: `%s`\n- Finding category: %s\n- Fault domain: %s\n", markdownInline(item.ScenarioID), markdownInline(item.Category), markdownInline(item.FaultDomain))
+		if item.Reason != "" {
+			fmt.Fprintf(&output, "- Reason: %s\n", markdownInline(item.Reason))
+		}
+		for _, assertion := range item.Assertions {
+			fmt.Fprintf(&output, "- Assertion `%s`\n  - Expected: %s\n  - Observed: %s\n", markdownInline(assertion.ID), markdownInline(assertion.Expected), markdownInline(assertion.Observed))
+		}
+		for index, finding := range item.Findings {
+			if len(item.Findings) > 1 {
+				fmt.Fprintf(&output, "- Finding %d: category %s; fault domain %s\n", index+1, markdownInline(finding.Category), markdownInline(finding.FaultDomain))
+			}
+			if finding.Remediation != "" {
+				fmt.Fprintf(&output, "- Remediation: %s\n", markdownInline(finding.Remediation))
+			}
+		}
+		if item.NextAction != "" && len(item.Findings) == 0 {
+			fmt.Fprintf(&output, "- Next action: %s\n", markdownInline(item.NextAction))
+		}
 	}
 	return []byte(output.String()), nil
 }
@@ -198,34 +244,243 @@ func Markdown(bundle Bundle) ([]byte, error) {
 var htmlReportTemplate = template.Must(template.New("report").Parse(`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
-<title>AgentAPI Doctor report</title><style>body{font:15px system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#161616}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:.45rem;text-align:left}code{overflow-wrap:anywhere}.pass{color:#086b2d}.fail{color:#a40000}.muted{color:#555}</style></head>
+<title>AgentAPI Doctor report</title><style>body{font:15px system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#161616}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:.45rem;text-align:left;vertical-align:top}code{overflow-wrap:anywhere}.pass{color:#086b2d}.fail{color:#a40000}.muted{color:#555}.diagnostic{border-left:4px solid #a40000;background:#f7f7f7;margin:1rem 0;padding:.25rem 1rem}.diagnostic h2{font-size:1.1rem}.diagnostic dt{font-weight:700;margin-top:.5rem}.diagnostic dd{margin-left:0}</style></head>
 <body><h1>AgentAPI Doctor report</h1><p><strong>Run:</strong> <code>{{.RunID}}</code><br><strong>Profile:</strong> <code>{{.Profile.Name}}@{{.Profile.Version}}</code><br><strong>Outcome:</strong> {{.Outcome}}</p>
 <p class="muted">Candidate {{.Denominators.CandidateCount}}, applicable {{.Denominators.ApplicableCount}}, executed {{.Denominators.ExecutedCount}}. This report is an observation, not vendor certification.</p>
-<table><thead><tr><th>Scenario</th><th>Disposition</th><th>Execution</th><th>Verdict</th><th>Reason</th></tr></thead><tbody>{{range .Cases}}<tr><td>{{.ScenarioID}}</td><td>{{.PlanDisposition}}</td><td>{{.ExecutionStatus}}</td><td>{{if .Verdict}}{{.Verdict}}{{else}}—{{end}}</td><td>{{.ReasonCode}}</td></tr>{{end}}</tbody></table></body></html>`))
+<table><thead><tr><th>Scenario</th><th>Disposition</th><th>Execution</th><th>Verdict</th><th>Reason</th></tr></thead><tbody>{{range .Cases}}<tr><td>{{if .Detailed}}<strong>{{.ScenarioName}}</strong><br>{{end}}<code>{{.ScenarioID}}</code></td><td>{{.PlanDisposition}}</td><td>{{.ExecutionStatus}}</td><td>{{.Label}}</td><td>{{.Reason}}</td></tr>{{end}}</tbody></table>
+{{range .Cases}}{{if .Detailed}}<section class="diagnostic"><h2>{{.Label}} — {{.ScenarioName}}</h2><dl><dt>Scenario ID</dt><dd><code>{{.ScenarioID}}</code></dd>{{if not .Findings}}<dt>Finding category</dt><dd>{{.Category}}</dd><dt>Fault domain</dt><dd>{{.FaultDomain}}</dd>{{end}}{{if .Reason}}<dt>Reason</dt><dd>{{.Reason}}</dd>{{end}}{{if .NextAction}}<dt>Next action</dt><dd>{{.NextAction}}</dd>{{end}}</dl>
+{{range .Assertions}}<p><strong>Assertion <code>{{.ID}}</code></strong><br><strong>Expected:</strong> {{.Expected}}<br><strong>Observed:</strong> {{.Observed}}</p>{{end}}
+{{range .Findings}}<p><strong>Finding category:</strong> {{.Category}}<br><strong>Fault domain:</strong> {{.FaultDomain}}{{if .Remediation}}<br><strong>Remediation:</strong> {{.Remediation}}{{end}}</p>{{end}}</section>{{end}}{{end}}</body></html>`))
 
 func HTML(bundle Bundle) ([]byte, error) {
 	if err := bundle.Validate(); err != nil {
 		return nil, err
 	}
-	copyBundle := bundle
-	copyBundle.Cases = sortedCases(bundle)
+	view := htmlReportView{Bundle: bundle}
+	for _, result := range sortedCases(bundle) {
+		view.Cases = append(view.Cases, presentCase(result))
+	}
 	var output bytes.Buffer
-	if err := htmlReportTemplate.Execute(&output, copyBundle); err != nil {
+	if err := htmlReportTemplate.Execute(&output, view); err != nil {
 		return nil, err
 	}
 	return output.Bytes(), nil
 }
 
 func safeLine(value string) string {
-	return strings.Map(func(r rune) rune {
-		if r == '\n' || r == '\r' || r == '\x00' {
-			return ' '
+	runes := []rune(value)
+	var output strings.Builder
+	for index := 0; index < len(runes); index++ {
+		r := runes[index]
+		if r == '\x1b' {
+			index = skipEscapeSequence(runes, index)
+			continue
 		}
-		return r
-	}, value)
+		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
+			output.WriteRune(' ')
+			continue
+		}
+		output.WriteRune(r)
+	}
+	return output.String()
 }
-func markdownInline(value string) string { return strings.ReplaceAll(safeLine(value), "`", "\\`") }
-func markdownCell(value string) string   { return strings.ReplaceAll(markdownInline(value), "|", "\\|") }
+
+func skipEscapeSequence(runes []rune, escape int) int {
+	if escape+1 >= len(runes) {
+		return escape
+	}
+	switch runes[escape+1] {
+	case '[': // Control Sequence Introducer: ESC [ ... final-byte.
+		for index := escape + 2; index < len(runes); index++ {
+			if runes[index] >= 0x40 && runes[index] <= 0x7e {
+				return index
+			}
+		}
+		return len(runes) - 1
+	case ']': // Operating System Command: ESC ] ... BEL or ST.
+		for index := escape + 2; index < len(runes); index++ {
+			if runes[index] == '\a' {
+				return index
+			}
+			if runes[index] == '\x1b' && index+1 < len(runes) && runes[index+1] == '\\' {
+				return index + 1
+			}
+		}
+		return len(runes) - 1
+	default:
+		return escape + 1
+	}
+}
+func markdownInline(value string) string {
+	return strings.NewReplacer(
+		"\\", "\\\\", "`", "\\`", "*", "\\*", "_", "\\_", "[", "\\[", "]", "\\]",
+		"<", "&lt;", ">", "&gt;", "&", "&amp;",
+	).Replace(safeLine(value))
+}
+func markdownCell(value string) string { return strings.ReplaceAll(markdownInline(value), "|", "\\|") }
+
+type htmlReportView struct {
+	Bundle
+	Cases []casePresentation
+}
+
+type casePresentation struct {
+	ScenarioID      string
+	ScenarioName    string
+	PlanDisposition schema.PlanDisposition
+	ExecutionStatus schema.ExecutionStatus
+	Label           string
+	Reason          string
+	Detailed        bool
+	Category        string
+	FaultDomain     string
+	NextAction      string
+	Assertions      []assertionPresentation
+	Findings        []findingPresentation
+}
+
+type assertionPresentation struct {
+	ID       string
+	Expected string
+	Observed string
+}
+
+type findingPresentation struct {
+	Category    string
+	FaultDomain string
+	Remediation string
+}
+
+func presentCase(result schema.CaseResult) casePresentation {
+	label := strings.ToUpper(string(result.ExecutionStatus))
+	if result.Verdict != nil {
+		label = strings.ToUpper(string(*result.Verdict))
+	}
+	item := casePresentation{
+		ScenarioID: safeLine(result.ScenarioID), ScenarioName: humanScenarioName(result.ScenarioID),
+		PlanDisposition: result.PlanDisposition, ExecutionStatus: result.ExecutionStatus,
+		Label: safeLine(label), Reason: safeLine(string(result.ReasonCode)),
+		Category: "not recorded", FaultDomain: "not attributed",
+	}
+	if result.Verdict != nil {
+		item.Detailed = *result.Verdict == schema.VerdictFail || *result.Verdict == schema.VerdictWarn || *result.Verdict == schema.VerdictInconclusive
+	}
+	if item.Reason != "" {
+		item.Category = item.Reason
+	}
+	for _, finding := range result.Findings {
+		entry := findingPresentation{
+			Category:    safeFallback(finding.Category, "not recorded"),
+			FaultDomain: safeFallback(finding.FaultDomain, "not attributed"),
+			Remediation: safeLine(finding.RemediationHint),
+		}
+		item.Findings = append(item.Findings, entry)
+		if len(item.Findings) == 1 {
+			item.Category, item.FaultDomain = entry.Category, entry.FaultDomain
+		}
+	}
+	if item.Detailed && len(item.Findings) == 0 {
+		item.NextAction = "Review the expected and observed prerequisite with the saved evidence; no fault domain was attributed."
+	}
+	for _, assertion := range result.AssertionResults {
+		if assertion.Verdict == schema.VerdictPass {
+			continue
+		}
+		item.Assertions = append(item.Assertions, assertionPresentation{
+			ID:       safeFallback(assertion.AssertionID, "unnamed"),
+			Expected: displayValue(assertion.Expected), Observed: displayValue(assertion.Observed),
+		})
+	}
+	return item
+}
+
+func parenthesizedReason(reason string) string {
+	if reason == "" {
+		return ""
+	}
+	return " (" + reason + ")"
+}
+
+func safeFallback(value, fallback string) string {
+	value = strings.TrimSpace(safeLine(value))
+	if value == "" {
+		return fallback
+	}
+	return value
+}
+
+func displayValue(value any) string {
+	if value == nil {
+		return "not recorded"
+	}
+	if text, ok := value.(string); ok {
+		if text == "" {
+			return `""`
+		}
+		return safeLine(text)
+	}
+	encoded, err := schema.CanonicalMarshal(value)
+	if err != nil {
+		return safeLine(fmt.Sprint(value))
+	}
+	return safeLine(string(encoded))
+}
+
+func humanScenarioName(identifier string) string {
+	parts := strings.FieldsFunc(safeLine(identifier), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	for index, part := range parts {
+		if allDigits(part) && index+1 < len(parts) {
+			parts = parts[index+1:]
+			break
+		}
+	}
+	words := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if allDigits(part) {
+			continue
+		}
+		switch strings.ToLower(part) {
+		case "openai":
+			words = append(words, "OpenAI")
+		case "api":
+			words = append(words, "API")
+		case "http":
+			words = append(words, "HTTP")
+		case "https":
+			words = append(words, "HTTPS")
+		case "sse":
+			words = append(words, "SSE")
+		case "id":
+			words = append(words, "ID")
+		case "json":
+			words = append(words, "JSON")
+		default:
+			runes := []rune(strings.ToLower(part))
+			if len(runes) > 0 {
+				runes[0] = unicode.ToUpper(runes[0])
+			}
+			words = append(words, string(runes))
+		}
+	}
+	if len(words) == 0 {
+		return "Unnamed scenario"
+	}
+	return strings.Join(words, " ")
+}
+
+func allDigits(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, r := range value {
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
+}
 func findingText(result schema.CaseResult) string {
 	if len(result.Findings) == 0 {
 		return "failure recorded without a derived finding"

@@ -110,6 +110,39 @@ func TestExitPriorityAndUnknownCommand(t *testing.T) {
 	}
 }
 
+func TestQuickPathHelpIsSuccessfulAndSideEffectFree(t *testing.T) {
+	directory := t.TempDir()
+	tests := []struct {
+		name     string
+		args     []string
+		contains []string
+	}{
+		{name: "general help", args: []string{"help"}, contains: []string{"Quick paths:", "doctor demo", "doctor help test"}},
+		{name: "test topic", args: []string{"help", "test"}, contains: []string{"Check one authorized endpoint", "--base-url", "--auth-env"}},
+		{name: "demo topic", args: []string{"help", "demo"}, contains: []string{"four compatibility checks", "no API key"}},
+		{name: "report topic", args: []string{"help", "report"}, contains: []string{"Export a saved run", "markdown latest"}},
+		{name: "test flag", args: []string{"test", "--help"}, contains: []string{"Check one authorized endpoint", "--plan-only"}},
+		{name: "demo flag", args: []string{"demo", "--help"}, contains: []string{"four compatibility checks", "doctor demo"}},
+		{name: "report flag", args: []string{"report", "--help"}, contains: []string{"Formats: terminal", "doctor-report.md"}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			code, stdout, stderr := runRawWithDependencies(t, Dependencies{WorkingDir: directory}, test.args...)
+			if code != ExitSuccess || stderr != "" {
+				t.Fatalf("help failed: code=%d stdout=%q stderr=%q", code, stdout, stderr)
+			}
+			for _, fragment := range test.contains {
+				if !strings.Contains(stdout, fragment) {
+					t.Fatalf("help omitted %q:\n%s", fragment, stdout)
+				}
+			}
+		})
+	}
+	if _, err := os.Stat(filepath.Join(directory, ".agentapi")); !os.IsNotExist(err) {
+		t.Fatalf("help command created runtime data: %v", err)
+	}
+}
+
 func TestSelfCheckMakesNoNetworkClaim(t *testing.T) {
 	code, output := run(t, t.TempDir(), "self-check")
 	if code != ExitSuccess || output.Status != "pass" {

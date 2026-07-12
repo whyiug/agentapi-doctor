@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">AgentAPI Doctor detects a missing terminal event</title>
+  <desc id="desc">A terminal-style visualization of a synthetic OpenAI Responses run where three checks pass and the missing terminal event causes one targeted failure.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#111c33"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#020617" flood-opacity=".45"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="620" rx="28" fill="#e9eff8"/>
+  <rect x="48" y="42" width="1104" height="536" rx="18" fill="url(#background)" filter="url(#shadow)"/>
+  <rect x="48" y="42" width="1104" height="54" rx="18" fill="#17233b"/>
+  <rect x="48" y="78" width="1104" height="18" fill="#17233b"/>
+  <circle cx="79" cy="69" r="8" fill="#fb7185"/>
+  <circle cx="105" cy="69" r="8" fill="#fbbf24"/>
+  <circle cx="131" cy="69" r="8" fill="#34d399"/>
+  <text x="174" y="76" fill="#aab9d4" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18">doctor test · synthetic missing-terminal-event</text>
+
+  <text x="82" y="139" fill="#8292ad" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="17">$ doctor test --protocol openai-responses ...</text>
+  <text x="82" y="183" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="22" font-weight="700">Profile outcome: INCOMPATIBLE</text>
+  <text x="82" y="217" fill="#aab9d4" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="17">4 checks · 3 pass · 1 targeted fail · exit 1</text>
+
+  <rect x="82" y="246" width="1036" height="58" rx="10" fill="#102d2a" stroke="#1f7664"/>
+  <text x="105" y="282" fill="#5ee2b2" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18" font-weight="700">PASS</text>
+  <text x="184" y="282" fill="#e2e8f0" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18">Stream media type</text>
+  <text x="878" y="282" fill="#7dd3fc" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16">text/event-stream</text>
+
+  <rect x="82" y="319" width="1036" height="102" rx="10" fill="#321923" stroke="#8f304b"/>
+  <text x="105" y="356" fill="#fb7185" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18" font-weight="700">FAIL</text>
+  <text x="184" y="356" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18" font-weight="700">Terminal event exactly once</text>
+  <text x="184" y="389" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16">Expected: 1 terminal event</text>
+  <text x="530" y="389" fill="#fda4af" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16">Observed: 0</text>
+  <text x="824" y="389" fill="#aab9d4" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">STREAM_STATE_MACHINE</text>
+
+  <rect x="82" y="437" width="1036" height="70" rx="10" fill="#17233b" stroke="#344766"/>
+  <text x="105" y="469" fill="#aab9d4" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16">Evidence saved locally · secret-redacted · content-addressed</text>
+  <text x="105" y="493" fill="#7dd3fc" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">Next: doctor report markdown &lt;run-id&gt; --output doctor-report.md</text>
+
+  <text x="82" y="548" fill="#8292ad" font-family="system-ui, sans-serif" font-size="15">Real deterministic output from a checked-in loopback fixture · no API key · no external endpoint</text>
+</svg>

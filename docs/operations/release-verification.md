@@ -1,189 +1,166 @@
 # Release Verification and Removal
 
-## Current publication status
+## Publication status
 
-AgentAPI Doctor does **not** currently have a published stable or release-candidate
-release. The GitHub Action, reusable workflow, Homebrew formula, and Scoop manifest
-in this repository are `candidate-unpublished` distribution contracts. Their null
-version and checksum fields are intentional. Do not substitute guessed versions,
-checksums, tags, or commit IDs, and do not treat the templates as installable
-packages.
+The first supported binary channel is `v0.1.0-rc.1`. Treat it as published only
+when the exact tag has a non-draft entry on the project's
+[GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases) page with
+the complete asset set below. If that entry is absent, use the developer source
+path in [Installation](../installation.md#source-install-for-contributors).
+Never substitute a guessed version or checksum into these commands.
 
-Use the procedures below only after a release page contains all of the following
-for the same immutable tag:
+The first release publishes only the `doctor` CLI. Registry,
+reference-server, OCI, Homebrew, Scoop, composite Action, and reusable-workflow
+files in the repository remain unpublished development candidates.
 
-- the exact OS/architecture archive;
-- `checksums.txt`;
-- `checksums.txt.sigstore.json`;
-- `oci-images.json`, when the release includes OCI subjects;
-- SPDX and CycloneDX SBOM assets plus verifiable provenance attestations; and
-- release notes naming the supported version and known issues.
+## Exact release asset set
 
-There is intentionally no download-piped-to-shell command. A release artifact is
-not trusted merely because it was downloaded over HTTPS.
+For one exact version, the immutable GitHub Release contains:
+
+- `agentapi-doctor_VERSION_linux_amd64.tar.gz`;
+- `agentapi-doctor_VERSION_linux_arm64.tar.gz`;
+- `agentapi-doctor_VERSION_darwin_amd64.tar.gz`;
+- `agentapi-doctor_VERSION_darwin_arm64.tar.gz`;
+- `agentapi-doctor_VERSION_windows_amd64.zip`;
+- `agentapi-doctor_VERSION_windows_arm64.zip`;
+- `agentapi-doctor.spdx.json`;
+- `checksums.txt`; and
+- `checksums.txt.sigstore.json`.
+
+`checksums.txt` covers all six archives and the SPDX SBOM. The Sigstore bundle
+authenticates `checksums.txt`, so it cannot recursively checksum itself. GitHub
+build-provenance attestations are stored in GitHub's attestation service for
+each of the nine files rather than duplicated as an unbound release asset.
 
 ## Verification order
 
-Verify in this order:
+1. Select an exact release tag, OS, and architecture.
+2. Download the matching archive, `checksums.txt`, and its Sigstore bundle from
+   that same tag.
+3. Verify the bundle with the exact release-workflow identity and GitHub Actions
+   OIDC issuer.
+4. Read the selected archive's SHA-256 from the authenticated checksum file and
+   compare it locally.
+5. Optionally verify GitHub provenance and inspect the SPDX SBOM.
+6. Extract the archive and confirm `doctor version --json` reports the selected
+   version.
 
-1. select an exact version, OS, and architecture—never a moving channel;
-2. download the archive, checksum manifest, and Sigstore bundle from that exact
-   release tag;
-3. verify the Sigstore bundle over the checksum manifest with the expected GitHub
-   Actions issuer and exact release-workflow certificate identity;
-4. read the selected archive's SHA-256 from the now-authenticated checksum
-   manifest;
-5. calculate the archive SHA-256 locally and compare it exactly; and
-6. inspect provenance/SBOM and safely extract only after all prior checks pass.
-
-The release workflow identity is:
+The certificate identity is exact and tag-bound:
 
 ```text
-https://github.com/whyiug/agentapi-doctor/.github/workflows/release.yml@refs/tags/v<exact-version>
+https://github.com/whyiug/agentapi-doctor/.github/workflows/release.yml@refs/tags/vVERSION
 ```
 
-The required OIDC issuer is:
+The required issuer is:
 
 ```text
 https://token.actions.githubusercontent.com
 ```
 
-## Manual download and Sigstore verification
+## Download and verify
 
-Set explicit values after confirming that the release exists. The angle-bracketed
-values below are placeholders, not published versions:
+Set explicit values only after the release page exists. Use `tar.gz` for Linux
+and macOS and `zip` for Windows.
 
 ```bash
-VERSION='<exact-semver-or-rc>'
-OS='<linux-or-darwin-or-windows>'
-ARCH='<amd64-or-arm64>'
+VERSION='0.1.0-rc.1'
+TARGET_OS='linux'
+TARGET_ARCH='amd64'
+EXTENSION='tar.gz'
 TAG="v${VERSION}"
-ARTIFACT="agentapi-doctor_${VERSION}_${OS}_${ARCH}.tar.gz"
+ARCHIVE="agentapi-doctor_${VERSION}_${TARGET_OS}_${TARGET_ARCH}.${EXTENSION}"
 DESTINATION='./agentapi-doctor-verified-release'
 
 mkdir -m 0700 "$DESTINATION"
 gh release download "$TAG" \
   --repo whyiug/agentapi-doctor \
   --dir "$DESTINATION" \
-  --pattern "$ARTIFACT" \
+  --pattern "$ARCHIVE" \
   --pattern 'checksums.txt' \
   --pattern 'checksums.txt.sigstore.json'
 ```
 
-Use a separately trusted `cosign` installation. Then authenticate the checksum
-manifest before trusting any checksum line:
+Use a separately trusted `cosign` installation to authenticate the checksum
+manifest:
 
 ```bash
 cosign verify-blob \
   --bundle "$DESTINATION/checksums.txt.sigstore.json" \
-  --certificate-identity "https://github.com/whyiug/agentapi-doctor/.github/workflows/release.yml@refs/tags/v${VERSION}" \
+  --certificate-identity "https://github.com/whyiug/agentapi-doctor/.github/workflows/release.yml@refs/tags/${TAG}" \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
   "$DESTINATION/checksums.txt"
 ```
 
-Any identity, issuer, transparency, signature, or bundle failure stops the
-installation. Do not replace the exact identity with a broad regular expression.
-
-## Manual archive checksum verification
-
-Extract exactly one matching checksum entry and compare it with a locally computed
-digest. The following Python snippet is portable, rejects duplicate/malformed
-entries and path-like filenames, and does not extract the archive:
+Then verify exactly one checksum entry without extracting the archive:
 
 ```bash
-python3 - "$DESTINATION/checksums.txt" "$DESTINATION/$ARTIFACT" <<'PY'
+python3 - "$DESTINATION/checksums.txt" "$DESTINATION/$ARCHIVE" <<'PY'
 import hashlib
 from pathlib import Path
 import re
 import sys
 
 manifest = Path(sys.argv[1])
-artifact = Path(sys.argv[2])
-if artifact.name != sys.argv[2].rsplit('/', 1)[-1]:
-    raise SystemExit('artifact path must end in one bounded filename')
-if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,199}', artifact.name):
-    raise SystemExit('unsafe artifact filename')
+archive = Path(sys.argv[2])
+if archive.name != sys.argv[2].replace('\\', '/').rsplit('/', 1)[-1]:
+    raise SystemExit('archive path must end in one bounded filename')
+if re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._+-]{0,199}', archive.name) is None:
+    raise SystemExit('unsafe archive filename')
 raw = manifest.read_bytes()
 if not raw or len(raw) > 4 * 1024 * 1024:
     raise SystemExit('checksum manifest violates size bounds')
 matches = []
 for line in raw.decode('utf-8').splitlines():
-    match = re.fullmatch(r'([0-9a-f]{64})[ \t]+([A-Za-z0-9][A-Za-z0-9._-]{0,199})', line)
+    match = re.fullmatch(r'([0-9a-f]{64})  ([A-Za-z0-9][A-Za-z0-9._+-]{0,199})', line)
     if match is None:
         raise SystemExit('malformed checksum manifest')
-    if match.group(2) == artifact.name:
+    if match.group(2) == archive.name:
         matches.append(match.group(1))
 if len(matches) != 1:
-    raise SystemExit('expected exactly one checksum entry for selected artifact')
-if artifact.stat().st_size > 256 * 1024 * 1024:
-    raise SystemExit('archive exceeds the supported download bound')
-observed = hashlib.sha256(artifact.read_bytes()).hexdigest()
-if observed != matches[0]:
+    raise SystemExit('expected exactly one checksum for the selected archive')
+digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+if digest != matches[0]:
     raise SystemExit('archive checksum mismatch')
-print(f'verified sha256:{observed}')
+print(f'verified sha256:{digest}')
 PY
 ```
 
-Before extracting manually, reject absolute paths, `..` components, links, device
-files, excessive member counts, and excessive uncompressed size. The candidate
-composite action implements these checks and extracts only `doctor`/`doctor.exe`;
-a generic `tar -x` command is deliberately not recommended here.
+Any identity, issuer, signature, filename, or digest failure stops the
+installation.
 
-## GitHub Actions usage after publication
+## Verify GitHub provenance
 
-The repository-callable candidate is located at `.github/workflows/doctor.yml`;
-`integrations/reusable-workflow/workflow.yml` is its byte-identical source template.
-This placement makes the workflow structurally callable by GitHub, but it does not
-establish independent review or make the candidate published or usable without the
-signed release artifacts listed above.
-
-Call both the reusable workflow and its `action_commit` using full 40-character
-commit SHAs. Supply an exact release version. Branch names, tags, moving major
-aliases, and a moving release channel are not acceptable pins. The reusable
-workflow grants only `contents: read`, checks out the action implementation at the
-provided full SHA, installs a pinned Sigstore verifier, and delegates archive
-verification to the composite action.
-
-Until a commit containing these integration files and a signed release both exist,
-there is no valid Actions invocation to publish in documentation.
-
-## Homebrew and Scoop after publication
-
-The checked-in package files are templates plus candidate schemas. Release
-automation must generate them from the already verified `checksums.txt` and an
-exact version. The generators reject missing platform entries, path traversal,
-floating versions, symlinked output directories, unknown template tokens, and
-overwrites.
-
-After an actual package channel is published, users can remove the package with:
+After downloading an asset, GitHub CLI can verify its repository-bound
+attestation:
 
 ```bash
-brew uninstall agentapi-doctor
+gh attestation verify "$DESTINATION/$ARCHIVE" \
+  --repo whyiug/agentapi-doctor
 ```
 
-or, on Windows:
+Provenance proves which GitHub workflow produced the bytes. It does not expand
+the product's compatibility claims.
 
-```powershell
-scoop uninstall agentapi-doctor
+## Extract, inspect, and remove
+
+After verification, inspect the archive member list before extraction. Reject
+absolute paths, `..` components, links, device files, duplicate names, and
+unexpected files. The release workflow applies these rules automatically on
+native Linux, macOS, and Windows runners.
+
+The expected executable is `doctor` on Linux/macOS and `doctor.exe` on Windows.
+Run:
+
+```text
+doctor version --json
+doctor demo
 ```
 
-No Homebrew tap or Scoop bucket is currently claimed to exist.
+The demo is credential-free, uses only a temporary loopback listener, and
+removes that listener when the process exits. It writes redacted local evidence
+under `.agentapi/` in the current directory.
 
-The candidate release workflow attaches generated formula/manifest files to an
-exact release only after both pass their offline validators. Attaching those
-files does not publish or update a third-party package channel.
-
-## Manual and CI removal
-
-- The composite action installs beneath the job's `RUNNER_TEMP`; GitHub-hosted jobs
-  discard that directory with the runner. It does not modify a system directory.
-- For a manual installation, remove only the exact path into which you personally
-  copied the verified binary. Do not use wildcards, command substitution, or a
-  recursive deletion copied from untrusted output.
-- Remove the separate download directory only after retaining any verification
-  evidence required by your organization's release policy.
-
-An uninstall does not revoke a compromised artifact. If release verification ever
-fails after publication, stop promotion, preserve the evidence, and follow the
-security and release incident process; published artifacts and tags are never
-silently overwritten.
+To uninstall a manually copied release, remove only the exact executable path
+you installed. Inspect or archive `.agentapi/` separately before deleting local
+run data. A failed later verification does not revoke already copied bytes;
+stop using them and follow the project release-incident process.

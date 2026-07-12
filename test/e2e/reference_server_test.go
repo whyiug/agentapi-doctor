@@ -3,8 +3,10 @@ package e2e_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -356,6 +358,80 @@ func TestEveryMutantChangesItsTargetStructure(t *testing.T) {
 			}
 			test.assert(t, reference.Body.Bytes(), mutated.Body.Bytes())
 		})
+	}
+}
+
+func TestMissingTerminalMutationPassesThroughNonStreamAndTargetsStream(t *testing.T) {
+	plan, err := mutantserver.New(mutantserver.MissingTerminalEvent)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nonStream := caseByName(t, "chat-text-json")
+	reference := perform(t, nil, nonStream)
+	passedThrough := perform(t, plan, nonStream)
+	if passedThrough.Code != http.StatusOK {
+		t.Fatalf("non-stream status = %d: %s", passedThrough.Code, passedThrough.Body.String())
+	}
+	if !bytes.Equal(passedThrough.Body.Bytes(), reference.Body.Bytes()) {
+		t.Fatalf("non-stream response was not passed through\nreference: %s\nmutant: %s", reference.Body, passedThrough.Body)
+	}
+	if id := passedThrough.Header().Get("X-AgentAPI-Mutant"); id != "" {
+		t.Fatalf("non-applicable response advertised mutant ID %q", id)
+	}
+
+	stream := caseByName(t, "chat-text-sse")
+	mutated := perform(t, plan, stream)
+	if mutated.Code != http.StatusOK {
+		t.Fatalf("stream status = %d: %s", mutated.Code, mutated.Body.String())
+	}
+	if id := mutated.Header().Get("X-AgentAPI-Mutant"); id != string(mutantserver.MissingTerminalEvent) {
+		t.Fatalf("stream response mutant ID = %q", id)
+	}
+	if count := strings.Count(mutated.Body.String(), "data: [DONE]"); count != 0 {
+		t.Fatalf("targeted stream retained %d terminal events: %s", count, mutated.Body.String())
+	}
+}
+
+func TestNotApplicableCompositeRollsBackEarlierDecorators(t *testing.T) {
+	primary, err := mutantserver.Mutation(mutantserver.MissingTerminalEvent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decorator, err := mutantserver.Annotation("reserved-header-decorator", "X-AgentAPI-Mutant", "forged")
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := mutantserver.Compose(decorator, primary)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nonStream := caseByName(t, "chat-text-json")
+	reference := perform(t, nil, nonStream)
+	passedThrough := perform(t, plan, nonStream)
+	if passedThrough.Code != reference.Code || !bytes.Equal(passedThrough.Body.Bytes(), reference.Body.Bytes()) {
+		t.Fatalf("non-applicable composite changed the response\nreference: %d %s\nmutant: %d %s", reference.Code, reference.Body, passedThrough.Code, passedThrough.Body)
+	}
+	if !reflect.DeepEqual(passedThrough.Header(), reference.Header()) {
+		t.Fatalf("non-applicable composite changed headers\nreference: %#v\nmutant: %#v", reference.Header(), passedThrough.Header())
+	}
+}
+
+type failingFixtureTransformer struct{}
+
+func (failingFixtureTransformer) ID() string { return "synthetic-failing-transformer" }
+func (failingFixtureTransformer) Apply(*referenceserver.Exchange) error {
+	return errors.New("synthetic transformer failure")
+}
+
+func TestTransformerFailureIsNotTreatedAsNotApplicable(t *testing.T) {
+	response := perform(t, failingFixtureTransformer{}, caseByName(t, "chat-text-json"))
+	if response.Code != http.StatusUnprocessableEntity || !strings.Contains(response.Body.String(), "transformer_failed") {
+		t.Fatalf("transformer failure was masked: status=%d body=%s", response.Code, response.Body.String())
+	}
+	if id := response.Header().Get("X-AgentAPI-Mutant"); id != "" {
+		t.Fatalf("failed response advertised transformer ID %q", id)
 	}
 }
 

@@ -42,9 +42,16 @@ func applyMutation(id ID, exchange *referenceserver.Exchange) error {
 	}
 }
 
+func notApplicable(reason string) error {
+	return fmt.Errorf("%w: %s", referenceserver.ErrTransformerNotApplicable, reason)
+}
+
 func argumentsObject(exchange *referenceserver.Exchange) error {
 	if exchange.Scenario != referenceserver.ScenarioTool {
-		return errors.New("tool scenario is required")
+		return notApplicable("tool scenario is required")
+	}
+	if exchange.Protocol != referenceserver.ProtocolOpenAIChat && exchange.Protocol != referenceserver.ProtocolOpenAIResponses {
+		return notApplicable("protocol uses native object arguments")
 	}
 	arguments := map[string]any{"text": "fixture"}
 	if !exchange.Streaming {
@@ -58,8 +65,6 @@ func argumentsObject(exchange *referenceserver.Exchange) error {
 		case referenceserver.ProtocolOpenAIResponses:
 			firstMap(exchange.JSON["output"])["arguments"] = arguments
 			return nil
-		default:
-			return errors.New("mutation does not apply to native object arguments")
 		}
 	}
 	for _, event := range exchange.Events {
@@ -89,7 +94,7 @@ func argumentsObject(exchange *referenceserver.Exchange) error {
 
 func missingOutputIndex(exchange *referenceserver.Exchange) error {
 	if exchange.Protocol != referenceserver.ProtocolOpenAIResponses || !exchange.Streaming {
-		return errors.New("responses streaming scenario is required")
+		return notApplicable("responses streaming scenario is required")
 	}
 	for _, event := range exchange.Events {
 		data, ok := event.Data.(map[string]any)
@@ -105,7 +110,7 @@ func missingOutputIndex(exchange *referenceserver.Exchange) error {
 
 func duplicateOutputIndex(exchange *referenceserver.Exchange) error {
 	if exchange.Protocol != referenceserver.ProtocolOpenAIResponses || !exchange.Streaming {
-		return errors.New("responses streaming scenario is required")
+		return notApplicable("responses streaming scenario is required")
 	}
 	for index, event := range exchange.Events {
 		data, ok := event.Data.(map[string]any)
@@ -125,7 +130,7 @@ func duplicateOutputIndex(exchange *referenceserver.Exchange) error {
 
 func dropStreamingToolCall(exchange *referenceserver.Exchange) error {
 	if !exchange.Streaming || exchange.Scenario != referenceserver.ScenarioTool {
-		return errors.New("streaming tool scenario is required")
+		return notApplicable("streaming tool scenario is required")
 	}
 	filtered := exchange.Events[:0]
 	dropped := false
@@ -205,7 +210,7 @@ func invalidFinishReason(exchange *referenceserver.Exchange) error {
 
 func missingTerminal(exchange *referenceserver.Exchange) error {
 	if !exchange.Streaming {
-		return errors.New("streaming scenario is required")
+		return notApplicable("streaming scenario is required")
 	}
 	filtered := exchange.Events[:0]
 	found := false
@@ -225,7 +230,7 @@ func missingTerminal(exchange *referenceserver.Exchange) error {
 
 func duplicateTerminal(exchange *referenceserver.Exchange) error {
 	if !exchange.Streaming {
-		return errors.New("streaming scenario is required")
+		return notApplicable("streaming scenario is required")
 	}
 	for index := len(exchange.Events) - 1; index >= 0; index-- {
 		if exchange.Events[index].Terminal {
@@ -238,7 +243,7 @@ func duplicateTerminal(exchange *referenceserver.Exchange) error {
 
 func changeToolCallID(exchange *referenceserver.Exchange) error {
 	if !exchange.Streaming || exchange.Scenario != referenceserver.ScenarioTool {
-		return errors.New("streaming tool scenario is required")
+		return notApplicable("streaming tool scenario is required")
 	}
 	for index := len(exchange.Events) - 1; index >= 0; index-- {
 		data, _ := exchange.Events[index].Data.(map[string]any)
@@ -268,7 +273,7 @@ func changeToolCallID(exchange *referenceserver.Exchange) error {
 
 func injectUnknownEvent(exchange *referenceserver.Exchange) error {
 	if !exchange.Streaming {
-		return errors.New("streaming scenario is required")
+		return notApplicable("streaming scenario is required")
 	}
 	event := referenceserver.SSEEvent{
 		Event: "fixture.unknown",
@@ -284,7 +289,10 @@ func injectUnknownEvent(exchange *referenceserver.Exchange) error {
 
 func unclosedReasoning(exchange *referenceserver.Exchange) error {
 	if !exchange.Streaming {
-		return errors.New("streaming scenario is required")
+		return notApplicable("streaming scenario is required")
+	}
+	if exchange.Protocol != referenceserver.ProtocolOpenAIResponses && exchange.Protocol != referenceserver.ProtocolAnthropic {
+		return notApplicable("protocol has no reasoning block in this fixture")
 	}
 	terminal := firstTerminalIndex(exchange.Events)
 	if terminal < 0 {
@@ -305,8 +313,6 @@ func unclosedReasoning(exchange *referenceserver.Exchange) error {
 			{Event: "content_block_start", Data: map[string]any{"type": "content_block_start", "index": 1, "content_block": map[string]any{"type": "thinking", "thinking": ""}}},
 			{Event: "content_block_delta", Data: map[string]any{"type": "content_block_delta", "index": 1, "delta": map[string]any{"type": "thinking_delta", "thinking": "unfinished"}}},
 		}
-	default:
-		return errors.New("protocol has no reasoning block in this fixture")
 	}
 	insertEvents(exchange, terminal, injected...)
 	return nil
@@ -344,7 +350,7 @@ func inconsistentUsage(exchange *referenceserver.Exchange) error {
 
 func truncatedUTF8(exchange *referenceserver.Exchange) error {
 	if !exchange.Streaming {
-		return errors.New("streaming scenario is required")
+		return notApplicable("streaming scenario is required")
 	}
 	terminal := firstTerminalIndex(exchange.Events)
 	if terminal < 0 {

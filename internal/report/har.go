@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/whyiug/agentapi-doctor/internal/buildinfo"
 	"github.com/whyiug/agentapi-doctor/internal/redaction"
 )
 
@@ -70,5 +71,5 @@ func HAR(exchanges []HTTPExchange) ([]byte, error) {
 		resp := exchange.response.Bytes()
 		entries = append(entries, entry{Started: exchange.started.Format(time.RFC3339Nano), Time: float64(exchange.duration.Microseconds()) / 1000, Request: request{Method: exchange.method, URL: "urn:agentapi-doctor:redacted-target", HTTPVersion: "HTTP/1.1", Headers: []any{}, QueryString: []any{}, Cookies: []any{}, HeadersSize: -1, BodySize: len(req), PostData: content{Size: len(req), MimeType: "application/json", Text: string(req)}}, Response: response{Status: exchange.status, StatusText: "", HTTPVersion: "HTTP/1.1", Headers: []any{}, Cookies: []any{}, Content: content{Size: len(resp), MimeType: "application/json", Text: string(resp)}, HeadersSize: -1, BodySize: len(resp)}, Cache: map[string]any{}, Timings: map[string]float64{"send": 0, "wait": float64(exchange.duration.Microseconds()) / 1000, "receive": 0}, Comment: "URL and headers omitted by the privacy boundary"})
 	}
-	return json.MarshalIndent(map[string]any{"log": map[string]any{"version": "1.2", "creator": map[string]string{"name": "agentapi-doctor", "version": "0.1.0"}, "entries": entries}}, "", "  ")
+	return json.MarshalIndent(map[string]any{"log": map[string]any{"version": "1.2", "creator": map[string]string{"name": "agentapi-doctor", "version": buildinfo.Current().Version}, "entries": entries}}, "", "  ")
 }

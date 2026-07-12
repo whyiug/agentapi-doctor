@@ -1,40 +1,42 @@
 # Roadmap
 
-AgentAPI Doctor follows outcome-based priorities rather than fixed delivery
-dates. The roadmap may change as users contribute evidence and real integration
-needs.
+AgentAPI Doctor grows from reproducible user failures, not from catalog size or
+architecture completeness. The detailed research and stop conditions are in
+[`0713-plan.md`](0713-plan.md).
 
-## Available from source
+## v0.1.0-rc.1: Quick Check
 
-- Local diagnostics for OpenAI Chat Completions, OpenAI Responses, and
-  Anthropic Messages protocol slices.
-- Deterministic reference and targeted-mutant fixtures.
-- Evidence redaction, content-addressed storage, run comparison, baselines, and
-  terminal/JSON/JUnit/SARIF/Markdown/HTML reports.
-- A single-node self-hosted Registry, static Matrix UI, Docker/Compose setup,
-  schemas, OpenAPI, CI integrations, and release packaging automation.
+- One prebuilt `doctor` CLI for Linux, macOS, and Windows.
+- Four bounded raw HTTP checks per run for OpenAI Chat, OpenAI Responses, or
+  Anthropic Messages.
+- Human-readable failure diagnostics, local redacted evidence, six report
+  formats, baselines, and stable exit codes.
+- A no-key loopback demo and deterministic lifecycle-failure fixture.
 
-## Near term
+This RC does not claim real SDK/Agent compatibility or automatic root-cause
+attribution.
 
-- Publish the first signed prerelease and verify clean installation on Linux,
-  macOS, and Windows.
-- Improve CLI onboarding, diagnostics, and actionable remediation guidance.
-- Expand executable protocol cases while keeping metadata and runnable coverage
-  clearly separated.
-- Exercise the GitHub Action and reusable workflow in real downstream test
-  repositories.
-- Stabilize configuration, result, and report schemas before a 1.0 release.
+## Next: one real-client case
 
-## Later
+The only active product expansion is a pinned OpenAI Python SDK / Responses
+streaming profile covering terminal-event and strict-envelope failures. It must
+produce both raw-wire and SDK observations plus a maintainer-ready redacted
+reproduction bundle.
 
-- Add locked SDK and agent-client drivers with explicit version support.
-- Add more protocol families through independently versioned packs.
-- Strengthen sandboxing and network isolation for untrusted drivers.
-- Mature Registry verification, ownership, dispute, privacy, backup, and
-  operational controls before any hosted service is offered.
-- Build a community-maintained compatibility matrix from consented, verifiable
-  observations.
+Success means one public failure family is deterministic on a clean runner and
+an external maintainer or integrator finds the bundle easier to reproduce than
+hand-assembled logs.
 
-Priorities are discussed through issues, pull requests, and RFCs. A checked box
-or large catalog is not a compatibility claim: support is declared only for
-behavior covered by executable tests and release documentation.
+## Conditional backlog
+
+These items start only after external use supplies evidence for them:
+
+- a second pinned client profile;
+- a supported GitHub Action or reusable workflow;
+- longer-running compatibility-drift pilots;
+- a version-bound community matrix or Registry;
+- a local Web UI or hosted checker;
+- additional package-manager channels.
+
+Until then, existing Registry, Matrix, driver, and distribution candidates are
+development assets, not supported product surfaces.

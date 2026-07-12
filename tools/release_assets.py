@@ -28,23 +28,13 @@ MAX_MANIFEST_BYTES = 4 * 1024 * 1024
 OPERATING_SYSTEMS = ("darwin", "linux", "windows")
 ARCHITECTURES = ("amd64", "arm64")
 
-# Signing and provenance exports are added only after the checksum-covered
-# release set is assembled, so they are allowlisted but never checksum inputs.
+# The checksum bundle authenticates checksums.txt and therefore cannot be one
+# of its own checksum inputs. GitHub build provenance is stored by GitHub's
+# attestation service rather than duplicated as an ad-hoc release file.
 OPTIONAL_UNCHECKSUMMED_ASSETS = {
-    "agentapi-doctor.intoto.jsonl": "provenance",
-    "agentapi-doctor.slsa-provenance.json": "provenance",
     "checksums.txt.sigstore.json": "signature",
 }
-
-# OCI subjects do not exist until the verified multi-architecture images have
-# been pushed. If this optional final-publication asset is present, it must be
-# covered by checksums.txt before the manifest can be signed or uploaded.
-OPTIONAL_CHECKSUMMED_ASSETS = {
-    "agentapi-doctor-image.spdx.json": "image-sbom",
-    "agentapi-doctor-registry-image.spdx.json": "image-sbom",
-    "oci-images.json": "oci-subjects",
-}
-OPTIONAL_ASSETS = OPTIONAL_UNCHECKSUMMED_ASSETS | OPTIONAL_CHECKSUMMED_ASSETS
+OPTIONAL_ASSETS = OPTIONAL_UNCHECKSUMMED_ASSETS
 
 
 def validate_version(version: str) -> None:
@@ -58,21 +48,11 @@ def expected_release_assets(version: str) -> dict[str, str]:
     validate_version(version)
     assets: dict[str, str] = {}
     for operating_system in OPERATING_SYSTEMS:
+        extension = "zip" if operating_system == "windows" else "tar.gz"
         for architecture in ARCHITECTURES:
             assets[
-                f"agentapi-doctor_{version}_{operating_system}_{architecture}.tar.gz"
+                f"agentapi-doctor_{version}_{operating_system}_{architecture}.{extension}"
             ] = "doctor-archive"
-            assets[
-                f"agentapi-doctor_reference-server_{version}_{operating_system}_{architecture}.tar.gz"
-            ] = "reference-server-archive"
-    for architecture in ARCHITECTURES:
-        assets[f"agentapi-doctor_registry_{version}_linux_{architecture}.tar.gz"] = (
-            "registry-archive"
-        )
-    assets[f"agentapi-doctor_{version}_source.tar.gz"] = "source-archive"
-    assets["agentapi-doctor.cdx.json"] = "sbom"
-    assets["agentapi-doctor.json"] = "package-manifest"
-    assets["agentapi-doctor.rb"] = "package-manifest"
     assets["agentapi-doctor.spdx.json"] = "sbom"
     assets["checksums.txt"] = "checksums"
     assets.update(OPTIONAL_ASSETS)
@@ -227,11 +207,6 @@ def _parse_checksums(path: Path) -> dict[str, str]:
 def _validate_checksums(directory: Path, version: str) -> None:
     checksums = _parse_checksums(directory / "checksums.txt")
     expected = checksummed_release_assets(version)
-    expected.update(
-        name
-        for name in OPTIONAL_CHECKSUMMED_ASSETS
-        if (directory / name).is_file() and not (directory / name).is_symlink()
-    )
     if set(checksums) != expected:
         missing = sorted(expected - set(checksums))
         unknown = sorted(set(checksums) - expected)

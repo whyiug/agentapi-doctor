@@ -87,9 +87,10 @@ func Run(ctx context.Context, args []string, dependencies Dependencies) int {
 		return runCompletion(args[1:], dependencies)
 	case "dev":
 		return runDev(args[1:], dependencies)
-	case "help", "--help", "-h":
-		_, _ = fmt.Fprintln(dependencies.Stdout, usage())
-		return ExitSuccess
+	case "help":
+		return runHelp(args[1:], dependencies)
+	case "--help", "-h":
+		return writeHelp(dependencies.Stdout, usage())
 	default:
 		return writeError(dependencies.Stderr, ExitInput, "unknown_command", fmt.Sprintf("unknown command %q\n%s", args[0], usage()))
 	}
@@ -294,5 +295,53 @@ func writeFailure(writer io.Writer, code int, reason, message string, data any) 
 }
 
 func usage() string {
-	return "usage: doctor <init|self-check|target|test|demo|run|compare|baseline|report|completion|dev|version|help> ..."
+	return `AgentAPI Doctor checks whether an OpenAI- or Anthropic-compatible endpoint behaves as claimed.
+
+Usage:
+  doctor <command> [options]
+
+Quick paths:
+  doctor demo                                  Run four safe local checks
+  doctor test --base-url <url> --protocol <id> --model <id>
+                                               Check an authorized endpoint
+  doctor report markdown latest --output doctor-report.md
+                                               Export the latest saved result
+
+Core commands:
+  demo       Try AgentAPI Doctor without credentials or network access
+  test       Check a configured or inline endpoint
+  report     Export a saved run as terminal, JSON, JUnit, SARIF, Markdown, or HTML
+  run        Inspect a saved run
+  target     Manage saved target configuration
+
+Other commands: init, self-check, compare, baseline, completion, dev, version
+Use "doctor help test", "doctor help demo", or "doctor help report" for examples.`
+}
+
+func runHelp(args []string, dependencies Dependencies) int {
+	if len(args) == 0 {
+		return writeHelp(dependencies.Stdout, usage())
+	}
+	if len(args) != 1 {
+		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor help [test|demo|report]")
+	}
+	switch args[0] {
+	case "test":
+		return writeHelp(dependencies.Stdout, testHelp)
+	case "demo":
+		return writeHelp(dependencies.Stdout, demoHelp)
+	case "report":
+		return writeHelp(dependencies.Stdout, reportHelp)
+	default:
+		return writeError(dependencies.Stderr, ExitInput, "unknown_help_topic", fmt.Sprintf("unknown help topic %q; available topics: test, demo, report", args[0]))
+	}
+}
+
+func helpRequested(args []string) bool {
+	return len(args) == 1 && (args[0] == "--help" || args[0] == "-h")
+}
+
+func writeHelp(writer io.Writer, help string) int {
+	_, _ = fmt.Fprintln(writer, help)
+	return ExitSuccess
 }

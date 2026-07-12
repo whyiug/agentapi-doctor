@@ -3,7 +3,8 @@
 [中文文档首页](README.md) | [English](../getting-started/README.md)
 
 本指南从源码 checkout 开始，依次完成授权 target 的配置、运行、证据保存和
-报告导出。当前还没有 tagged release 或已发布软件包，PASS 也不是厂商认证。
+报告导出。这是贡献者路径；普通用户应通过[快速开始](quick-start.md)安装
+预编译 CLI。PASS 不是厂商认证。
 
 如果只想走最短且不需要凭据的路径，请使用一条命令的
 [快速开始](quick-start.md)。

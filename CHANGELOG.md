@@ -8,6 +8,11 @@ CLI/Core versions will follow
 
 ## [Unreleased]
 
+No changes have been recorded since the v0.1.0-rc.1 release candidate was
+prepared.
+
+## [0.1.0-rc.1] - 2026-07-13
+
 ### Added
 
 - Source-buildable `doctor`, Registry, synthetic reference-server, catalog,
@@ -43,11 +48,12 @@ CLI/Core versions will follow
   protected-main pull-request workflow and standard `make` development targets.
 - Added English and Simplified Chinese project home pages and Quick Starts,
   plus installation, configuration, CLI reference, and troubleshooting guides.
-- Release archives and minimal OCI images now carry a generated third-party
-  license bundle; Registry and reference-server binaries expose exact build
-  identity, and release smoke tests verify every native archive.
-- Release publication now emits checksum-covered image-specific SPDX SBOMs for
-  both published OCI image digests.
+- Doctor release archives carry a generated third-party license bundle and
+  exact build identity. Linux and macOS use tar.gz while Windows uses ZIP.
+- Release publication is limited to six native Doctor archives, a checksum
+  manifest, one checksum-covered SPDX SBOM, a Sigstore checksum bundle, and
+  GitHub build-provenance attestations. Registry, reference-server, OCI, and
+  package-manager candidates are not first-release channels.
 - First-run documentation now leads with a source install, a one-command demo,
   and direct checks for authorized local or remote endpoints.
 - Local run records now atomically bind the canonical report to a validated,
@@ -100,5 +106,6 @@ CLI/Core versions will follow
 - New reports use report-bundle `v1alpha2` for that case-level graph edge;
   report readers retain read-only support for `v1alpha1` bundles.
 
-There are no tagged RC or stable releases. This section records development
-facts and does not claim support, external review, adoption, or publication.
+This first release candidate does not claim external review, adoption, vendor
+certification, or long-term support. Its support and verification boundaries
+are recorded in `release-notes/v0.1.0-rc.1.md`.
