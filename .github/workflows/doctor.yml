@@ -1,0 +1,98 @@
+name: AgentAPI Doctor verified candidate workflow
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Exact AgentAPI Doctor release version without a v prefix.
+        required: true
+        type: string
+      action_commit:
+        description: Full lowercase commit SHA containing the composite action; branches and tags are rejected.
+        required: true
+        type: string
+      config_path:
+        description: Bounded repository-relative AgentAPI Doctor configuration path.
+        required: false
+        default: agentapi-doctor.yaml
+        type: string
+    outputs:
+      artifact_sha256:
+        description: SHA-256 of the installed OS/architecture archive.
+        value: ${{ jobs.doctor.outputs.artifact_sha256 }}
+
+permissions:
+  contents: read
+
+jobs:
+  doctor:
+    name: Verify distribution and run self-check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      artifact_sha256: ${{ steps.install.outputs.artifact-sha256 }}
+    steps:
+      - name: Reject floating or malformed immutable inputs
+        shell: bash
+        env:
+          ACTION_COMMIT: ${{ inputs.action_commit }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          case "$ACTION_COMMIT" in
+            ''|*[!0-9a-f]*) exit 2 ;;
+          esac
+          test "${#ACTION_COMMIT}" -eq 40
+          test "$ACTION_COMMIT" != 0000000000000000000000000000000000000000
+          printf '%s\n' "$VERSION" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.(0|[1-9][0-9]*))?$'
+
+      - name: Checkout the caller commit without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Checkout the exact action implementation
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: whyiug/agentapi-doctor
+          ref: ${{ inputs.action_commit }}
+          path: .agentapi-doctor-action
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Validate bounded workflow inputs and config path
+        shell: bash
+        env:
+          ACTION_COMMIT: ${{ inputs.action_commit }}
+          CONFIG_PATH: ${{ inputs.config_path }}
+          VERSION: ${{ inputs.version }}
+        run: >-
+          python3 .agentapi-doctor-action/integrations/reusable-workflow/validate_inputs.py
+          --version "$VERSION"
+          --action-commit "$ACTION_COMMIT"
+          --config "$CONFIG_PATH"
+          --workspace "$GITHUB_WORKSPACE"
+
+      - name: Install pinned Sigstore verifier
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.0.6
+
+      - name: Install exact signed AgentAPI Doctor release
+        id: install
+        uses: ./.agentapi-doctor-action/integrations/github-action
+        with:
+          version: ${{ inputs.version }}
+          cosign-path: cosign
+
+      - name: Verify binary identity and configuration
+        shell: bash
+        env:
+          CONFIG_PATH: ${{ inputs.config_path }}
+          DOCTOR_PATH: ${{ steps.install.outputs.doctor-path }}
+        run: |
+          "$DOCTOR_PATH" version --json
+          "$DOCTOR_PATH" self-check --config "$CONFIG_PATH"

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:scenario:v1beta1",
+  "title": "AgentAPI Doctor Scenario",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {"const": "urn:agentapi-doctor:scenario:v1beta1"},
+    "kind": {"const": "Scenario"},
+    "metadata": {
+      "type": "object",
+      "required": ["id", "version", "title", "labels"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,255}$"},
+        "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 256},
+        "labels": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "required": ["protocol", "classification", "requirements", "budgets", "steps", "publication"],
+      "properties": {
+        "protocol": {"type": "object", "required": ["family", "snapshot", "digest"], "properties": {"family": {"type": "string"}, "snapshot": {"type": "string"}, "digest": {"$ref": "#/$defs/digest"}}, "additionalProperties": false},
+        "classification": {"type": "object", "required": ["type", "stability", "sideEffects", "idempotent"], "properties": {"type": {"enum": ["normative", "consumer_profile", "behavioral", "advisory"]}, "stability": {"enum": ["experimental", "provisional", "stable"]}, "sideEffects": {"enum": ["none", "reversible-local", "reversible-remote", "irreversible"]}, "idempotent": {"type": "boolean"}}, "additionalProperties": false},
+        "requirements": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["id", "level"], "properties": {"id": {"type": "string", "minLength": 1}, "level": {"enum": ["MUST", "SHOULD", "MAY"]}}, "additionalProperties": false}},
+        "requires": {"type": "object", "properties": {"all": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}, "any": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}}, "additionalProperties": false},
+        "budgets": {"$ref": "#/$defs/budget"},
+        "steps": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/step"}},
+        "resources": {"type": "array", "items": {"$ref": "#/$defs/resource"}},
+        "finally": {"type": "array", "items": {"type": "object", "required": ["finalize"], "properties": {"finalize": {"type": "string"}}, "additionalProperties": false}},
+        "repetition": {"type": "object", "required": ["count", "policy"], "properties": {"count": {"type": "integer", "minimum": 1, "maximum": 1000}, "policy": {"enum": ["all", "any", "statistical"]}}, "additionalProperties": false},
+        "publication": {"type": "object", "required": ["dataClass"], "properties": {"dataClass": {"enum": ["synthetic-only", "local-private", "public-redacted-reviewed"]}}, "additionalProperties": false}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "budget": {"type": "object", "required": ["timeout", "maxRequests", "maxArtifactBytes"], "properties": {"timeout": {"type": "string"}, "maxRequests": {"type": "integer", "minimum": 1}, "maxInputTokens": {"type": "integer", "minimum": 0}, "maxOutputTokens": {"type": "integer", "minimum": 0}, "maxArtifactBytes": {"type": "integer", "minimum": 1}}, "additionalProperties": false},
+    "step": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+        "invoke": {"type": "object"},
+        "capture": {"type": "object"},
+        "register_resource": {"type": "object"},
+        "provide_tool_result": {"type": "object"},
+        "wait_for": {"type": "object"},
+        "assert": {"type": "object"},
+        "cancel": {"type": "object"},
+        "replay": {"type": "object"},
+        "finalize": {"type": "object"}
+      },
+      "oneOf": [
+        {"required": ["invoke"]}, {"required": ["capture"]}, {"required": ["register_resource"]},
+        {"required": ["provide_tool_result"]}, {"required": ["wait_for"]}, {"required": ["assert"]},
+        {"required": ["cancel"]}, {"required": ["replay"]}, {"required": ["finalize"]}
+      ],
+      "additionalProperties": false
+    },
+    "resource": {
+      "type": "object",
+      "required": ["id", "acquireFrom", "sideEffectClass", "finalizer", "cleanupBudget"],
+      "properties": {
+        "id": {"type": "string"}, "acquireFrom": {"type": "string"},
+        "sideEffectClass": {"enum": ["none", "reversible-local", "reversible-remote", "irreversible"]},
+        "finalizer": {"type": "object"}, "cleanupBudget": {"$ref": "#/$defs/budget"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

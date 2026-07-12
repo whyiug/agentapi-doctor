@@ -1,0 +1,34 @@
+class AgentapiDoctor < Formula
+  desc "Evidence-first API compatibility diagnostics"
+  homepage "https://github.com/whyiug/agentapi-doctor"
+  version "{{VERSION}}"
+  license "Apache-2.0"
+
+  on_macos do
+    if Hardware::CPU.arm?
+      url "{{DARWIN_ARM64_URL}}"
+      sha256 "{{DARWIN_ARM64_SHA256}}"
+    else
+      url "{{DARWIN_AMD64_URL}}"
+      sha256 "{{DARWIN_AMD64_SHA256}}"
+    end
+  end
+
+  on_linux do
+    if Hardware::CPU.arm?
+      url "{{LINUX_ARM64_URL}}"
+      sha256 "{{LINUX_ARM64_SHA256}}"
+    else
+      url "{{LINUX_AMD64_URL}}"
+      sha256 "{{LINUX_AMD64_SHA256}}"
+    end
+  end
+
+  def install
+    bin.install "doctor"
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/doctor version --json")
+  end
+end

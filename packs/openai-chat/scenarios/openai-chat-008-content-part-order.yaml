@@ -1,0 +1,56 @@
+apiVersion: urn:agentapi-doctor:scenario:v1beta1
+kind: Scenario
+metadata:
+  id: openai-chat-008-content-part-order
+  version: 0.1.0
+  title: "Candidate: OpenAI Chat Completions HTTP/SSE / content-part-order"
+  labels:
+    generator: catalog-v1
+    protocol: openai-chat
+    taxonomy: messages-roles
+    review: pending-review
+    reference: ref-openai-chat-008
+    mutant: mut-openai-chat-008
+spec:
+  protocol:
+    family: openai-chat
+    snapshot: "content-lock-set-2026-07-11"
+    digest: sha256:66386857b026ddee2115b31fb9c7c1c6476b5fabf6c82cb69a4c054e899a52bf
+  classification:
+    type: normative
+    stability: incubating
+    sideEffects: none
+    idempotent: true
+  requirements:
+    - id: OAI-CHAT-REQ-008
+      level: MUST
+  requires:
+    all:
+      - offline-fixture
+  budgets:
+    timeout: 30s
+    maxRequests: 2
+    maxInputTokens: 128
+    maxOutputTokens: 128
+    maxResponseBytes: 64KiB
+    maxArtifactBytes: 1MiB
+  steps:
+    - id: reference
+      replay:
+        fixture: canonical/openai-chat-008.json
+        as: reference-pass
+    - id: mutant
+      replay:
+        fixture: mutation/openai-chat-008.json
+        as: targeted-mutant
+    - id: assertion
+      assert:
+        - use: catalog.content-part-order
+          equals: true
+          assertionRole: normative
+          requirement: OAI-CHAT-REQ-008
+  repetition:
+    count: 1
+    policy: all
+  publication:
+    dataClass: synthetic-only

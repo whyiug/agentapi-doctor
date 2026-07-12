@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:external-suite-adapter:v1",
+  "kind": "ExternalSuiteAdapter",
+  "status": "candidate",
+  "metadata": {"id": "open-responses", "version": "0.1.0"},
+  "spec": {
+    "upstream": {
+      "project": "Open Responses",
+      "repository": "https://github.com/openresponses/openresponses",
+      "resolutionStatus": "unresolved",
+      "exactVersion": null,
+      "sourceDigest": null,
+      "licenseStatus": "review-pending"
+    },
+    "interface": {
+      "transport": "subprocess-json",
+      "inputSchema": "urn:agentapi-doctor:external-suite-input:v1",
+      "outputSchema": "urn:agentapi-doctor:external-suite-output:v1",
+      "mappingPolicy": "preserve-upstream-results-and-separate-adapter-findings",
+      "network": "offline-during-gate"
+    },
+    "runEvidence": {"status": "not-run", "resultDigest": null, "evidenceRefs": []},
+    "gate": {"status": "pending", "reason": "upstream version, source digest, license review, mapping mutants, and a real run are unresolved", "evidenceRefs": []}
+  }
+}

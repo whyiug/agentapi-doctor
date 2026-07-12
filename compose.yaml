@@ -1,0 +1,62 @@
+name: agentapi-doctor-local
+
+services:
+  registry:
+    build:
+      context: .
+      target: registry
+      args:
+        VERSION: local
+        COMMIT: local
+        BUILT_AT: local
+    command:
+      - serve
+      - -database
+      - /data/registry.db
+      - -allow-non-loopback
+      - -listen
+      - 0.0.0.0:8080
+      - -rate-limit
+      - "120"
+    environment:
+      AGENTAPI_REGISTRY_TOKEN: ${AGENTAPI_REGISTRY_TOKEN:-}
+    ports:
+      - 127.0.0.1:${AGENTAPI_REGISTRY_PORT:-18080}:8080
+    volumes:
+      - registry-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 256m
+    restart: "no"
+
+  reference:
+    build:
+      context: .
+      target: reference-server
+      args:
+        VERSION: local
+        COMMIT: local
+        BUILT_AT: local
+    command:
+      - -allow-non-loopback
+      - -listen
+      - 0.0.0.0:8090
+    ports:
+      - 127.0.0.1:${AGENTAPI_REFERENCE_PORT:-18090}:8090
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 128m
+    restart: "no"
+
+volumes:
+  registry-data:

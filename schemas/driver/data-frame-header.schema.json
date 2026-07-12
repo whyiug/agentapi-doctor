@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:driver-data-frame-header:v1alpha1",
+  "title": "AgentAPI Doctor provisional Driver companion data-frame header",
+  "type": "object",
+  "required": ["invocation_id", "attempt_id", "stream_id", "sequence", "length", "final"],
+  "properties": {
+    "invocation_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "attempt_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "stream_id": {"type": "string", "minLength": 1},
+    "sequence": {"type": "integer", "minimum": 0},
+    "length": {"type": "integer", "minimum": 0, "maximum": 262144},
+    "final": {"type": "boolean"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:consumer-profile:v1beta1",
+  "kind": "ConsumerCompatibilityProfile",
+  "status": "candidate",
+  "metadata": {"id": "openai-node", "version": "0.1.0"},
+  "spec": {
+    "consumer": {"name": "OpenAI Node SDK", "category": "sdk", "upstreamVersionResolution": "unresolved", "exactVersions": []},
+    "driverRef": "runners/node/driver.yaml",
+    "protocolPacks": ["openai-chat", "openai-responses-http"],
+    "apiTypes": ["openai-chat", "openai-responses"],
+    "requiredCapabilities": ["sync", "async", "streaming-iterator", "stream-accumulator", "tool-parser", "structured-output-helper", "abort-controller", "error-subclass", "retry-observation", "raw-response", "request-transform-capture"],
+    "sandbox": {"temporaryHome": true, "network": "recorder-only", "ambientCredentials": false},
+    "supportGate": {"status": "pending", "reason": "current/previous exact SDK, runtime, lockfile, and driver artifact digests are not independently verified", "evidenceRefs": []}
+  }
+}

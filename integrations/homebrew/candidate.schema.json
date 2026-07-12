@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:homebrew-distribution-candidate:v1",
+  "title": "AgentAPI Doctor unpublished Homebrew distribution candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "status",
+    "package",
+    "formulaTemplate",
+    "version",
+    "releaseTag",
+    "artifacts",
+    "verification",
+    "publishedEvidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "urn:agentapi-doctor:homebrew-distribution-candidate:v1"
+    },
+    "kind": {
+      "const": "HomebrewDistributionCandidate"
+    },
+    "status": {
+      "const": "candidate-unpublished"
+    },
+    "package": {
+      "const": "agentapi-doctor"
+    },
+    "formulaTemplate": {
+      "const": "integrations/homebrew/agentapi-doctor.rb.tmpl"
+    },
+    "version": {
+      "type": "null"
+    },
+    "releaseTag": {
+      "type": "null"
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "darwin-amd64",
+        "darwin-arm64",
+        "linux-amd64",
+        "linux-arm64"
+      ],
+      "properties": {
+        "darwin-amd64": {
+          "$ref": "#/$defs/darwinAmd64"
+        },
+        "darwin-arm64": {
+          "$ref": "#/$defs/darwinArm64"
+        },
+        "linux-amd64": {
+          "$ref": "#/$defs/linuxAmd64"
+        },
+        "linux-arm64": {
+          "$ref": "#/$defs/linuxArm64"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "checksumAlgorithm",
+        "checksumManifest",
+        "sigstoreBundleRequired"
+      ],
+      "properties": {
+        "checksumAlgorithm": {
+          "const": "sha256"
+        },
+        "checksumManifest": {
+          "const": "checksums.txt"
+        },
+        "sigstoreBundleRequired": {
+          "const": true
+        }
+      }
+    },
+    "publishedEvidence": {
+      "type": "array",
+      "maxItems": 0
+    }
+  },
+  "$defs": {
+    "artifactBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "archiveTemplate",
+        "sha256"
+      ],
+      "properties": {
+        "archiveTemplate": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "null"
+        }
+      }
+    },
+    "darwinAmd64": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/artifactBase"
+        },
+        {
+          "properties": {
+            "archiveTemplate": {
+              "const": "agentapi-doctor_{version}_darwin_amd64.tar.gz"
+            }
+          }
+        }
+      ]
+    },
+    "darwinArm64": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/artifactBase"
+        },
+        {
+          "properties": {
+            "archiveTemplate": {
+              "const": "agentapi-doctor_{version}_darwin_arm64.tar.gz"
+            }
+          }
+        }
+      ]
+    },
+    "linuxAmd64": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/artifactBase"
+        },
+        {
+          "properties": {
+            "archiveTemplate": {
+              "const": "agentapi-doctor_{version}_linux_amd64.tar.gz"
+            }
+          }
+        }
+      ]
+    },
+    "linuxArm64": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/artifactBase"
+        },
+        {
+          "properties": {
+            "archiveTemplate": {
+              "const": "agentapi-doctor_{version}_linux_arm64.tar.gz"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

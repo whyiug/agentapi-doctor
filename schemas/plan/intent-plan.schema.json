@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:intent-plan:v1alpha1",
+  "title": "AgentAPI Doctor provisional IntentPlan",
+  "description": "Offline immutable authorization ceiling. Cross-field envelope identity and content digests are additionally checked by pkg/schema.IntentPlan.Validate.",
+  "type": "object",
+  "required": [
+    "schema_version", "kind", "instance_id", "content_digest", "object_ref", "producer", "created_at",
+    "intent_plan_id", "config_digest", "target", "selectors", "support_manifest_digest",
+    "candidate_denominator_digest", "probe", "conditional_branches", "budget", "evidence", "safety",
+    "author", "approval_requirements"
+  ],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:intent-plan:v1alpha1"},
+    "kind": {"const": "IntentPlan"},
+    "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "object_ref": {"$ref": "#/$defs/intentPlanRef"},
+    "producer": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/producer"},
+    "created_at": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/utcTime"},
+    "extensions": {"$ref": "#/$defs/extensions"},
+    "intent_plan_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "config_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "target": {"$ref": "#/$defs/target"},
+    "selectors": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/selector"}},
+    "support_manifest_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "candidate_denominator_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "probe": {"$ref": "#/$defs/probe"},
+    "conditional_branches": {
+      "type": ["array", "null"],
+      "items": {"$ref": "#/$defs/conditionalBranch"}
+    },
+    "budget": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/budgetPolicy"},
+    "evidence": {"$ref": "#/$defs/evidencePolicy"},
+    "safety": {"$ref": "#/$defs/safetyPolicy"},
+    "author": {"type": "string", "minLength": 1},
+    "approval_requirements": {"type": ["array", "null"], "items": {"type": "string"}}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "extensions": {
+      "type": "object",
+      "propertyNames": {"pattern": "^x-.+"},
+      "additionalProperties": true
+    },
+    "intentPlanRef": {
+      "type": "object",
+      "required": ["kind", "instance_id", "content_digest"],
+      "properties": {
+        "kind": {"const": "IntentPlan"},
+        "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": ["logical_ref", "protocol_family", "identity_expectation", "allowed_origin"],
+      "properties": {
+        "logical_ref": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"},
+        "protocol_family": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"},
+        "identity_expectation": {"type": "string", "minLength": 1},
+        "allowed_origin": {"type": "string", "format": "uri", "pattern": "^https?://[^/?#]+/?$"}
+      },
+      "additionalProperties": false
+    },
+    "selector": {
+      "type": "object",
+      "required": ["kind", "name", "constraint", "allowed_digests"],
+      "properties": {
+        "kind": {"type": "string", "pattern": "^[A-Z][A-Za-z0-9]{1,63}$"},
+        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"},
+        "constraint": {"type": "string"},
+        "allowed_digests": {
+          "type": ["array", "null"],
+          "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "probe": {
+      "type": "object",
+      "required": ["operations", "budget", "network"],
+      "properties": {
+        "operations": {"type": ["array", "null"], "items": {"type": "string"}, "uniqueItems": true},
+        "budget": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/hardBudget"},
+        "network": {"enum": ["offline", "target_only"]}
+      },
+      "additionalProperties": false
+    },
+    "conditionalBranch": {
+      "type": "object",
+      "required": ["capability", "scenarios"],
+      "properties": {
+        "capability": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"},
+        "scenarios": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidencePolicy": {
+      "type": "object",
+      "required": ["capture", "redaction", "publication"],
+      "properties": {
+        "capture": {"enum": ["metadata_only", "synthetic_content", "standard_fixture_only", "local_private_encrypted"]},
+        "redaction": {"type": "string"},
+        "publication": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "safetyPolicy": {
+      "type": "object",
+      "required": ["network", "redirects", "tool_side_effects", "driver_permissions"],
+      "properties": {
+        "network": {"enum": ["offline", "target_only"]},
+        "redirects": {"type": "string"},
+        "tool_side_effects": {"enum": ["none", "reversible_only"]},
+        "driver_permissions": {"type": ["array", "null"], "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    }
+  }
+}

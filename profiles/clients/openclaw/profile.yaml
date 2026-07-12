@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:consumer-profile:v1beta1",
+  "kind": "ConsumerCompatibilityProfile",
+  "status": "candidate",
+  "metadata": {"id": "openclaw", "version": "0.1.0"},
+  "spec": {
+    "consumer": {"name": "OpenClaw", "category": "agent-client", "upstreamVersionResolution": "unresolved", "exactVersions": []},
+    "driverRef": "runners/agent/driver.yaml",
+    "protocolPacks": ["openai-responses-http", "openai-chat", "anthropic-messages"],
+    "apiTypes": ["openai-responses", "openai-completions", "anthropic-messages"],
+    "excludedApiTypes": ["ollama-native", "gemini-native", "plugin-provider"],
+    "requiredCapabilities": ["provider-initialization", "model-discovery", "tool-schema-transform", "content-parts", "strict-message-keys", "streaming-usage", "reasoning-thinking", "single-tool-loop", "multi-tool-loop", "continuation", "timeout", "fallback-observation", "real-agent-loop"],
+    "sandbox": {"temporaryHome": true, "network": "recorder-only", "ambientCredentials": false, "syntheticToolsOnly": true},
+    "supportGate": {"status": "pending", "reason": "current/previous exact CLI executable, runtime, and artifact digests are not independently verified; native and plugin providers are outside this Tier 1 profile", "evidenceRefs": []}
+  }
+}

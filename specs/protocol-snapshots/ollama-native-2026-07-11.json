@@ -1,0 +1,21 @@
+{
+  "schema_version": "urn:agentapi-doctor:protocol-snapshot:v1",
+  "protocol": "ollama-native",
+  "revision": "content-lock-set-2026-07-11",
+  "status": "candidate",
+  "review_status": "pending_review",
+  "sources": [
+    {
+      "source_id": "ollama-api-introduction",
+      "content_sha256": "sha256:c10b87c3931a5e5ecb7c9352220262b27a4cd30671aaaf394c3606e500c205c3"
+    },
+    {
+      "source_id": "ollama-api-streaming",
+      "content_sha256": "sha256:cab19f8961979cc64b7be8c49c9fad86f2646fb74d2cf09058fcc1fcf4a155ac"
+    },
+    {
+      "source_id": "ollama-tool-calling",
+      "content_sha256": "sha256:e801b90be443c68a7a6641065da225af566067d86292f7c18ecd052ebf962ab9"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": "urn:agentapi-doctor:protocol-snapshot:v1",
+  "protocol": "anthropic-messages",
+  "revision": "content-lock-set-2026-07-11",
+  "status": "candidate",
+  "review_status": "pending_review",
+  "sources": [
+    {
+      "source_id": "anthropic-api-overview",
+      "content_sha256": "sha256:b3e736b411932d5fa471f8a9fe517116f06dfce38dab7a0d89add0274222df74"
+    },
+    {
+      "source_id": "anthropic-messages-guide",
+      "content_sha256": "sha256:7ec085e4beebff11c9ab6eba98ed721ca5cdded4f6fa425ee975397a64609fb1"
+    },
+    {
+      "source_id": "anthropic-streaming",
+      "content_sha256": "sha256:ca02c68f990b7c3c727f768ab5058917f16e1fb29fc5e6874651847df816d4c0"
+    },
+    {
+      "source_id": "anthropic-tool-use",
+      "content_sha256": "sha256:ce047dd1aa3f79e1f30c0b28822e27d792a6569533c2be03828fc6546b679538"
+    }
+  ]
+}

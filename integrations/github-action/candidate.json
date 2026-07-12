@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:github-action-distribution:v1",
+  "kind": "GitHubActionDistribution",
+  "status": "candidate-unpublished",
+  "releaseRepository": "whyiug/agentapi-doctor",
+  "releaseVersion": null,
+  "actionCommit": null,
+  "verification": {
+    "checksumAlgorithm": "sha256",
+    "checksumManifest": "checksums.txt",
+    "sigstoreBundle": "checksums.txt.sigstore.json",
+    "certificateIssuer": "https://token.actions.githubusercontent.com",
+    "certificateIdentityWorkflow": ".github/workflows/release.yml",
+    "publishedEvidence": []
+  }
+}

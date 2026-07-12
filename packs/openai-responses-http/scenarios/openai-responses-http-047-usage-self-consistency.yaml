@@ -1,0 +1,56 @@
+apiVersion: urn:agentapi-doctor:scenario:v1beta1
+kind: Scenario
+metadata:
+  id: openai-responses-http-047-usage-self-consistency
+  version: 0.1.0
+  title: "Candidate: OpenAI Responses HTTP/SSE / usage-self-consistency"
+  labels:
+    generator: catalog-v1
+    protocol: openai-responses-http
+    taxonomy: usage
+    review: pending-review
+    reference: ref-openai-responses-http-047
+    mutant: mut-openai-responses-http-047
+spec:
+  protocol:
+    family: openai-responses-http
+    snapshot: "content-lock-set-2026-07-11"
+    digest: sha256:f681d4d76c9fb22ac7c4abea3bd9eda48f7e46baea17f68f06af86290b22bf21
+  classification:
+    type: normative
+    stability: incubating
+    sideEffects: none
+    idempotent: true
+  requirements:
+    - id: OAI-RESP-REQ-047
+      level: MUST
+  requires:
+    all:
+      - offline-fixture
+  budgets:
+    timeout: 30s
+    maxRequests: 2
+    maxInputTokens: 128
+    maxOutputTokens: 128
+    maxResponseBytes: 64KiB
+    maxArtifactBytes: 1MiB
+  steps:
+    - id: reference
+      replay:
+        fixture: canonical/openai-responses-http-047.json
+        as: reference-pass
+    - id: mutant
+      replay:
+        fixture: mutation/openai-responses-http-047.json
+        as: targeted-mutant
+    - id: assertion
+      assert:
+        - use: catalog.usage-self-consistency
+          equals: true
+          assertionRole: normative
+          requirement: OAI-RESP-REQ-047
+  repetition:
+    count: 1
+    policy: all
+  publication:
+    dataClass: synthetic-only

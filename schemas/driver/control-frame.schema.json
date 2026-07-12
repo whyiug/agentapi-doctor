@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:driver-control-frame:v1alpha1",
+  "title": "AgentAPI Doctor provisional Driver NDJSON JSON-RPC control frame",
+  "description": "One JSON-RPC 2.0 value before its single NDJSON line ending. The codec separately enforces the 1 MiB byte bound, duplicate-key rejection and canonical JSON.",
+  "oneOf": [
+    {"$ref": "#/$defs/helloRequest"},
+    {"$ref": "#/$defs/prepareRequest"},
+    {"$ref": "#/$defs/capabilitiesRequest"},
+    {"$ref": "#/$defs/invokeRequest"},
+    {"$ref": "#/$defs/cancelRequest"},
+    {"$ref": "#/$defs/resetRequest"},
+    {"$ref": "#/$defs/shutdownRequest"},
+    {"$ref": "#/$defs/observationNotification"},
+    {"$ref": "#/$defs/completedNotification"},
+    {"$ref": "#/$defs/resultResponse"},
+    {"$ref": "#/$defs/errorResponse"}
+  ],
+  "$defs": {
+    "id": {"type": ["string", "integer"]},
+    "emptyObject": {"type": "object", "properties": {}, "additionalProperties": false},
+    "versionRange": {
+      "type": "object",
+      "required": ["minimum", "maximum"],
+      "properties": {
+        "minimum": {"type": "string", "minLength": 1},
+        "maximum": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "objectRef": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"},
+    "helloParams": {
+      "type": "object",
+      "required": ["core_version_range"],
+      "properties": {"core_version_range": {"$ref": "#/$defs/versionRange"}},
+      "additionalProperties": false
+    },
+    "prepareParams": {
+      "type": "object",
+      "required": ["resolved_plan_digest", "capability_token", "approved_permissions"],
+      "properties": {
+        "resolved_plan_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+        "capability_token": {"type": "string", "minLength": 1},
+        "fixture_refs": {"type": ["array", "null"], "items": {"$ref": "#/$defs/objectRef"}},
+        "approved_permissions": {"type": ["array", "null"], "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "exactInputHandle": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": {"enum": ["pipe", "socket", "memfd"]},
+        "value": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "invokeParams": {
+      "type": "object",
+      "required": ["invocation_id", "attempt_id", "operation", "ephemeral_exact_input_handle"],
+      "properties": {
+        "invocation_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "attempt_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "operation": {"type": "string", "minLength": 1},
+        "ephemeral_exact_input_handle": {"$ref": "#/$defs/exactInputHandle"}
+      },
+      "additionalProperties": false
+    },
+    "cancelParams": {
+      "type": "object",
+      "required": ["invocation_id", "reason", "deadline_millis"],
+      "properties": {
+        "invocation_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "reason": {"type": "string", "minLength": 1},
+        "deadline_millis": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "observationParams": {
+      "type": "object",
+      "required": ["invocation_id", "attempt_id", "sequence", "kind", "monotonic_ns"],
+      "properties": {
+        "invocation_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "attempt_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "sequence": {"type": "integer", "minimum": 0},
+        "kind": {"type": "string", "minLength": 1},
+        "monotonic_ns": {"type": "integer", "minimum": 0},
+        "payload": true,
+        "data_stream": {
+          "type": "object",
+          "required": ["stream_id"],
+          "properties": {"stream_id": {"type": "string", "minLength": 1}},
+          "additionalProperties": false
+        }
+      },
+      "not": {"required": ["payload", "data_stream"]},
+      "additionalProperties": false
+    },
+    "completedParams": {
+      "type": "object",
+      "required": ["invocation_id", "attempt_id", "status", "summary_digest"],
+      "properties": {
+        "invocation_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "attempt_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "status": {"enum": ["completed", "cancelled", "errored"]},
+        "last_sequence": {"type": "integer", "minimum": 0},
+        "summary_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "helloRequest": {
+      "type": "object", "required": ["jsonrpc", "id", "method", "params"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "id": {"$ref": "#/$defs/id"}, "method": {"const": "driver.hello"}, "params": {"$ref": "#/$defs/helloParams"}},
+      "additionalProperties": false
+    },
+    "prepareRequest": {
+      "type": "object", "required": ["jsonrpc", "id", "method", "params"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "id": {"$ref": "#/$defs/id"}, "method": {"const": "driver.prepare"}, "params": {"$ref": "#/$defs/prepareParams"}},
+      "additionalProperties": false
+    },
+    "capabilitiesRequest": {
+      "type": "object", "required": ["jsonrpc", "id", "method"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "id": {"$ref": "#/$defs/id"}, "method": {"const": "driver.capabilities"}, "params": {"$ref": "#/$defs/emptyObject"}},
+      "additionalProperties": false
+    },
+    "invokeRequest": {
+      "type": "object", "required": ["jsonrpc", "id", "method", "params"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "id": {"$ref": "#/$defs/id"}, "method": {"const": "driver.invoke"}, "params": {"$ref": "#/$defs/invokeParams"}},
+      "additionalProperties": false
+    },
+    "cancelRequest": {
+      "type": "object", "required": ["jsonrpc", "id", "method", "params"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "id": {"$ref": "#/$defs/id"}, "method": {"const": "driver.cancel"}, "params": {"$ref": "#/$defs/cancelParams"}},
+      "additionalProperties": false
+    },
+    "resetRequest": {
+      "type": "object", "required": ["jsonrpc", "id", "method"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "id": {"$ref": "#/$defs/id"}, "method": {"const": "driver.reset"}, "params": {"$ref": "#/$defs/emptyObject"}},
+      "additionalProperties": false
+    },
+    "shutdownRequest": {
+      "type": "object", "required": ["jsonrpc", "id", "method"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "id": {"$ref": "#/$defs/id"}, "method": {"const": "driver.shutdown"}, "params": {"$ref": "#/$defs/emptyObject"}},
+      "additionalProperties": false
+    },
+    "observationNotification": {
+      "type": "object", "required": ["jsonrpc", "method", "params"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "method": {"const": "driver.observation"}, "params": {"$ref": "#/$defs/observationParams"}},
+      "additionalProperties": false
+    },
+    "completedNotification": {
+      "type": "object", "required": ["jsonrpc", "method", "params"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "method": {"const": "driver.completed"}, "params": {"$ref": "#/$defs/completedParams"}},
+      "additionalProperties": false
+    },
+    "errorData": {
+      "type": "object",
+      "required": ["class"],
+      "properties": {
+        "class": {"enum": ["unsupported_rpc_version", "invalid_state", "invalid_request", "permission_denied", "budget_exceeded", "capability_mismatch", "driver_internal", "cancellation_timeout", "malformed_observation", "artifact_mismatch"]},
+        "details": true
+      },
+      "additionalProperties": false
+    },
+    "rpcError": {
+      "type": "object",
+      "required": ["code", "message", "data"],
+      "properties": {
+        "code": {"type": "integer"},
+        "message": {"type": "string", "minLength": 1},
+        "data": {"$ref": "#/$defs/errorData"}
+      },
+      "additionalProperties": false
+    },
+    "resultResponse": {
+      "type": "object", "required": ["jsonrpc", "id", "result"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "id": {"$ref": "#/$defs/id"}, "result": true},
+      "additionalProperties": false
+    },
+    "errorResponse": {
+      "type": "object", "required": ["jsonrpc", "id", "error"],
+      "properties": {"jsonrpc": {"const": "2.0"}, "id": {"$ref": "#/$defs/id"}, "error": {"$ref": "#/$defs/rpcError"}},
+      "additionalProperties": false
+    }
+  }
+}

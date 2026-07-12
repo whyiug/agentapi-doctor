@@ -1,0 +1,56 @@
+apiVersion: urn:agentapi-doctor:scenario:v1beta1
+kind: Scenario
+metadata:
+  id: mcp-2025-11-25-021-resources-list
+  version: 0.1.0
+  title: "Candidate: Model Context Protocol 2025-11-25 / resources-list"
+  labels:
+    generator: catalog-v1
+    protocol: mcp-2025-11-25
+    taxonomy: endpoint-discovery
+    review: pending-review
+    reference: ref-mcp-2025-11-25-021
+    mutant: mut-mcp-2025-11-25-021
+spec:
+  protocol:
+    family: mcp-2025-11-25
+    snapshot: "2025-11-25"
+    digest: sha256:a2f09ce0e2985a93930630229fca543fc8f80e0260ff0b5f8fd2e61946ebddef
+  classification:
+    type: normative
+    stability: experimental
+    sideEffects: none
+    idempotent: true
+  requirements:
+    - id: MCP-20251125-REQ-021
+      level: MUST
+  requires:
+    all:
+      - offline-fixture
+  budgets:
+    timeout: 30s
+    maxRequests: 2
+    maxInputTokens: 128
+    maxOutputTokens: 128
+    maxResponseBytes: 64KiB
+    maxArtifactBytes: 1MiB
+  steps:
+    - id: reference
+      replay:
+        fixture: canonical/mcp-2025-11-25-021.json
+        as: reference-pass
+    - id: mutant
+      replay:
+        fixture: mutation/mcp-2025-11-25-021.json
+        as: targeted-mutant
+    - id: assertion
+      assert:
+        - use: catalog.resources-list
+          equals: true
+          assertionRole: normative
+          requirement: MCP-20251125-REQ-021
+  repetition:
+    count: 1
+    policy: all
+  publication:
+    dataClass: synthetic-only

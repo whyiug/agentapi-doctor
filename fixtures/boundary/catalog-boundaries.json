@@ -1,0 +1,45 @@
+{
+  "schema_version": "urn:agentapi-doctor:catalog-boundary-set:v1",
+  "generator": {
+    "name": "agentapi-doctor-catalog-generator",
+    "version": "1.0.0"
+  },
+  "cases": [
+    {
+      "id": "minimum-denominator",
+      "boundary": "scenario_count",
+      "input": 249,
+      "expectation": "reject below 250"
+    },
+    {
+      "id": "exact-denominator",
+      "boundary": "scenario_count",
+      "input": 250,
+      "expectation": "accept when all other invariants hold"
+    },
+    {
+      "id": "maximum-source-locator",
+      "boundary": "source_locator_bytes",
+      "input": 512,
+      "expectation": "accept exact bound"
+    },
+    {
+      "id": "oversized-source-locator",
+      "boundary": "source_locator_bytes",
+      "input": 513,
+      "expectation": "reject above bound"
+    },
+    {
+      "id": "fixture-path-depth",
+      "boundary": "fixture_ref",
+      "input": "canonical/a.json",
+      "expectation": "accept canonical relative path"
+    },
+    {
+      "id": "fixture-path-traversal",
+      "boundary": "fixture_ref",
+      "input": "../a.json",
+      "expectation": "reject traversal"
+    }
+  ]
+}

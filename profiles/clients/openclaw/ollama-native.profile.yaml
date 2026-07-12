@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:consumer-profile:v1beta1",
+  "kind": "ConsumerCompatibilityProfile",
+  "status": "candidate",
+  "metadata": {"id": "openclaw.ollama-native", "version": "0.1.0"},
+  "spec": {
+    "consumer": {"name": "OpenClaw Ollama Native", "category": "agent-client", "upstreamVersionResolution": "unresolved", "exactVersions": []},
+    "driverRef": "runners/agent/driver.yaml",
+    "protocolPacks": ["ollama-native"],
+    "apiTypes": ["ollama-native"],
+    "requiredCapabilities": ["provider-initialization", "model-discovery", "native-tool-schema", "streaming", "single-tool-loop", "multi-tool-loop", "continuation"],
+    "sandbox": {"temporaryHome": true, "network": "recorder-only", "ambientCredentials": false, "syntheticToolsOnly": true},
+    "supportGate": {"status": "pending", "reason": "required Tier 2 scope has no verified exact OpenClaw consumer version, Ollama target, pack digest, or run evidence", "evidenceRefs": []}
+  }
+}

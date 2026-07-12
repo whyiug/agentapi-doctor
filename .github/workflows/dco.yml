@@ -1,0 +1,34 @@
+name: DCO
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  signoff:
+    name: signoff
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout complete history without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify every proposed commit has a DCO trailer
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git rev-list --reverse "$BASE_SHA..$HEAD_SHA" > "$RUNNER_TEMP/commits"
+          test -s "$RUNNER_TEMP/commits"
+          while IFS= read -r commit; do
+            author="$(git show -s --format='%an <%ae>' "$commit")"
+            git show -s --format=%B "$commit" | grep -Fqx "Signed-off-by: $author" || {
+              echo "::error::commit $commit lacks exact DCO sign-off for $author"
+              exit 1
+            }
+          done < "$RUNNER_TEMP/commits"

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:consumer-profile:v1beta1",
+  "kind": "ConsumerCompatibilityProfile",
+  "status": "candidate",
+  "metadata": {"id": "vercel-ai-sdk", "version": "0.1.0"},
+  "spec": {
+    "consumer": {"name": "Vercel AI SDK", "category": "agent-client", "upstreamVersionResolution": "unresolved", "exactVersions": []},
+    "driverRef": "runners/node/driver.yaml",
+    "protocolPacks": ["openai-responses-http", "openai-chat"],
+    "apiTypes": ["openai-responses", "openai-chat", "openai-compatible"],
+    "requiredCapabilities": ["generate-text", "stream-text", "structured-output", "tool-calls", "multi-step", "partial-tool-input", "usage-metadata", "provider-metadata", "abort-signal"],
+    "sandbox": {"temporaryHome": true, "network": "recorder-only", "ambientCredentials": false},
+    "supportGate": {"status": "pending", "reason": "current/previous exact package graph, Node runtime, lockfile, and driver artifact digests are not independently verified", "evidenceRefs": []}
+  }
+}

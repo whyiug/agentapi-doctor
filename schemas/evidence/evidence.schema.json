@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:evidence:v1alpha1",
+  "title": "AgentAPI Doctor provisional sanitized Evidence",
+  "description": "One capture-layer evidence record. Cross-field payload digest equality and envelope identity are additionally enforced by pkg/schema.Evidence.Validate.",
+  "type": "object",
+  "required": [
+    "schema_version", "kind", "content_digest", "object_ref", "producer", "created_at", "evidence_id",
+    "run_id", "invocation_id", "attempt_id", "sequence", "capture_layer", "instrumentation_mode",
+    "direction", "evidence_kind", "monotonic_offset_ns", "redactions"
+  ],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:evidence:v1alpha1"},
+    "kind": {"const": "Evidence"},
+    "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "object_ref": {"$ref": "#/$defs/evidenceRef"},
+    "producer": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/producer"},
+    "created_at": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/utcTime"},
+    "extensions": {"type": "object", "propertyNames": {"pattern": "^x-.+"}, "additionalProperties": true},
+    "evidence_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "run_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "invocation_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "attempt_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "capture_layer": {"enum": ["upstream_application_observation", "proxy_forwarded_observation", "client_sdk_observation", "sanitized_persisted_evidence"]},
+    "instrumentation_mode": {"enum": ["direct_transport", "recording_proxy", "fixture_replay", "client_native"]},
+    "direction": {"enum": ["core_to_target", "target_to_core", "proxy_to_client", "client_to_proxy", "driver_to_core"]},
+    "evidence_kind": {"type": "string", "minLength": 1},
+    "monotonic_offset_ns": {"type": "integer", "minimum": 0},
+    "byte_offset": {"type": "integer"},
+    "event_offset": {"type": "integer"},
+    "payload_ref": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"},
+    "payload_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "unavailable_reason": {"type": "string", "minLength": 1},
+    "redactions": {"type": ["array", "null"], "items": {"$ref": "#/$defs/redaction"}},
+    "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}}
+  },
+  "oneOf": [
+    {"required": ["payload_ref", "payload_digest"]},
+    {"required": ["unavailable_reason"], "not": {"anyOf": [{"required": ["payload_ref"]}, {"required": ["payload_digest"]}]}}
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "evidenceRef": {
+      "type": "object",
+      "required": ["kind", "content_digest"],
+      "properties": {
+        "kind": {"const": "Evidence"},
+        "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "redaction": {
+      "type": "object",
+      "required": ["rule_id", "field_class", "count"],
+      "properties": {
+        "rule_id": {"type": "string", "minLength": 1},
+        "field_class": {"type": "string", "minLength": 1},
+        "count": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "relation": {
+      "type": "object",
+      "required": ["relation", "target"],
+      "properties": {
+        "relation": {"type": "string"},
+        "target": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

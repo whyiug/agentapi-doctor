@@ -1,0 +1,21 @@
+{
+  "schema_version": "urn:agentapi-doctor:protocol-snapshot:v1",
+  "protocol": "openai-chat",
+  "revision": "content-lock-set-2026-07-11",
+  "status": "candidate",
+  "review_status": "pending_review",
+  "sources": [
+    {
+      "source_id": "openai-chat-function-calling",
+      "content_sha256": "sha256:fd02b8cc59f93b6e24ab53e2a8382ebb45914b68c5c8ac9b816d27b1445bf450"
+    },
+    {
+      "source_id": "openai-chat-streaming",
+      "content_sha256": "sha256:4645bdad3f2309785bec0403f74471c6301411d93b2deb39dd979b5848a85407"
+    },
+    {
+      "source_id": "openai-chat-structured-output",
+      "content_sha256": "sha256:ac166ce490f4c863cbe4a50b2d447742c830a0b9a318a2740d0599cb163cf82b"
+    }
+  ]
+}

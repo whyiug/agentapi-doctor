@@ -1,0 +1,234 @@
+package executor
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/whyiug/agentapi-doctor/internal/budget"
+	"github.com/whyiug/agentapi-doctor/pkg/schema"
+)
+
+func digest(label string) schema.Digest { return schema.NewDigest([]byte(label)) }
+func instance(number int) schema.InstanceID {
+	return schema.InstanceID(fmt.Sprintf("00000000-0000-7000-8000-%012x", number))
+}
+
+func idSource(start int) IDSource {
+	var mu sync.Mutex
+	next := start
+	return func() (schema.InstanceID, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		value := instance(next)
+		next++
+		return value, nil
+	}
+}
+
+func driver() schema.ArtifactPin {
+	return schema.ArtifactPin{Kind: "Driver", Name: "raw-http", Version: "1.0.0", Digest: digest("driver")}
+}
+
+func hard(requests int64) schema.HardBudget {
+	return schema.HardBudget{MaxRequests: requests, MaxRequestBytes: 1 << 20, MaxResponseBytes: 1 << 20, MaxArtifactBytes: 1 << 20, MaxProcesses: 4, MaxDuration: schema.NewDuration(time.Minute)}
+}
+
+func testPlan(t *testing.T, decisions []schema.ScenarioDecision, finalizers []schema.FinalizerPlan) schema.ResolvedRunPlan {
+	t.Helper()
+	created := schema.NewUTCTime(time.Unix(1, 0))
+	producer := schema.Producer{Name: "doctor", Version: "0.1.0", ArtifactDigest: digest("doctor")}
+	id := instance(10)
+	intent := schema.ObjectRef{Kind: "IntentPlan", InstanceID: instance(9), ContentDigest: digest("intent")}
+	resolver := schema.ArtifactPin{Kind: "Resolver", Name: "core", Version: "1.0.0", Digest: digest("resolver")}
+	policy := schema.BudgetPolicy{Hard: hard(20), Reservation: schema.TokenBudget{MaxInputTokens: 1000, MaxOutputTokens: 1000}, Cleanup: hard(10)}
+	runtime := schema.RuntimePolicy{Concurrency: 1, Retries: 1, Timeout: schema.NewDuration(time.Second), Capture: schema.CaptureStandard, Sandbox: "process", Network: schema.NetworkTargetOnly}
+	denominator := digest("denominator")
+	support := digest("support")
+	target := schema.TargetResolution{IdentityLevel: "version-pinned", ObservedFingerprint: digest("target")}
+	artifacts := []schema.ArtifactPin{driver()}
+	projection := struct {
+		SchemaVersion             string                    `json:"schema_version"`
+		Kind                      string                    `json:"kind"`
+		ResolvedPlanID            schema.InstanceID         `json:"resolved_plan_id"`
+		IntentPlanRef             schema.ObjectRef          `json:"intent_plan_ref"`
+		Resolver                  schema.ArtifactPin        `json:"resolver"`
+		CapabilityObservationRefs []schema.ObjectRef        `json:"capability_observation_refs"`
+		SupportLockDigest         schema.Digest             `json:"support_lock_digest"`
+		Artifacts                 []schema.ArtifactPin      `json:"artifacts"`
+		Target                    schema.TargetResolution   `json:"target"`
+		Scenarios                 []schema.ScenarioDecision `json:"scenarios"`
+		DenominatorDigest         schema.Digest             `json:"denominator_digest"`
+		Budget                    schema.BudgetPolicy       `json:"budget"`
+		Runtime                   schema.RuntimePolicy      `json:"runtime"`
+		Finalizers                []schema.FinalizerPlan    `json:"finalizers,omitempty"`
+		Producer                  schema.Producer           `json:"producer"`
+		CreatedAt                 schema.UTCTime            `json:"created_at"`
+	}{"urn:agentapi-doctor:resolved-run-plan:v1alpha1", "ResolvedRunPlan", id, intent, resolver, nil, support, artifacts, target, decisions, denominator, policy, runtime, finalizers, producer, created}
+	meta, err := schema.SealMeta(projection.SchemaVersion, projection.Kind, id, producer, created, projection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan := schema.ResolvedRunPlan{EnvelopeMeta: meta, ResolvedPlanID: id, IntentPlanRef: intent, Resolver: resolver, SupportLockDigest: support, Artifacts: artifacts, Target: target, Scenarios: decisions, DenominatorDigest: denominator, Budget: policy, Runtime: runtime, Finalizers: finalizers}
+	if err := plan.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	return plan
+}
+
+type scriptedRunner struct {
+	mu            sync.Mutex
+	outcomes      []Outcome
+	errors        []error
+	calls         int
+	finalized     []string
+	finalizeError map[string]error
+}
+
+func (runner *scriptedRunner) Estimate(schema.ScenarioDecision) (budget.Usage, error) {
+	return budget.Usage{Requests: 1, RequestBytes: 10, ResponseBytes: 100, ArtifactBytes: 100}, nil
+}
+func (runner *scriptedRunner) Run(_ context.Context, _ Invocation) (Outcome, error) {
+	runner.mu.Lock()
+	defer runner.mu.Unlock()
+	index := runner.calls
+	runner.calls++
+	var outcome Outcome
+	if index < len(runner.outcomes) {
+		outcome = runner.outcomes[index]
+	}
+	if index < len(runner.errors) && runner.errors[index] != nil {
+		return Outcome{}, runner.errors[index]
+	}
+	return outcome, nil
+}
+func (runner *scriptedRunner) Finalize(_ context.Context, plan schema.FinalizerPlan) (budget.Usage, error) {
+	runner.mu.Lock()
+	defer runner.mu.Unlock()
+	runner.finalized = append(runner.finalized, plan.LeaseID)
+	return budget.Usage{Requests: 1}, runner.finalizeError[plan.LeaseID]
+}
+
+type resolver struct {
+	runner  *scriptedRunner
+	missing bool
+}
+
+func (value resolver) Resolve(schema.ArtifactPin) (Runner, error) {
+	if value.missing {
+		return nil, errors.New("missing driver")
+	}
+	return value.runner, nil
+}
+func (value resolver) ResolveFinalizer(schema.FinalizerPlan) (Runner, error) {
+	return value.runner, nil
+}
+
+func passOutcome() Outcome {
+	return Outcome{Verdict: schema.VerdictPass, EvidenceRefs: []schema.ObjectRef{{Kind: "Payload", ContentDigest: digest("evidence")}}, Usage: budget.Usage{Requests: 1, RequestBytes: 10, ResponseBytes: 20, ArtifactBytes: 20}}
+}
+
+func TestExecutePreservesDispositionAndEndpointVerdict(t *testing.T) {
+	decisions := []schema.ScenarioDecision{{ScenarioID: "execute.case", Disposition: schema.DispositionExecute, Driver: driver()}, {ScenarioID: "unsupported.case", Disposition: schema.DispositionNotApplicable, ReasonCode: string(schema.ReasonUnsupportedCapability), Driver: driver()}}
+	plan := testPlan(t, decisions, nil)
+	runner := &scriptedRunner{outcomes: []Outcome{passOutcome()}}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(100), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Attempts) != 1 || len(result.Cases) != 2 || result.Cases[0].Verdict == nil || *result.Cases[0].Verdict != schema.VerdictPass {
+		t.Fatalf("result=%#v", result)
+	}
+	if result.Cases[1].Verdict != nil || result.Cases[1].ApplicableMember {
+		t.Fatalf("not-applicable case gained a verdict: %#v", result.Cases[1])
+	}
+}
+
+func TestTransientRetriesButDriverErrorNeverBecomesTargetFail(t *testing.T) {
+	decision := schema.ScenarioDecision{ScenarioID: "retry.case", Disposition: schema.DispositionExecute, Driver: driver()}
+	plan := testPlan(t, []schema.ScenarioDecision{decision}, nil)
+	runner := &scriptedRunner{outcomes: []Outcome{{}, passOutcome()}, errors: []error{&RunError{Class: ErrorTransient, Err: errors.New("503")}, nil}}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(200), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Attempts) != 2 || result.Cases[0].Verdict == nil || *result.Cases[0].Verdict != schema.VerdictPass {
+		t.Fatalf("retry result=%#v", result)
+	}
+	brokenPlan := testPlan(t, []schema.ScenarioDecision{{ScenarioID: "driver.case", Disposition: schema.DispositionExecute, Driver: driver()}}, nil)
+	broken, err := Execute(context.Background(), brokenPlan, brokenPlan.ContentDigest, Config{Runners: resolver{missing: true}, NewID: idSource(300), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if broken.Cases[0].Verdict != nil || broken.Cases[0].ExecutionStatus != schema.ExecutionErrored || len(broken.Cases[0].Findings) != 0 {
+		t.Fatalf("driver error became target result: %#v", broken.Cases[0])
+	}
+}
+
+func TestDependencyFailureSkipsDependentWithAttemptIdentity(t *testing.T) {
+	fail := passOutcome()
+	fail.Verdict = schema.VerdictFail
+	decisions := []schema.ScenarioDecision{{ScenarioID: "parent", Disposition: schema.DispositionExecute, Driver: driver()}, {ScenarioID: "child", Disposition: schema.DispositionExecute, Driver: driver(), DependsOn: []string{"parent"}}}
+	plan := testPlan(t, decisions, nil)
+	runner := &scriptedRunner{outcomes: []Outcome{fail}}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(400), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Cases[1].ExecutionStatus != schema.ExecutionSkipped || result.Cases[1].Verdict != nil || len(result.Cases[1].AttemptIDs) != 1 {
+		t.Fatalf("dependent=%#v", result.Cases[1])
+	}
+}
+
+func TestFinalizersAreLIFOAndFailuresRemainResidual(t *testing.T) {
+	finalizers := []schema.FinalizerPlan{{LeaseID: "first", ResourceType: "fixture", Operation: "delete", CleanupBudget: hard(1)}, {LeaseID: "second", ResourceType: "fixture", Operation: "delete", CleanupBudget: hard(1)}}
+	plan := testPlan(t, []schema.ScenarioDecision{{ScenarioID: "one", Disposition: schema.DispositionExecute, Driver: driver()}}, finalizers)
+	runner := &scriptedRunner{outcomes: []Outcome{passOutcome()}, finalizeError: map[string]error{"first": errors.New("still present")}}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(500), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fmt.Sprint(runner.finalized) != "[second first]" || fmt.Sprint(result.ResidualLeases) != "[first]" {
+		t.Fatalf("order=%v residual=%v", runner.finalized, result.ResidualLeases)
+	}
+}
+
+func TestExecuteRejectsUnapprovedDigest(t *testing.T) {
+	plan := testPlan(t, []schema.ScenarioDecision{{ScenarioID: "one", Disposition: schema.DispositionExecute, Driver: driver()}}, nil)
+	_, err := Execute(context.Background(), plan, digest("different"), Config{Runners: resolver{runner: &scriptedRunner{}}, NewID: idSource(600)})
+	if err == nil {
+		t.Fatal("expected digest mismatch")
+	}
+}
+
+func TestInvalidRunnerOutcomeIsHarnessErrorWithoutFinding(t *testing.T) {
+	plan := testPlan(t, []schema.ScenarioDecision{{ScenarioID: "one", Disposition: schema.DispositionExecute, Driver: driver()}}, nil)
+	runner := &scriptedRunner{outcomes: []Outcome{{Verdict: schema.VerdictFail, Findings: []schema.Finding{{Category: "invented"}}, Usage: budget.Usage{Requests: 1}}}}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(700), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Cases[0].Verdict != nil || len(result.Cases[0].Findings) != 0 || result.Cases[0].ReasonCode != schema.ReasonHarnessError {
+		t.Fatalf("invalid outcome escaped: %#v", result.Cases[0])
+	}
+}
+
+func TestCancellationStillRunsBoundedFinalizers(t *testing.T) {
+	plan := testPlan(t, []schema.ScenarioDecision{{ScenarioID: "one", Disposition: schema.DispositionExecute, Driver: driver()}}, []schema.FinalizerPlan{{LeaseID: "lease", ResourceType: "fixture", Operation: "delete", CleanupBudget: hard(1)}})
+	runner := &scriptedRunner{}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	result, err := Execute(ctx, plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(800), Now: func() time.Time { return time.Unix(2, 0) }})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected cancellation, got %v", err)
+	}
+	if fmt.Sprint(runner.finalized) != "[lease]" || len(result.ResidualLeases) != 0 {
+		t.Fatalf("finalized=%v residual=%v", runner.finalized, result.ResidualLeases)
+	}
+	if result.Cases[0].ExecutionStatus != schema.ExecutionCancelled || result.Cases[0].Verdict != nil {
+		t.Fatalf("case=%#v", result.Cases[0])
+	}
+}

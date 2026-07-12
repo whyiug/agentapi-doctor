@@ -1,0 +1,64 @@
+name: Fixture contribution
+description: Propose a minimal synthetic fixture with provenance and ground truth.
+title: "fixture: "
+body:
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: Rights and safety
+      options:
+        - label: I have the right to submit every included byte under the stated license.
+          required: true
+        - label: The fixture is synthetic or independently rewritten; it contains no private log, secret, personal data, or copied test of uncertain license.
+          required: true
+        - label: Reproduction is local and does not send a test payload to a public target.
+          required: true
+  - type: input
+    id: source
+    attributes:
+      label: Public provenance source
+      description: Link the upstream issue, release note, specification, or other first-party record.
+      placeholder: https://example.org/upstream/record
+    validations:
+      required: true
+  - type: input
+    id: license
+    attributes:
+      label: SPDX identifier and allowed use
+      placeholder: Apache-2.0; independently authored synthetic fixture
+    validations:
+      required: true
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Original symptom and affected versions
+    validations:
+      required: true
+  - type: textarea
+    id: groundtruth
+    attributes:
+      label: Ground truth and fault boundary
+      description: Explain how the expected classification was independently established; use unknown when evidence is insufficient.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Deterministic local reproduction
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: assertions
+    attributes:
+      label: Requirement, reference pass, and mutant fail
+      description: Link the requirement source and describe both targeted behaviors.
+    validations:
+      required: true
+  - type: textarea
+    id: redaction
+    attributes:
+      label: Redaction and derivation record
+      description: State what was synthesized, removed, or transformed and how the failure fingerprint was preserved.
+    validations:
+      required: true

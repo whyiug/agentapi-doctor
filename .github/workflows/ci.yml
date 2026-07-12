@@ -1,0 +1,114 @@
+name: Product CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  GOTOOLCHAIN: local
+
+concurrency:
+  group: product-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go-platform:
+    name: Go ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Install the pinned Go toolchain
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+          check-latest: false
+      - name: Test all Go packages
+        run: go test ./...
+      - name: Build supported binaries
+        run: go build ./cmd/doctor ./cmd/registry ./cmd/reference-server
+
+  product-gate:
+    name: Product gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout complete history without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install the pinned Go toolchain
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+          check-latest: false
+      - name: Validate GitHub workflow contracts
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          archive="$RUNNER_TEMP/actionlint.tar.gz"
+          curl --fail --location --proto '=https' --tlsv1.2 \
+            --output "$archive" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "$ACTIONLINT_SHA256  $archive" | sha256sum --check --strict
+          mkdir "$RUNNER_TEMP/actionlint"
+          tar -xzf "$archive" -C "$RUNNER_TEMP/actionlint" actionlint
+          "$RUNNER_TEMP/actionlint/actionlint" .github/workflows/*.yml
+      - name: Verify formatting, schemas, tests, and static analysis
+        run: make -f Product.mk product-check
+      - name: Exercise data races
+        run: go test -race ./...
+      - name: Ensure the module is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+          go mod vendor
+          git diff --exit-code -- vendor
+      - name: Reject worktree drift
+        run: git diff --check
+
+  containers:
+    name: Offline container builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Build and smoke all minimal images without build-time network
+        run: make -f Product.mk docker-build-check
+
+  aggregate:
+    name: aggregate
+    if: always()
+    needs: [go-platform, product-gate, containers]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require every product job
+        env:
+          GO_PLATFORM: ${{ needs.go-platform.result }}
+          PRODUCT_GATE: ${{ needs.product-gate.result }}
+          CONTAINERS: ${{ needs.containers.result }}
+        run: |
+          test "$GO_PLATFORM" = success
+          test "$PRODUCT_GATE" = success
+          test "$CONTAINERS" = success

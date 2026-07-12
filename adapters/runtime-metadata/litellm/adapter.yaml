@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:runtime-metadata-adapter:v1",
+  "kind": "RuntimeMetadataAdapter", "status": "candidate",
+  "metadata": {"id": "litellm", "version": "0.1.0"},
+  "spec": {
+    "runtime": {"name": "litellm", "versionResolution": "unresolved", "exactVersions": []},
+    "behavior": {"sendsClientRequests": false, "modifiesNormativeTruth": false, "protocolConformanceLabel": false},
+    "outputFields": ["runtime", "exact_version", "configuration_digest", "model_revision", "provider_route", "backend", "gateway_mode"],
+    "fixtureContract": {"valid": "adapters/runtime-metadata/litellm/fixtures/valid.json", "invalid": "adapters/runtime-metadata/litellm/fixtures/invalid.json", "requiredFields": ["synthetic", "runtime", "reportedVersion", "configuration"], "forbiddenFields": ["authorization", "apiKey", "token", "cookie", "secret"]},
+    "gate": {"status": "pending", "reason": "only synthetic contract fixtures exist; no exact upstream version or runtime observation is claimed", "evidenceRefs": []}
+  }
+}

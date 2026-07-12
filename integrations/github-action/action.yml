@@ -1,0 +1,54 @@
+name: AgentAPI Doctor verified installer
+description: Candidate action that installs one explicitly versioned and Sigstore-verified AgentAPI Doctor release artifact.
+author: AgentAPI Doctor contributors
+
+inputs:
+  version:
+    description: Exact release version without the v prefix (SemVer or SemVer-rc.N); floating channels are rejected.
+    required: true
+  cosign-path:
+    description: Command name or absolute path of an already installed cosign verifier.
+    required: false
+    default: cosign
+
+outputs:
+  doctor-path:
+    description: Absolute path to the verified doctor executable.
+    value: ${{ steps.install-posix.outputs.doctor-path || steps.install-windows.outputs.doctor-path }}
+  artifact-name:
+    description: Exact OS/architecture archive selected for this runner.
+    value: ${{ steps.install-posix.outputs.artifact-name || steps.install-windows.outputs.artifact-name }}
+  artifact-sha256:
+    description: SHA-256 verified against the signed release checksum manifest.
+    value: ${{ steps.install-posix.outputs.artifact-sha256 || steps.install-windows.outputs.artifact-sha256 }}
+
+runs:
+  using: composite
+  steps:
+    - name: Download and verify the exact release artifact
+      id: install-posix
+      if: runner.os != 'Windows'
+      shell: bash
+      env:
+        AGENTAPI_DOCTOR_VERSION: ${{ inputs.version }}
+        AGENTAPI_DOCTOR_COSIGN: ${{ inputs.cosign-path }}
+      run: >-
+        python3 "$GITHUB_ACTION_PATH/install.py"
+        --version "$AGENTAPI_DOCTOR_VERSION"
+        --cosign "$AGENTAPI_DOCTOR_COSIGN"
+
+    - name: Download and verify the exact release artifact on Windows
+      id: install-windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        AGENTAPI_DOCTOR_VERSION: ${{ inputs.version }}
+        AGENTAPI_DOCTOR_COSIGN: ${{ inputs.cosign-path }}
+      run: >-
+        python "$env:GITHUB_ACTION_PATH/install.py"
+        --version "$env:AGENTAPI_DOCTOR_VERSION"
+        --cosign "$env:AGENTAPI_DOCTOR_COSIGN"
+
+branding:
+  icon: shield
+  color: blue

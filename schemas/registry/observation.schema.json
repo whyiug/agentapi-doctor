@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:observation:v1",
+  "title": "AgentAPI Doctor Registry Compatibility Observation v1",
+  "description": "Immutable observation projection plus append-only provenance and Registry-derived interpretation. The observation_id projection digest is additionally verified by registry/api. This schema does not imply hosted verification or publication availability.",
+  "type": "object",
+  "required": [
+    "schema_version", "observation_id", "observation_class_id", "subject", "test",
+    "environment", "result", "manifest_digest"
+  ],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:observation:v1"},
+    "observation_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "observation_class_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "subject": {"$ref": "#/$defs/canonicalSection"},
+    "test": {"$ref": "#/$defs/canonicalSection"},
+    "environment": {"$ref": "#/$defs/canonicalSection"},
+    "result": {"$ref": "#/$defs/canonicalSection"},
+    "manifest_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "provenance": {"type": "array", "items": {"$ref": "#/$defs/attestationReference"}},
+    "registry_derived": {"$ref": "#/$defs/registryDerived"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "canonicalSection": {
+      "description": "Intentionally open provider-neutral section retained as a strict RFC 8785 JSON object by the Go API.",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "attestationReference": {
+      "type": "object",
+      "required": ["digest"],
+      "properties": {
+        "digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+        "uri": {"type": "string", "pattern": "^[^\\r\\n\\x00]*$"}
+      },
+      "additionalProperties": false
+    },
+    "registryDerived": {
+      "type": "object",
+      "properties": {
+        "trust_labels": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": ".*\\S.*"}},
+        "freshness": {"enum": ["unknown", "fresh", "stale"]},
+        "published_at": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/utcTime"},
+        "dispute_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": ".*\\S.*"}},
+        "superseded_by": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+        "tombstoned": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

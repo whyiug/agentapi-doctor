@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:driver-manifest:v1",
+  "kind": "Driver",
+  "status": "candidate",
+  "metadata": {"id": "raw-go", "version": "0.1.0"},
+  "spec": {
+    "rpc": {"minimum": "1.0.0", "maximum": "1.0.0", "transport": "ndjson-stdio", "maxControlFrameBytes": 1048576, "defaultDataFrameBytes": 262144},
+    "execution": {"type": "built-in", "runtime": "go", "resolutionStatus": "unresolved", "exactRuntimeVersion": null, "artifactDigest": null, "lockfileDigest": null, "imageDigest": null},
+    "capabilities": ["http", "sse", "stream", "cancel", "retry-observation", "raw-response"],
+    "permissions": ["recorder-socket", "ephemeral-input"],
+    "security": {"receivesRealAuth": false, "casWrite": false, "stdoutProtocolOnly": true, "network": "recorder-only"},
+    "gate": {"status": "pending", "reason": "binary/runtime/artifact identity and conformance evidence are unresolved", "evidenceRefs": []}
+  }
+}

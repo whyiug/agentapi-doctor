@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "urn:agentapi-doctor:schema:external-suite-adapter:v1",
+  "type": "object", "additionalProperties": false, "required": ["schemaVersion", "kind", "status", "metadata", "spec"],
+  "properties": {
+    "schemaVersion": {"const": "urn:agentapi-doctor:external-suite-adapter:v1"}, "kind": {"const": "ExternalSuiteAdapter"}, "status": {"const": "candidate"},
+    "metadata": {"type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": {"id": {"const": "open-responses"}, "version": {"type": "string"}}},
+    "spec": {"type": "object", "additionalProperties": false, "required": ["upstream", "interface", "runEvidence", "gate"], "properties": {
+      "upstream": {"type": "object", "additionalProperties": false, "required": ["project", "repository", "resolutionStatus", "exactVersion", "sourceDigest", "licenseStatus"], "properties": {"project": {"const": "Open Responses"}, "repository": {"const": "https://github.com/openresponses/openresponses"}, "resolutionStatus": {"enum": ["unresolved", "resolved"]}, "exactVersion": {"type": ["string", "null"]}, "sourceDigest": {"type": ["string", "null"]}, "licenseStatus": {"enum": ["review-pending", "verified"]}}},
+      "interface": {"type": "object", "additionalProperties": false, "required": ["transport", "inputSchema", "outputSchema", "mappingPolicy", "network"], "properties": {"transport": {"const": "subprocess-json"}, "inputSchema": {"type": "string"}, "outputSchema": {"type": "string"}, "mappingPolicy": {"const": "preserve-upstream-results-and-separate-adapter-findings"}, "network": {"const": "offline-during-gate"}}},
+      "runEvidence": {"type": "object", "additionalProperties": false, "required": ["status", "resultDigest", "evidenceRefs"], "properties": {"status": {"enum": ["not-run", "verified"]}, "resultDigest": {"type": ["string", "null"]}, "evidenceRefs": {"type": "array", "items": {"type": "string"}}}},
+      "gate": {"type": "object", "additionalProperties": false, "required": ["status", "reason", "evidenceRefs"], "properties": {"status": {"enum": ["pending", "passed"]}, "reason": {"type": "string"}, "evidenceRefs": {"type": "array", "items": {"type": "string"}}}}
+    }}
+  }
+}

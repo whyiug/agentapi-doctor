@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:scoop-distribution-candidate:v1",
+  "title": "AgentAPI Doctor unpublished Scoop distribution candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "status",
+    "package",
+    "manifestTemplate",
+    "version",
+    "releaseTag",
+    "artifacts",
+    "verification",
+    "publishedEvidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "urn:agentapi-doctor:scoop-distribution-candidate:v1"
+    },
+    "kind": {
+      "const": "ScoopDistributionCandidate"
+    },
+    "status": {
+      "const": "candidate-unpublished"
+    },
+    "package": {
+      "const": "agentapi-doctor"
+    },
+    "manifestTemplate": {
+      "const": "integrations/scoop/agentapi-doctor.json.tmpl"
+    },
+    "version": {
+      "type": "null"
+    },
+    "releaseTag": {
+      "type": "null"
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "windows-amd64",
+        "windows-arm64"
+      ],
+      "properties": {
+        "windows-amd64": {
+          "$ref": "#/$defs/windowsAmd64"
+        },
+        "windows-arm64": {
+          "$ref": "#/$defs/windowsArm64"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "checksumAlgorithm",
+        "checksumManifest",
+        "sigstoreBundleRequired"
+      ],
+      "properties": {
+        "checksumAlgorithm": {
+          "const": "sha256"
+        },
+        "checksumManifest": {
+          "const": "checksums.txt"
+        },
+        "sigstoreBundleRequired": {
+          "const": true
+        }
+      }
+    },
+    "publishedEvidence": {
+      "type": "array",
+      "maxItems": 0
+    }
+  },
+  "$defs": {
+    "artifactBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "archiveTemplate",
+        "sha256"
+      ],
+      "properties": {
+        "archiveTemplate": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "null"
+        }
+      }
+    },
+    "windowsAmd64": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/artifactBase"
+        },
+        {
+          "properties": {
+            "archiveTemplate": {
+              "const": "agentapi-doctor_{version}_windows_amd64.tar.gz"
+            }
+          }
+        }
+      ]
+    },
+    "windowsArm64": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/artifactBase"
+        },
+        {
+          "properties": {
+            "archiveTemplate": {
+              "const": "agentapi-doctor_{version}_windows_arm64.tar.gz"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

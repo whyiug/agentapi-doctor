@@ -1,0 +1,56 @@
+name: Go quality
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GOTOOLCHAIN: local
+
+concurrency:
+  group: go-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Static and vulnerability analysis
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Install Go 1.26.5
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: '1.26.5'
+          check-latest: false
+          cache-dependency-path: go.sum
+      - name: Install pinned quality tools
+        timeout-minutes: 8
+        env:
+          GOBIN: ${{ runner.temp }}/quality-tools
+        run: |
+          mkdir -p "$GOBIN"
+          go install honnef.co/go/tools/cmd/staticcheck@2026.1
+          go install golang.org/x/vuln/cmd/govulncheck@v1.5.0
+          python3 -m pip install --disable-pip-version-check --no-deps ruff==0.15.5
+          echo "$GOBIN" >> "$GITHUB_PATH"
+      - name: Lint product Python
+        run: ruff check tools/*.py integrations
+      - name: Run static analysis
+        timeout-minutes: 8
+        run: staticcheck ./...
+      - name: Run Go vulnerability analysis
+        timeout-minutes: 8
+        run: govulncheck -test ./...

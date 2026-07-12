@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:config:v1beta1",
+  "title": "AgentAPI Doctor project configuration",
+  "type": "object",
+  "required": ["apiVersion", "targets", "defaults"],
+  "properties": {
+    "apiVersion": {"const": "urn:agentapi-doctor:config:v1beta1"},
+    "targets": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
+      "additionalProperties": {"$ref": "#/$defs/target"}
+    },
+    "defaults": {"$ref": "#/$defs/defaults"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "secretRef": {"type": "string", "pattern": "^(env|keyring|file|exec)://[^\\r\\n\\x00]+$"},
+    "target": {
+      "type": "object",
+      "required": ["baseURL", "protocol", "model"],
+      "properties": {
+        "baseURL": {"type": "string", "format": "uri", "pattern": "^https?://"},
+        "protocol": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "auth": {
+          "type": "object",
+          "required": ["type", "token"],
+          "properties": {
+            "type": {"enum": ["bearer", "header"]},
+            "token": {
+              "type": "object",
+              "required": ["ref"],
+              "properties": {"ref": {"$ref": "#/$defs/secretRef"}},
+              "additionalProperties": false
+            },
+            "header": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        },
+        "metadata": {"type": "object", "additionalProperties": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "defaults": {
+      "type": "object",
+      "required": ["budget", "capture", "retries"],
+      "properties": {
+        "profile": {"type": "string"},
+        "budget": {
+          "type": "object",
+          "required": ["maxRequests", "maxDuration", "maxInputTokens", "maxOutputTokens"],
+          "properties": {
+            "maxRequests": {"type": "integer", "minimum": 1},
+            "maxDuration": {"type": "string", "pattern": "^[1-9][0-9]*(ns|us|µs|ms|s|m|h)([0-9].*)?$"},
+            "maxInputTokens": {"type": "integer", "minimum": 0},
+            "maxOutputTokens": {"type": "integer", "minimum": 0}
+          },
+          "additionalProperties": false
+        },
+        "capture": {
+          "type": "object",
+          "required": ["content"],
+          "properties": {"content": {"enum": ["metadata_only", "standard_fixture_only", "redacted_content", "full_local_encrypted"]}},
+          "additionalProperties": false
+        },
+        "retries": {
+          "type": "object",
+          "required": ["transport", "semantic"],
+          "properties": {
+            "transport": {"type": "integer", "minimum": 0},
+            "semantic": {"type": "integer", "minimum": 0}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

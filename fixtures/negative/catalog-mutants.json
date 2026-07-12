@@ -1,0 +1,53 @@
+{
+  "schema_version": "urn:agentapi-doctor:catalog-negative-set:v1",
+  "generator": {
+    "name": "agentapi-doctor-catalog-generator",
+    "version": "1.0.0"
+  },
+  "cases": [
+    {
+      "id": "duplicate-json-key",
+      "mutation": "duplicate a top-level JSON member",
+      "input": "{\"status\":\"candidate\",\"status\":\"stable\"}",
+      "reject_stage": "strict-json"
+    },
+    {
+      "id": "unknown-json-field",
+      "mutation": "add an unrecognized contract member",
+      "input": {
+        "unknown": true
+      },
+      "reject_stage": "strict-json"
+    },
+    {
+      "id": "floating-source-revision",
+      "mutation": "replace exact revision with latest",
+      "input": "latest",
+      "reject_stage": "source-lock"
+    },
+    {
+      "id": "unknown-requirement-source",
+      "mutation": "bind requirement to absent source ID",
+      "input": "missing-source",
+      "reject_stage": "requirement-link"
+    },
+    {
+      "id": "duplicate-semantic-key",
+      "mutation": "rename a scenario without changing its semantic key",
+      "input": "duplicate/semantic/key",
+      "reject_stage": "denominator"
+    },
+    {
+      "id": "untargeted-mutant",
+      "mutation": "remove kills_requirement",
+      "input": null,
+      "reject_stage": "fixture-link"
+    },
+    {
+      "id": "tier-one-claim",
+      "mutation": "mark candidate as Tier 1",
+      "input": "tier1",
+      "reject_stage": "candidate-status"
+    }
+  ]
+}

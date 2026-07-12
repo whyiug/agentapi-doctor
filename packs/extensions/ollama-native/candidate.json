@@ -1,0 +1,18 @@
+{
+  "schema_version": "urn:agentapi-doctor:pack-candidate-status:v1",
+  "pack": "ollama-native",
+  "protocol": "ollama-native",
+  "release_track": "required-experimental",
+  "status": "candidate",
+  "review_status": "pending_review",
+  "claimed_tier": "none",
+  "publication": "blocked_pending_review",
+  "independent_review": false,
+  "real_sdk_validation": false,
+  "live_provider_verified": false,
+  "known_gaps": [
+    "Candidate source interpretations require independent protocol-maintainer review.",
+    "Only deterministic synthetic fixtures have been compiled; no live provider was contacted.",
+    "No real SDK or consumer compatibility result is claimed."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:capability-observation:v1alpha1",
+  "title": "AgentAPI Doctor provisional CapabilityObservation",
+  "description": "Probe evidence bound to one IntentPlan. It is not a target support or hosted-verification claim.",
+  "type": "object",
+  "required": [
+    "schema_version", "kind", "instance_id", "content_digest", "object_ref", "producer", "created_at",
+    "capability_observation_id", "intent_plan_ref", "probe_policy_digest", "facts", "consumed_budget"
+  ],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:capability-observation:v1alpha1"},
+    "kind": {"const": "CapabilityObservation"},
+    "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "object_ref": {"$ref": "#/$defs/capabilityObservationRef"},
+    "producer": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/producer"},
+    "created_at": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/utcTime"},
+    "extensions": {
+      "type": "object", "propertyNames": {"pattern": "^x-.+"}, "additionalProperties": true
+    },
+    "capability_observation_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+    "intent_plan_ref": {"$ref": "#/$defs/intentPlanRef"},
+    "probe_policy_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "facts": {"type": ["array", "null"], "items": {"$ref": "#/$defs/fact"}},
+    "consumed_budget": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/hardBudget"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "capabilityObservationRef": {
+      "type": "object",
+      "required": ["kind", "instance_id", "content_digest"],
+      "properties": {
+        "kind": {"const": "CapabilityObservation"},
+        "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "intentPlanRef": {
+      "type": "object",
+      "required": ["kind", "instance_id", "content_digest"],
+      "properties": {
+        "kind": {"const": "IntentPlan"},
+        "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "fact": {
+      "type": "object",
+      "required": ["capability", "status", "evidence"],
+      "properties": {
+        "capability": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"},
+        "status": {"enum": ["supported", "unsupported", "unknown"]},
+        "evidence": {
+          "type": ["array", "null"],
+          "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

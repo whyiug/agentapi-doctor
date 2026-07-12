@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "urn:agentapi-doctor:driver-manifest:v1",
+  "kind": "Driver",
+  "status": "candidate",
+  "metadata": {"id": "node-sdk", "version": "0.1.0"},
+  "spec": {
+    "rpc": {"minimum": "1.0.0", "maximum": "1.0.0", "transport": "ndjson-stdio", "maxControlFrameBytes": 1048576, "defaultDataFrameBytes": 262144},
+    "execution": {"type": "subprocess-or-pinned-oci", "runtime": "node", "resolutionStatus": "unresolved", "exactRuntimeVersion": null, "artifactDigest": null, "lockfileDigest": null, "imageDigest": null},
+    "capabilities": ["sync", "async", "stream", "abort-controller", "retry-observation", "sdk-events", "request-transform-capture"],
+    "permissions": ["temporary-home", "recorder-socket", "ephemeral-input", "bounded-stderr"],
+    "security": {"receivesRealAuth": false, "casWrite": false, "stdoutProtocolOnly": true, "network": "recorder-only"},
+    "gate": {"status": "pending", "reason": "exact Node runtime, package lock, OCI/executable digest, and driver conformance evidence are unresolved", "evidenceRefs": []}
+  }
+}

@@ -1,0 +1,440 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: AgentAPI Doctor self-hosted Registry API
+  version: 0.1.0-provisional
+  description: >-
+    Provisional contract for the implemented /v1 self-hosted Registry routes.
+    This document does not claim that a project-operated hosted Registry,
+    persistent verification queue, publication worker, or ownership verifier
+    is available. A commit returns 501 hosted_verifier_unavailable when the
+    configured store has no verifier queue.
+  x-contract-status: provisional
+  x-hosted-verifier-available: false
+  x-ownership-verifier-available: false
+tags:
+  - name: observations
+  - name: catalog
+  - name: governance
+paths:
+  /v1/observations:prepare:
+    post:
+      tags: [observations]
+      operationId: prepareObservation
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PrepareRequest'}
+      responses:
+        '201':
+          description: Upload session created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PrepareResponse'}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/uploads/{session_id}:
+    put:
+      tags: [observations]
+      operationId: stageObservationUpload
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: '#/components/parameters/SessionID'
+        - name: X-Upload-Challenge
+          in: header
+          required: true
+          schema: {type: string, minLength: 16, maxLength: 4096}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: './observation.schema.json'}
+      responses:
+        '204': {description: Exact observation bytes were staged.}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/observations:commit:
+    post:
+      tags: [observations]
+      operationId: commitObservation
+      description: >-
+        Commits the exact staged digest. 202 is possible only when the
+        configured Store accepts a verification-queue item. The included
+        memory and SQLite stores retain the commit but return 501 because no
+        hosted verifier queue is configured.
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CommitRequest'}
+      responses:
+        '202':
+          description: A configured verifier queue accepted the committed session.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommitResponse'}
+        '501':
+          description: The exact commit was retained, but hosted verification is unavailable.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/observations:
+    get:
+      tags: [observations]
+      operationId: listObservations
+      parameters:
+        - {name: subject, in: query, schema: {type: string, maxLength: 1024}}
+        - {name: version, in: query, schema: {type: string, maxLength: 1024}}
+        - {name: pack, in: query, schema: {type: string, maxLength: 1024}}
+        - {name: profile, in: query, schema: {type: string, maxLength: 1024}}
+        - {name: trust, in: query, schema: {type: string, maxLength: 1024}}
+        - {name: fresh, in: query, schema: {type: string, maxLength: 1024}}
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Cursor-paginated immutable observations.
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ObservationList'}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/observations/{digest}:
+    get:
+      tags: [observations]
+      operationId: getObservation
+      parameters:
+        - $ref: '#/components/parameters/Digest'
+      responses:
+        '200':
+          description: Exact immutable observation.
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+          content:
+            application/json:
+              schema: {$ref: './observation.schema.json'}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/subjects/{owner}/{project}:
+    get:
+      tags: [catalog]
+      operationId: getSubjectObservations
+      parameters:
+        - $ref: '#/components/parameters/Owner'
+        - $ref: '#/components/parameters/Project'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Observations for an exact owner/project namespace.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubjectObservationList'}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/packs/{name}/{version}:
+    get:
+      tags: [catalog]
+      operationId: getPack
+      parameters:
+        - $ref: '#/components/parameters/ArtifactName'
+        - $ref: '#/components/parameters/ArtifactVersion'
+      responses:
+        '200':
+          description: Exact stored pack document.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Artifact'}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/profiles/{name}/{version}:
+    get:
+      tags: [catalog]
+      operationId: getProfile
+      parameters:
+        - $ref: '#/components/parameters/ArtifactName'
+        - $ref: '#/components/parameters/ArtifactVersion'
+      responses:
+        '200':
+          description: Exact stored profile document.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Artifact'}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/ownership/challenges:
+    post:
+      tags: [governance]
+      operationId: createOwnershipChallenge
+      description: Creates a challenge record only; the included stores report verification_available=false.
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OwnershipChallengeRequest'}
+      responses:
+        '201':
+          description: Challenge record created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OwnershipChallengeResponse'}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/disputes:
+    post:
+      tags: [governance]
+      operationId: createDispute
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateDisputeRequest'}
+      responses:
+        '201':
+          description: Dispute opened for a published observation with current ownership.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Dispute'}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/disputes/{dispute_id}:
+    get:
+      tags: [governance]
+      operationId: getDispute
+      parameters:
+        - $ref: '#/components/parameters/DisputeID'
+      responses:
+        '200':
+          description: Append-only dispute journal view.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Dispute'}
+        default: {$ref: '#/components/responses/Error'}
+  /v1/badges/{owner}/{project}/{profile}.svg:
+    get:
+      tags: [catalog]
+      operationId: getCompatibilityBadge
+      parameters:
+        - $ref: '#/components/parameters/Owner'
+        - $ref: '#/components/parameters/Project'
+        - name: profile
+          in: path
+          required: true
+          schema: {type: string, minLength: 1, maxLength: 256}
+      responses:
+        '200':
+          description: Escaped SVG label for the latest matching stored observation.
+          content:
+            image/svg+xml:
+              schema: {type: string}
+        default: {$ref: '#/components/responses/Error'}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  headers:
+    ETag:
+      description: Strong digest-derived representation tag.
+      schema: {type: string}
+  parameters:
+    SessionID:
+      name: session_id
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/UUIDv7'}
+    DisputeID:
+      name: dispute_id
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/UUIDv7'}
+    Digest:
+      name: digest
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Digest'}
+    Owner:
+      name: owner
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/NamespacePart'}
+    Project:
+      name: project
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/NamespacePart'}
+    ArtifactName:
+      name: name
+      in: path
+      required: true
+      schema: {type: string, minLength: 1, maxLength: 256}
+    ArtifactVersion:
+      name: version
+      in: path
+      required: true
+      schema: {type: string, minLength: 1, maxLength: 128}
+    Cursor:
+      name: cursor
+      in: query
+      schema: {type: string, maxLength: 1024}
+    Limit:
+      name: limit
+      in: query
+      schema: {type: integer, minimum: 1, maximum: 100, default: 25}
+  responses:
+    Error:
+      description: Strict machine-readable error.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+  schemas:
+    Digest:
+      type: string
+      pattern: '^sha256:[0-9a-f]{64}$'
+    UUIDv7:
+      type: string
+      pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+    NamespacePart:
+      type: string
+      pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'
+      not: {enum: ['.', '..']}
+    Capabilities:
+      type: object
+      required: [durable_persistence, hosted_verification, ownership_verification]
+      properties:
+        durable_persistence: {type: boolean}
+        hosted_verification: {type: boolean, description: False for the included stores.}
+        ownership_verification: {type: boolean, description: False for the included stores.}
+      additionalProperties: false
+    PrepareRequest:
+      type: object
+      required: [observation_digest, upload_digest, size_bytes]
+      properties:
+        observation_digest: {$ref: '#/components/schemas/Digest'}
+        upload_digest: {$ref: '#/components/schemas/Digest'}
+        size_bytes: {type: integer, minimum: 1}
+      additionalProperties: false
+    PrepareResponse:
+      type: object
+      required: [session_id, observation_digest, upload_digest, upload_url, upload_challenge, challenge_header, max_bytes, expires_at, ephemeral, capabilities]
+      properties:
+        session_id: {$ref: '#/components/schemas/UUIDv7'}
+        observation_digest: {$ref: '#/components/schemas/Digest'}
+        upload_digest: {$ref: '#/components/schemas/Digest'}
+        upload_url: {type: string, pattern: '^/v1/uploads/'}
+        upload_challenge: {type: string, minLength: 16}
+        challenge_header: {const: X-Upload-Challenge}
+        max_bytes: {type: integer, minimum: 1}
+        expires_at: {type: string, format: date-time, pattern: 'Z$'}
+        ephemeral: {type: boolean}
+        capabilities: {$ref: '#/components/schemas/Capabilities'}
+      additionalProperties: false
+    CommitRequest:
+      type: object
+      required: [session_id, observation_digest, upload_digest]
+      properties:
+        session_id: {$ref: '#/components/schemas/UUIDv7'}
+        observation_digest: {$ref: '#/components/schemas/Digest'}
+        upload_digest: {$ref: '#/components/schemas/Digest'}
+      additionalProperties: false
+    CommitResponse:
+      type: object
+      required: [session_id, observation_digest, status, verification_status, ephemeral, capabilities]
+      properties:
+        session_id: {$ref: '#/components/schemas/UUIDv7'}
+        observation_digest: {$ref: '#/components/schemas/Digest'}
+        status: {enum: [committed, validating, quarantined, published]}
+        verification_status: {const: queued}
+        ephemeral: {type: boolean}
+        capabilities: {$ref: '#/components/schemas/Capabilities'}
+      additionalProperties: false
+    ObservationList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: './observation.schema.json'}
+        next_cursor: {type: string}
+      additionalProperties: false
+    SubjectObservationList:
+      type: object
+      required: [subject, observations]
+      properties:
+        subject: {type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}/[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'}
+        observations:
+          type: array
+          items: {$ref: './observation.schema.json'}
+        next_cursor: {type: string}
+      additionalProperties: false
+    Artifact:
+      type: object
+      required: [kind, name, version, digest, document]
+      properties:
+        kind: {enum: [pack, profile]}
+        name: {type: string}
+        version: {type: string}
+        digest: {$ref: '#/components/schemas/Digest'}
+        document: true
+      additionalProperties: false
+    OwnershipChallengeRequest:
+      type: object
+      required: [subject, method]
+      properties:
+        subject: {type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}/[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'}
+        method: {enum: [dns_txt, github_org, controlled_domain]}
+      additionalProperties: false
+    OwnershipChallengeResponse:
+      type: object
+      required: [challenge_id, subject, method, nonce, expires_at, status, verification_available]
+      properties:
+        challenge_id: {$ref: '#/components/schemas/UUIDv7'}
+        subject: {type: string}
+        method: {enum: [dns_txt, github_org, controlled_domain]}
+        nonce: {type: string, minLength: 1, maxLength: 512}
+        expires_at: {type: string, format: date-time, pattern: 'Z$'}
+        status: {enum: [pending, verified, expired]}
+        verification_available: {type: boolean, description: False for the included stores.}
+      additionalProperties: false
+    CreateDisputeRequest:
+      type: object
+      required: [observation_id, statement]
+      properties:
+        observation_id: {$ref: '#/components/schemas/Digest'}
+        statement: {type: string, minLength: 1, maxLength: 4096}
+      additionalProperties: false
+    DisputeEvent:
+      type: object
+      required: [sequence, kind, actor, at]
+      properties:
+        sequence: {type: integer, minimum: 1}
+        kind: {enum: [opened, owner_response, review_started, resolved, superseded]}
+        actor: {type: string, minLength: 1, maxLength: 512}
+        at: {type: string, format: date-time, pattern: 'Z$'}
+        statement: {type: string, maxLength: 4096}
+        replacement_id: {$ref: '#/components/schemas/Digest'}
+      additionalProperties: false
+    Dispute:
+      type: object
+      required: [dispute_id, observation_id, subject, status, events]
+      properties:
+        dispute_id: {$ref: '#/components/schemas/UUIDv7'}
+        observation_id: {$ref: '#/components/schemas/Digest'}
+        subject: {type: string}
+        status: {enum: [opened, under_review, resolved, superseded]}
+        events:
+          type: array
+          minItems: 1
+          items: {$ref: '#/components/schemas/DisputeEvent'}
+      additionalProperties: false
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: {type: string, minLength: 1}
+            message: {type: string, minLength: 1}
+          additionalProperties: false
+      additionalProperties: false
