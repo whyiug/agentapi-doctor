@@ -402,7 +402,7 @@ jobs:
           )
           python3 tools/release_assets.py --directory release-dist \
             --version "$RELEASE_VERSION" --format json
-          printf '### OCI digest subjects\n\n- `%s@%s`\n- `%s@%s`\n' \
+          printf '### OCI digest subjects\n\n- %s@%s\n- %s@%s\n' \
             "$DOCTOR_NAME" "$DOCTOR_DIGEST" "$REGISTRY_NAME" "$REGISTRY_DIGEST" \
             >> "$GITHUB_STEP_SUMMARY"
       - name: Sign and validate the final release checksum manifest
