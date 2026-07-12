@@ -3,6 +3,7 @@ package productrun
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -39,6 +40,10 @@ type ExecuteRequest struct {
 	NetworkMode transport.NetworkMode
 	Now         func() time.Time
 	NewID       IDSource
+	// BeforePersist completes task-owned cleanup that must succeed before a
+	// report can be published as a durable run. It runs after evidence and the
+	// report pass all redaction checks, and is intended for the in-process demo.
+	BeforePersist func() error
 }
 
 type Execution struct {
@@ -50,15 +55,28 @@ type Execution struct {
 
 // Execute validates and re-derives the offline plan before making any
 // request, then runs only the frozen exact-origin scenarios. It persists the
-// canonical report bundle after redaction and returns any cancellation error
-// only after preserving the partial run record.
+// canonical plan and redacted report together and returns any cancellation
+// error only after preserving the partial run record.
 func Execute(ctx context.Context, request ExecuteRequest) (Execution, error) {
 	if ctx == nil {
 		return Execution{}, errors.New("context is required")
 	}
+	frozenJSON, err := frozenPlanJSON(request.Planned)
+	if err != nil {
+		return Execution{}, fmt.Errorf("freeze run plan: %w", err)
+	}
+	var frozen PlannedRun
+	if err := json.Unmarshal(frozenJSON, &frozen); err != nil {
+		return Execution{}, fmt.Errorf("decode frozen run plan: %w", err)
+	}
+	request.Planned = frozen
 	derived, route, err := validatePlanned(request.Planned)
 	if err != nil {
 		return Execution{}, err
+	}
+	planJSON, err := PlanJSON(request.Planned)
+	if err != nil {
+		return Execution{}, fmt.Errorf("build persistence-safe plan snapshot: %w", err)
 	}
 	if err := ensureDataRoot(request.DataRoot); err != nil {
 		return Execution{}, err
@@ -85,6 +103,9 @@ func Execute(ctx context.Context, request ExecuteRequest) (Execution, error) {
 	redactorInstance, err := redaction.New(sensitiveNames, canaries)
 	if err != nil {
 		return Execution{}, fmt.Errorf("configure redaction: %w", err)
+	}
+	if err := redactorInstance.AssertNoCanary(planJSON); err != nil {
+		return Execution{}, errors.New("run plan failed the credential-canary persistence invariant")
 	}
 
 	scenarios := materializeScenarios(derived, request.Planned.Resolved.ContentDigest, headers)
@@ -146,9 +167,12 @@ func Execute(ctx context.Context, request ExecuteRequest) (Execution, error) {
 		}
 		return Execution{}, executionErr
 	}
-	bundle, err := buildReport(request.Planned, derived, result, classifiedRunner.snapshot())
+	bundle, err := buildReport(request.Planned, derived, result, classifiedRunner.snapshot(), executionErr)
 	if err != nil {
 		return Execution{}, fmt.Errorf("build report: %w", err)
+	}
+	if bundle.IntentPlanRef != request.Planned.Intent.ObjectRef || bundle.ResolvedPlanRef != request.Planned.Resolved.ObjectRef {
+		return Execution{}, errors.New("report plan references differ from the frozen persisted plan")
 	}
 	encoded, err := report.JSON(bundle)
 	if err != nil {
@@ -164,13 +188,18 @@ func Execute(ctx context.Context, request ExecuteRequest) (Execution, error) {
 	if !bytes.Equal(encoded, redactedReport) {
 		return Execution{}, errors.New("report contains material that was not redacted before serialization")
 	}
+	if request.BeforePersist != nil {
+		if err := request.BeforePersist(); err != nil {
+			return Execution{}, fmt.Errorf("complete task cleanup before run persistence: %w", err)
+		}
+	}
 	runs, err := runstore.Open(filepath.Join(request.DataRoot, "runs"), runstore.DefaultMaxRecordBytes)
 	if err != nil {
 		return Execution{}, fmt.Errorf("open run store: %w", err)
 	}
-	recordDigest, err := runs.Put(result.RunID, encoded)
+	recordDigest, err := runs.Put(result.RunID, runstore.Payload{Bundle: encoded, Plan: planJSON})
 	if err != nil {
-		return Execution{}, fmt.Errorf("persist report: %w", err)
+		return Execution{}, fmt.Errorf("persist run record: %w", err)
 	}
 	execution := Execution{ExecutorResult: result, Report: bundle, ReportJSON: encoded, RecordDigest: recordDigest}
 	if executionErr != nil {
@@ -259,7 +288,7 @@ func authHeaderName(target config.Target) (string, error) {
 	return name, nil
 }
 
-func buildReport(planned PlannedRun, derived artifacts, result executor.Result, classes map[string]executor.ErrorClass) (report.Bundle, error) {
+func buildReport(planned PlannedRun, derived artifacts, result executor.Result, classes map[string]executor.ErrorClass, executionErr error) (report.Bundle, error) {
 	candidateIDs := make([]string, 0, len(result.Cases))
 	applicableIDs := make([]string, 0, len(result.Cases))
 	executedIDs := make([]string, 0, len(result.Cases))
@@ -292,11 +321,17 @@ func buildReport(planned PlannedRun, derived artifacts, result executor.Result, 
 	if candidateDigest != planned.Intent.CandidateDenominatorDigest || applicableDigest != planned.Resolved.DenominatorDigest {
 		return report.Bundle{}, errors.New("executor denominator membership differs from the resolved plan")
 	}
-	outcome, dimension, exitCode := aggregate(result.Cases, classes)
+	outcome, dimension, exitCode := aggregate(result.Cases, classes, executionErr)
 	conditions := []report.Condition{{
 		Code:    "candidate_interpretations_pending_review",
-		Message: "This local raw-wire slice uses candidate Requirement Catalog interpretations pending independent review; it does not establish a support tier or vendor certification.",
+		Message: "This client-side raw-wire slice uses candidate Requirement Catalog interpretations pending independent review; it does not establish a support tier or vendor certification.",
 	}}
+	switch {
+	case errors.Is(executionErr, context.DeadlineExceeded):
+		conditions = append(conditions, report.Condition{Code: "run_deadline_exceeded", Message: "The bounded run deadline expired; remaining checks are inconclusive rather than target failures."})
+	case errors.Is(executionErr, context.Canceled):
+		conditions = append(conditions, report.Condition{Code: "run_cancelled", Message: "The caller cancelled the run; remaining checks are inconclusive."})
+	}
 	classIDs := make([]string, 0, len(classes))
 	for scenarioID := range classes {
 		classIDs = append(classIDs, scenarioID)
@@ -338,8 +373,8 @@ func buildReport(planned PlannedRun, derived artifacts, result executor.Result, 
 	return bundle, nil
 }
 
-func aggregate(cases []schema.CaseResult, classes map[string]executor.ErrorClass) (schema.ProfileOutcome, schema.DimensionOutcome, int) {
-	hasFailure, hasWarning, hasIncomplete, hasInfrastructure, hasPermission, interrupted := false, false, false, false, false, false
+func aggregate(cases []schema.CaseResult, classes map[string]executor.ErrorClass, executionErr error) (schema.ProfileOutcome, schema.DimensionOutcome, int) {
+	hasFailure, hasWarning, hasIncomplete, hasInfrastructure, hasPermission, hasCancelled := false, false, false, false, false, false
 	for _, class := range classes {
 		if class == executor.ErrorAuthentication || class == executor.ErrorPermission {
 			hasPermission = true
@@ -347,7 +382,7 @@ func aggregate(cases []schema.CaseResult, classes map[string]executor.ErrorClass
 	}
 	for _, item := range cases {
 		if item.ExecutionStatus == schema.ExecutionCancelled {
-			interrupted = true
+			hasCancelled = true
 		}
 		if item.ExecutionStatus == schema.ExecutionErrored {
 			hasInfrastructure = true
@@ -366,13 +401,13 @@ func aggregate(cases []schema.CaseResult, classes map[string]executor.ErrorClass
 		}
 	}
 	switch {
-	case interrupted:
+	case hasCancelled && errors.Is(executionErr, context.Canceled):
 		return schema.ProfileInconclusive, schema.DimensionInconclusive, 130
 	case hasPermission:
 		return schema.ProfileInconclusive, schema.DimensionInconclusive, 5
 	case hasInfrastructure:
 		return schema.ProfileInconclusive, schema.DimensionInconclusive, 3
-	case hasIncomplete:
+	case hasCancelled || hasIncomplete:
 		return schema.ProfileInconclusive, schema.DimensionInconclusive, 4
 	case hasFailure:
 		return schema.ProfileIncompatible, schema.DimensionFail, 1
@@ -399,6 +434,15 @@ func (runner *classifyingRunner) Estimate(decision schema.ScenarioDecision) (bud
 
 func (runner *classifyingRunner) Run(ctx context.Context, invocation executor.Invocation) (executor.Outcome, error) {
 	outcome, err := runner.inner.Run(ctx, invocation)
+	if errors.Is(ctx.Err(), context.Canceled) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		// Cancellation is a run lifecycle outcome, not a harness fault. Remove a
+		// prior retry classification as well so a cancelled case cannot acquire a
+		// misleading error condition in the persisted report.
+		runner.mu.Lock()
+		delete(runner.classes, invocation.Scenario.ScenarioID)
+		runner.mu.Unlock()
+		return outcome, err
+	}
 	var classified *executor.RunError
 	if errors.As(err, &classified) {
 		runner.mu.Lock()

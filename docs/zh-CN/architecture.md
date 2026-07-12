@@ -1,8 +1,7 @@
 # 架构与证据模型
 
 **英文来源：** [Compatibility Layers](../concepts/compatibility-layers.md)、
-[Evidence and Oracles](../concepts/evidence-and-oracles.md)（草案工作树，首次评审
-commit 尚未产生）。
+[Evidence and Oracles](../concepts/evidence-and-oracles.md)。
 
 AgentAPI Doctor 分开四个测试平面：endpoint black-box、controlled backend、
 真实 client fixture replay 和最终 agent E2E。它也分开四个故障域：

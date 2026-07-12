@@ -15,7 +15,7 @@ exitCodes:
   5: authentication_or_permission_error
   6: baseline_regression
   130: interrupted
-exitPrecedence: [2, 5, 3, 4, 6, 1, 0]
+exitPrecedence: [130, 2, 5, 3, 4, 6, 1, 0]
 commands:
   - path: [init]
     operands:
@@ -41,20 +41,39 @@ commands:
     flags:
       - {name: config, type: path, required: false}
   - path: [test]
+    modes:
+      - name: configured-target
+        syntax: doctor test <target>
+      - name: inline-target
+        syntax: doctor test --base-url <url> --protocol <id> --model <id>
+        mutuallyExclusiveWith: [target, config]
     operands:
-      - {name: target, required: true}
+      - {name: target, required: false}
     flags:
       - {name: config, type: path, required: false}
+      - {name: base-url, type: url, required: false, requiredWhen: inline-target}
+      - {name: protocol, type: string, required: false, requiredWhen: inline-target}
+      - {name: model, type: string, required: false, requiredWhen: inline-target}
+      - {name: auth-env, type: env-name, required: false, mode: inline-target}
+      - {name: auth-header, type: http-field-name, required: false, mode: inline-target, requires: [auth-env]}
+      - {name: allow-plain-http, type: boolean, default: false, mode: inline-target}
       - {name: data-root, type: path, required: false}
       - {name: plan-only, type: boolean, default: false}
       - {name: resolve, type: boolean, default: false, requires: [plan-only]}
       - {name: output, type: path, required: false}
+      - {name: format, type: string, enum: [json, terminal], default: mode-dependent}
+  - path: [demo]
+    flags:
+      - {name: data-root, type: path, required: false}
+      - {name: output, type: path, required: false}
+      - {name: format, type: string, enum: [terminal, json], default: terminal}
   - path: [run, inspect]
     operands:
       - {name: run-ref, required: true}
     flags:
       - {name: store, type: path, required: false}
       - {name: allow-latest, type: boolean, default: true}
+      - {name: include-plan, type: boolean, default: false}
   - path: [compare]
     operands:
       - {name: left-run-ref, required: true}

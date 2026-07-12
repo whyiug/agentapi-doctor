@@ -41,6 +41,7 @@ type exchangeFacts struct {
 	items           []schema.IRItem
 	parseOutcomes   []oracle.Outcome
 	responseObjects []map[string]any
+	outputLimitHit  string
 }
 
 type evaluation struct {
@@ -49,6 +50,16 @@ type evaluation struct {
 }
 
 func evaluate(scenario Scenario, status int, headers http.Header, body []byte, refs []schema.ObjectRef) (evaluation, error) {
+	if field, unsupported := unsupportedOutputLimitField(scenario, status, body); unsupported {
+		return evaluation{Outcome: observedInconclusive(
+			refs,
+			schema.ReasonUnsupportedCapability,
+			"provider_output_limit_unsupported",
+			map[string]any{"request_field": field, "prerequisite": "provider accepts the requested output limit"},
+			map[string]any{"http_status": status, "request_field": field, "support": "unsupported"},
+		)}, nil
+	}
+
 	statusOutcome := observedPass(refs)
 	if status != scenario.ExpectedStatus {
 		statusOutcome = observedFail(refs, "unexpected_http_status", scenario.ExpectedStatus, status)
@@ -234,6 +245,15 @@ func checkScenario(scenario Scenario, facts exchangeFacts, refs []schema.ObjectR
 			return observedFail(refs, "streaming_tool_call_missing", "at least one streamed tool call", "none")
 		}
 	case CheckFinishReason:
+		if field, requested := requestedOutputLimitField(scenario); requested && facts.outputLimitHit != "" {
+			return observedInconclusive(
+				refs,
+				schema.ReasonInsufficientSamples,
+				"provider_output_limit_reached",
+				map[string]any{"request_field": field, "prerequisite": "response completes before the requested output limit"},
+				map[string]any{"request_field": field, "terminal_signal": facts.outputLimitHit},
+			)
+		}
 		if len(facts.finishReasons) == 0 {
 			return observedFail(refs, "finish_reason_missing", scenario.Assertion.AllowedValues, "none")
 		}
@@ -376,6 +396,13 @@ func observedFail(refs []schema.ObjectRef, code string, expected, observed any) 
 	}
 }
 
+func observedInconclusive(refs []schema.ObjectRef, reason schema.ReasonCode, code string, expected, observed any) oracle.Outcome {
+	return oracle.Outcome{
+		Verdict: schema.VerdictInconclusive, ReasonCode: reason, Code: code,
+		Expected: expected, Observed: observed, EvidenceRefs: slices.Clone(refs),
+	}
+}
+
 func inspectNonStream(protocol Protocol, value map[string]any, facts *exchangeFacts) {
 	switch protocol {
 	case ProtocolOpenAIChat:
@@ -388,6 +415,9 @@ func inspectNonStream(protocol Protocol, value map[string]any, facts *exchangeFa
 		}
 		if reason, ok := stringValue(choice["finish_reason"]); ok {
 			facts.finishReasons = append(facts.finishReasons, reason)
+			if reason == "length" {
+				facts.outputLimitHit = "finish_reason=length"
+			}
 		}
 		readUsage(objectValue(value["usage"]), "prompt_tokens", "completion_tokens", "total_tokens", &facts.usage)
 	case ProtocolOpenAIResponses:
@@ -400,6 +430,9 @@ func inspectNonStream(protocol Protocol, value map[string]any, facts *exchangeFa
 		}
 		if reason, ok := stringValue(value["status"]); ok {
 			facts.finishReasons = append(facts.finishReasons, reason)
+		}
+		if responsesOutputLimitReached(value) {
+			facts.outputLimitHit = "status=incomplete,incomplete_details.reason=max_output_tokens"
 		}
 		readUsage(objectValue(value["usage"]), "input_tokens", "output_tokens", "total_tokens", &facts.usage)
 	case ProtocolAnthropic:
@@ -438,6 +471,137 @@ func decodeObject(raw []byte) (map[string]any, error) {
 		return nil, err
 	}
 	return value, nil
+}
+
+func requestedOutputLimitField(scenario Scenario) (string, bool) {
+	field := ""
+	switch scenario.Protocol {
+	case ProtocolOpenAIChat:
+		field = "max_completion_tokens"
+	case ProtocolOpenAIResponses:
+		field = "max_output_tokens"
+	default:
+		return "", false
+	}
+	request, err := decodeObject(scenario.Body)
+	if err != nil {
+		return "", false
+	}
+	limit, ok := integerValue(request[field])
+	return field, ok && limit > 0
+}
+
+func unsupportedOutputLimitField(scenario Scenario, status int, body []byte) (string, bool) {
+	field, requested := requestedOutputLimitField(scenario)
+	if !requested || (status != http.StatusBadRequest && status != http.StatusUnprocessableEntity) || !json.Valid(body) {
+		return "", false
+	}
+	response, err := decodeObject(body)
+	if err != nil {
+		return "", false
+	}
+	return field, containsUnsupportedFieldError(response, field)
+}
+
+var unsupportedFieldMarkers = []string{
+	"unsupported parameter", "unsupported_parameter", "not supported",
+	"does not support", "unknown parameter", "unknown_parameter", "unknown argument",
+	"unrecognized parameter", "unrecognized argument", "unrecognized request argument",
+	"unknown field", "unrecognized field",
+	"unexpected field", "unexpected argument", "extra_forbidden",
+	"extra inputs are not permitted", "additional properties are not allowed",
+}
+
+func containsUnsupportedFieldError(value any, field string) bool {
+	switch typed := value.(type) {
+	case string:
+		text := strings.ToLower(typed)
+		return strings.Contains(text, field) && containsUnsupportedFieldMarker(text)
+	case []any:
+		for _, item := range typed {
+			if containsUnsupportedFieldError(item, field) {
+				return true
+			}
+		}
+	case map[string]any:
+		associated := false
+		for key, item := range typed {
+			key = strings.ToLower(key)
+			switch key {
+			case field:
+				associated = true
+			case "param", "parameter", "field", "argument", "loc", "path":
+				associated = associated || containsExactString(item, field)
+			}
+			if text, ok := item.(string); ok {
+				text = strings.ToLower(text)
+				if strings.Contains(text, field) && containsUnsupportedFieldMarker(text) {
+					return true
+				}
+			}
+		}
+		if associated && valueContainsUnsupportedFieldMarker(typed) {
+			return true
+		}
+		for _, item := range typed {
+			if containsUnsupportedFieldError(item, field) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func containsUnsupportedFieldMarker(text string) bool {
+	for _, marker := range unsupportedFieldMarkers {
+		if strings.Contains(text, marker) {
+			return true
+		}
+	}
+	return false
+}
+
+func valueContainsUnsupportedFieldMarker(value any) bool {
+	switch typed := value.(type) {
+	case string:
+		return containsUnsupportedFieldMarker(strings.ToLower(typed))
+	case []any:
+		for _, item := range typed {
+			if valueContainsUnsupportedFieldMarker(item) {
+				return true
+			}
+		}
+	case map[string]any:
+		for key, item := range typed {
+			if containsUnsupportedFieldMarker(strings.ToLower(key)) || valueContainsUnsupportedFieldMarker(item) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func containsExactString(value any, expected string) bool {
+	switch typed := value.(type) {
+	case string:
+		return strings.EqualFold(typed, expected)
+	case []any:
+		for _, item := range typed {
+			if containsExactString(item, expected) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func responsesOutputLimitReached(response map[string]any) bool {
+	status, _ := stringValue(response["status"])
+	if status != "incomplete" {
+		return false
+	}
+	reason, _ := stringValue(objectValue(response["incomplete_details"])["reason"])
+	return reason == "max_output_tokens"
 }
 
 func objectValue(value any) map[string]any {
@@ -613,6 +777,14 @@ func (decoder *streamDecoder) consumeResponses(value map[string]any, typeName st
 		decoder.append(statemachine.Event{Type: statemachine.EventResponseFailed})
 	case "response.incomplete":
 		facts.terminalCount++
+		response := objectValue(value["response"])
+		if reason, ok := stringValue(response["status"]); ok {
+			facts.finishReasons = append(facts.finishReasons, reason)
+		}
+		if responsesOutputLimitReached(response) {
+			facts.outputLimitHit = "status=incomplete,incomplete_details.reason=max_output_tokens"
+		}
+		readUsage(objectValue(response["usage"]), "input_tokens", "output_tokens", "total_tokens", &facts.usage)
 		decoder.append(statemachine.Event{Type: statemachine.EventResponseIncomplete})
 	}
 }
@@ -648,6 +820,9 @@ func (decoder *streamDecoder) consumeChat(value map[string]any, facts *exchangeF
 	}
 	if reason, ok := stringValue(choice["finish_reason"]); ok {
 		facts.finishReasons = append(facts.finishReasons, reason)
+		if reason == "length" {
+			facts.outputLimitHit = "finish_reason=length"
+		}
 		for _, index := range sortedToolIndexes(decoder.chatTools) {
 			tool := decoder.chatTools[index]
 			decoder.append(statemachine.Event{Type: statemachine.EventArgumentsDone, ItemID: tool.itemID, CallID: tool.callID, Arguments: tool.arguments})

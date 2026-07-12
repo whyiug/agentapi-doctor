@@ -132,10 +132,10 @@ a generic `tar -x` command is deliberately not recommended here.
 ## GitHub Actions usage after publication
 
 The repository-callable candidate is located at `.github/workflows/doctor.yml`;
-`integrations/reusable-workflow/workflow.yml` is its byte-identical reviewed source
-template. This placement makes the workflow structurally callable by GitHub, but it
-does not make the candidate published or usable without the signed release artifacts
-listed above.
+`integrations/reusable-workflow/workflow.yml` is its byte-identical source template.
+This placement makes the workflow structurally callable by GitHub, but it does not
+establish independent review or make the candidate published or usable without the
+signed release artifacts listed above.
 
 Call both the reusable workflow and its `action_commit` using full 40-character
 commit SHAs. Supply an exact release version. Branch names, tags, moving major

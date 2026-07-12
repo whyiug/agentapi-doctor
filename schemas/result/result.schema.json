@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:agentapi-doctor:schema:result:v1alpha1",
+  "$id": "urn:agentapi-doctor:schema:result:v1alpha2",
   "title": "AgentAPI Doctor provisional result contracts",
   "description": "Union of the public result records. Harness/driver errors remain distinct from target verdicts.",
   "oneOf": [
@@ -12,7 +12,7 @@
   "$defs": {
     "reasonCode": {
       "enum": [
-        "unsupported_capability", "transient_error", "spec_ambiguity", "budget_exhausted", "cost_limit",
+        "unsupported_capability", "authentication_failed", "permission_denied", "transient_error", "spec_ambiguity", "budget_exhausted", "cost_limit",
         "unsafe_operation", "harness_error", "driver_error", "cancelled_by_user", "flaky_detected",
         "insufficient_samples", "not_observed"
       ]
@@ -126,6 +126,7 @@
         "execution_status": {"$ref": "#/$defs/executionStatus"},
         "verdict": {"$ref": "#/$defs/verdict"},
         "reason_code": {"$ref": "#/$defs/reasonCode"},
+        "evidence_refs": {"type": "array", "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}},
         "assertion_results": {"type": "array", "items": {"$ref": "#/$defs/assertionResult"}},
         "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
         "candidate_member": {"type": "boolean"},
@@ -145,7 +146,7 @@
           },
           "else": {
             "required": ["reason_code"],
-            "not": {"anyOf": [{"required": ["attempt_ids"]}, {"required": ["verdict"]}]}
+            "not": {"anyOf": [{"required": ["attempt_ids"]}, {"required": ["verdict"]}, {"required": ["evidence_refs"]}]}
           }
         }
       ],

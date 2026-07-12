@@ -113,7 +113,7 @@ func (runner *scriptedRunner) Finalize(_ context.Context, plan schema.FinalizerP
 }
 
 type resolver struct {
-	runner  *scriptedRunner
+	runner  Runner
 	missing bool
 }
 
@@ -125,6 +125,25 @@ func (value resolver) Resolve(schema.ArtifactPin) (Runner, error) {
 }
 func (value resolver) ResolveFinalizer(schema.FinalizerPlan) (Runner, error) {
 	return value.runner, nil
+}
+
+type contextWaitingRunner struct {
+	started chan struct{}
+}
+
+func (runner *contextWaitingRunner) Estimate(schema.ScenarioDecision) (budget.Usage, error) {
+	return budget.Usage{Requests: 1, RequestBytes: 10, ResponseBytes: 100, ArtifactBytes: 100}, nil
+}
+
+func (runner *contextWaitingRunner) Run(ctx context.Context, _ Invocation) (Outcome, error) {
+	close(runner.started)
+	<-ctx.Done()
+	usage := budget.Usage{Requests: 1, RequestBytes: 10}
+	return Outcome{}, &RunError{Class: ErrorHarness, Err: ctx.Err(), Usage: usage, UsageKnown: true}
+}
+
+func (*contextWaitingRunner) Finalize(context.Context, schema.FinalizerPlan) (budget.Usage, error) {
+	return budget.Usage{}, nil
 }
 
 func passOutcome() Outcome {
@@ -165,6 +184,39 @@ func TestTransientRetriesButDriverErrorNeverBecomesTargetFail(t *testing.T) {
 	}
 	if broken.Cases[0].Verdict != nil || broken.Cases[0].ExecutionStatus != schema.ExecutionErrored || len(broken.Cases[0].Findings) != 0 {
 		t.Fatalf("driver error became target result: %#v", broken.Cases[0])
+	}
+}
+
+func TestErrorEvidenceSurvivesRetryAndNonVerdictCase(t *testing.T) {
+	decision := schema.ScenarioDecision{ScenarioID: "evidence.case", Disposition: schema.DispositionExecute, Driver: driver()}
+	plan := testPlan(t, []schema.ScenarioDecision{decision}, nil)
+	firstRef := schema.ObjectRef{Kind: "Evidence", ContentDigest: digest("first-error-evidence")}
+	final := passOutcome()
+	finalRef := schema.ObjectRef{Kind: "Evidence", ContentDigest: digest("final-evidence")}
+	final.EvidenceRefs = []schema.ObjectRef{finalRef}
+	runner := &scriptedRunner{
+		outcomes: []Outcome{{}, final},
+		errors:   []error{&RunError{Class: ErrorTransient, Err: errors.New("503"), EvidenceRefs: []schema.ObjectRef{firstRef}}, nil},
+	}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(250), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Attempts) != 2 || fmt.Sprint(result.Attempts[0].EvidenceRefs) != fmt.Sprint([]schema.ObjectRef{firstRef}) || fmt.Sprint(result.Attempts[1].EvidenceRefs) != fmt.Sprint([]schema.ObjectRef{finalRef}) {
+		t.Fatalf("attempt evidence was lost or crossed attempts: %#v", result.Attempts)
+	}
+	if fmt.Sprint(result.Cases[0].EvidenceRefs) != fmt.Sprint([]schema.ObjectRef{firstRef, finalRef}) {
+		t.Fatalf("case did not retain all attempt evidence: %#v", result.Cases[0])
+	}
+
+	authPlan := testPlan(t, []schema.ScenarioDecision{decision}, nil)
+	authRunner := &scriptedRunner{errors: []error{&RunError{Class: ErrorAuthentication, Err: errors.New("401"), EvidenceRefs: []schema.ObjectRef{firstRef}}}}
+	authResult, err := Execute(context.Background(), authPlan, authPlan.ContentDigest, Config{Runners: resolver{runner: authRunner}, NewID: idSource(280), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(authResult.Cases) != 1 || authResult.Cases[0].Verdict != nil || fmt.Sprint(authResult.Cases[0].EvidenceRefs) != fmt.Sprint([]schema.ObjectRef{firstRef}) {
+		t.Fatalf("authentication evidence was not preserved: %#v", authResult.Cases)
 	}
 }
 
@@ -230,5 +282,52 @@ func TestCancellationStillRunsBoundedFinalizers(t *testing.T) {
 	}
 	if result.Cases[0].ExecutionStatus != schema.ExecutionCancelled || result.Cases[0].Verdict != nil {
 		t.Fatalf("case=%#v", result.Cases[0])
+	}
+}
+
+func TestActiveFinalScenarioPropagatesCancellationAndDeadline(t *testing.T) {
+	tests := []struct {
+		name       string
+		newContext func(<-chan struct{}) (context.Context, context.CancelFunc)
+		wantError  error
+		wantReason schema.ReasonCode
+	}{
+		{
+			name: "caller cancellation",
+			newContext: func(started <-chan struct{}) (context.Context, context.CancelFunc) {
+				ctx, cancel := context.WithCancel(context.Background())
+				go func() {
+					<-started
+					cancel()
+				}()
+				return ctx, cancel
+			},
+			wantError: context.Canceled, wantReason: schema.ReasonCancelledByUser,
+		},
+		{
+			name: "run deadline",
+			newContext: func(<-chan struct{}) (context.Context, context.CancelFunc) {
+				return context.WithTimeout(context.Background(), 20*time.Millisecond)
+			},
+			wantError: context.DeadlineExceeded, wantReason: schema.ReasonBudgetExhausted,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			decision := schema.ScenarioDecision{ScenarioID: "final", Disposition: schema.DispositionExecute, Driver: driver()}
+			plan := testPlan(t, []schema.ScenarioDecision{decision}, nil)
+			runner := &contextWaitingRunner{started: make(chan struct{})}
+			ctx, cancel := test.newContext(runner.started)
+			defer cancel()
+			result, err := Execute(ctx, plan, plan.ContentDigest, Config{
+				Runners: resolver{runner: runner}, NewID: idSource(900), Now: func() time.Time { return time.Unix(2, 0) },
+			})
+			if !errors.Is(err, test.wantError) {
+				t.Fatalf("terminal error = %v, want %v", err, test.wantError)
+			}
+			if len(result.Cases) != 1 || result.Cases[0].ExecutionStatus != schema.ExecutionCancelled || result.Cases[0].ReasonCode != test.wantReason || result.Cases[0].Verdict != nil {
+				t.Fatalf("final cancelled case = %#v", result.Cases)
+			}
+		})
 	}
 }

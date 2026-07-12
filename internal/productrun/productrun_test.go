@@ -15,8 +15,10 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/whyiug/agentapi-doctor/internal/budget"
+	"github.com/whyiug/agentapi-doctor/internal/cas"
 	"github.com/whyiug/agentapi-doctor/internal/config"
 	"github.com/whyiug/agentapi-doctor/internal/executor"
 	"github.com/whyiug/agentapi-doctor/internal/rawdriver"
@@ -140,7 +142,7 @@ func TestBuildIsOfflineAndResolvedDigestBindsExactScenarioMaterial(t *testing.T)
 	}
 }
 
-func TestRouteTargetSafelyHandlesRootAndV1Prefixes(t *testing.T) {
+func TestRouteTargetSafelyHandlesRootAndCompleteAPIPrefixes(t *testing.T) {
 	tests := []struct {
 		base, protocol, want string
 	}{
@@ -148,8 +150,9 @@ func TestRouteTargetSafelyHandlesRootAndV1Prefixes(t *testing.T) {
 		{"http://127.0.0.1:8090/", "openai-chat", "/v1/chat/completions"},
 		{"http://127.0.0.1:8090/v1", "openai-responses", "/v1/responses"},
 		{"http://127.0.0.1:8090/v1/", "anthropic-messages", "/v1/messages"},
-		{"https://example.test/gateway", "openai-chat", "/gateway/v1/chat/completions"},
+		{"https://example.test/gateway", "openai-chat", "/gateway/chat/completions"},
 		{"https://example.test/gateway/v1", "openai-responses", "/gateway/v1/responses"},
+		{"https://example.test/api/v3", "openai-chat", "/api/v3/chat/completions"},
 	}
 	for _, test := range tests {
 		route, err := routeTarget(config.Target{BaseURL: test.base, Protocol: test.protocol, Model: "model"})
@@ -174,6 +177,35 @@ func TestRouteTargetSafelyHandlesRootAndV1Prefixes(t *testing.T) {
 	}})
 	if err == nil || !strings.Contains(err.Error(), "protocol-controlled") {
 		t.Fatalf("conflicting auth header was accepted: %v", err)
+	}
+}
+
+func TestRequestBodiesBoundProviderOutput(t *testing.T) {
+	if got := DefaultBudget(4).Hard.MaxDuration.Duration(); got != time.Minute {
+		t.Fatalf("default remote-capable run deadline = %s, want 1m", got)
+	}
+	tests := []struct {
+		protocol string
+		field    string
+	}{
+		{protocol: "openai-chat", field: "max_completion_tokens"},
+		{protocol: "openai-responses", field: "max_output_tokens"},
+		{protocol: "anthropic-messages", field: "max_tokens"},
+	}
+	for _, test := range tests {
+		t.Run(test.protocol, func(t *testing.T) {
+			body, err := requestBody(test.protocol, "fixture-model", false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var decoded map[string]any
+			if err := json.Unmarshal(body, &decoded); err != nil {
+				t.Fatal(err)
+			}
+			if got, ok := decoded[test.field].(float64); !ok || got != outputTokenLimit {
+				t.Fatalf("%s = %#v, want %d", test.field, decoded[test.field], outputTokenLimit)
+			}
+		})
 	}
 }
 
@@ -232,7 +264,111 @@ func TestExecuteReferencePassesAllThreeProtocolsAndPersistsValidBundle(t *testin
 			if err != nil || decoded.RunID != execution.ExecutorResult.RunID || record.BundleDigest != schema.NewDigest(execution.ReportJSON) {
 				t.Fatalf("persisted report = %#v, %v", decoded, err)
 			}
+			wantPlan, err := PlanJSON(planned)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var persistedPlan PersistedPlan
+			if err := json.Unmarshal(record.Plan, &persistedPlan); err != nil {
+				t.Fatal(err)
+			}
+			if err := persistedPlan.Validate(); err != nil {
+				t.Fatalf("persisted plan cannot be independently revalidated: %v", err)
+			}
+			if !bytes.Equal(record.Plan, wantPlan) || record.PlanDigest != schema.NewDigest(wantPlan) {
+				t.Fatalf("persisted plan bytes/digest differ from executed plan")
+			}
+			if decoded.IntentPlanRef != persistedPlan.Intent.ObjectRef || decoded.ResolvedPlanRef != persistedPlan.Resolved.ObjectRef {
+				t.Fatalf("report refs cannot be dereferenced from persisted plan: report=%#v plan=%#v", decoded, persistedPlan)
+			}
+			if persistedPlan.Target.BaseURL != baseURL {
+				t.Fatalf("persisted plan base URL = %q, want %q", persistedPlan.Target.BaseURL, baseURL)
+			}
 		})
+	}
+}
+
+func TestExecuteClassifiesRequestedOutputLimitTerminationAsInconclusive(t *testing.T) {
+	reference, err := referenceserver.New(referenceserver.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(&limitedChatHandler{next: reference})
+	defer server.Close()
+	planned := mustPlan(t, config.Target{BaseURL: server.URL, Protocol: "openai-chat", Model: "fixture-model"}, schema.BudgetPolicy{})
+	execution, err := Execute(context.Background(), ExecuteRequest{Planned: planned, DataRoot: filepath.Join(t.TempDir(), "data")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if execution.Report.Outcome != schema.ProfileInconclusive || execution.Report.PrimaryExitCode != 4 || execution.Report.Dimensions["protocol"] != schema.DimensionInconclusive {
+		t.Fatalf("output-limit profile classification = %#v", execution.Report)
+	}
+	for _, item := range execution.Report.Cases {
+		if len(item.Findings) != 0 {
+			t.Fatalf("output-limit case gained target finding: %#v", item)
+		}
+		if item.ScenarioID == "openai-chat-002-terminal-status" {
+			if item.Verdict == nil || *item.Verdict != schema.VerdictInconclusive || item.ReasonCode != schema.ReasonInsufficientSamples {
+				t.Fatalf("terminal-status prerequisite = %#v", item)
+			}
+			continue
+		}
+		if item.Verdict == nil || *item.Verdict != schema.VerdictPass {
+			t.Fatalf("unrelated assertion was not independently evaluated: %#v", item)
+		}
+	}
+}
+
+func TestExecutePersistsPlanFrozenBeforeNetwork(t *testing.T) {
+	reference, err := referenceserver.New(referenceserver.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var (
+		planned PlannedRun
+		once    sync.Once
+	)
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		once.Do(func() { planned.Target.Metadata["state"] = "mutated-after-freeze" })
+		reference.ServeHTTP(writer, request)
+	}))
+	defer server.Close()
+	planned = mustPlan(t, config.Target{
+		BaseURL: server.URL + "/v1", Protocol: "openai-responses", Model: "fixture-model",
+		Metadata: map[string]string{"state": "frozen-before-network"},
+	}, schema.BudgetPolicy{})
+	wantPlan, err := PlanJSON(planned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dataRoot := filepath.Join(t.TempDir(), "data")
+	execution, err := Execute(context.Background(), ExecuteRequest{Planned: planned, DataRoot: dataRoot})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if planned.Target.Metadata["state"] != "mutated-after-freeze" {
+		t.Fatal("fixture did not mutate the caller-owned plan after execution began")
+	}
+	store, err := runstore.Open(filepath.Join(dataRoot, "runs"), runstore.DefaultMaxRecordBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, err := store.Get(string(execution.Report.RunID), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var persisted PersistedPlan
+	if err := json.Unmarshal(record.Plan, &persisted); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(record.Plan, wantPlan) {
+		t.Fatal("persisted plan was not the pre-network snapshot")
+	}
+	if err := persisted.Validate(); err != nil {
+		t.Fatalf("frozen persisted plan is not independently valid: %v", err)
+	}
+	if bytes.Contains(record.Plan, []byte("frozen-before-network")) || bytes.Contains(record.Plan, []byte("mutated-after-freeze")) {
+		t.Fatal("free-form target metadata reached plan persistence")
 	}
 }
 
@@ -325,6 +461,175 @@ func TestExecuteCancellationPersistsPartialReportWithoutDialing(t *testing.T) {
 	}
 }
 
+func TestExecuteCancellationDuringFinalScenarioIsInterruptedWithoutHarnessCondition(t *testing.T) {
+	reference, err := referenceserver.New(referenceserver.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	releaseFinalHandler := make(chan struct{})
+	var requestMu sync.Mutex
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		requestMu.Lock()
+		requestCount++
+		current := requestCount
+		requestMu.Unlock()
+		if current == 4 {
+			cancel()
+			<-releaseFinalHandler
+			return
+		}
+		reference.ServeHTTP(writer, request)
+	}))
+	defer func() {
+		close(releaseFinalHandler)
+		server.Close()
+	}()
+
+	planned := mustPlan(t, config.Target{BaseURL: server.URL, Protocol: "openai-chat", Model: "fixture-model"}, schema.BudgetPolicy{})
+	execution, err := Execute(ctx, ExecuteRequest{Planned: planned, DataRoot: filepath.Join(t.TempDir(), "data")})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("cancellation error = %v", err)
+	}
+	if execution.Report.PrimaryExitCode != 130 || execution.Report.Outcome != schema.ProfileInconclusive {
+		t.Fatalf("final-scenario cancellation report = %#v", execution.Report)
+	}
+	if len(execution.Report.Cases) != 4 {
+		t.Fatalf("cases = %#v", execution.Report.Cases)
+	}
+	last := execution.Report.Cases[3]
+	if last.ExecutionStatus != schema.ExecutionCancelled || last.ReasonCode != schema.ReasonCancelledByUser || last.Verdict != nil {
+		t.Fatalf("last case = %#v", last)
+	}
+	sawCancelled := false
+	for _, condition := range execution.Report.Conditions {
+		if condition.Code == "run_cancelled" {
+			sawCancelled = true
+		}
+		if condition.Code == "harness_error" {
+			t.Fatalf("caller cancellation was reported as a harness fault: %#v", execution.Report.Conditions)
+		}
+	}
+	if !sawCancelled {
+		t.Fatalf("cancellation report omitted its lifecycle condition: %#v", execution.Report.Conditions)
+	}
+}
+
+func TestExecuteDeadlinePersistsInconclusivePartialReport(t *testing.T) {
+	releaseHandler := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		select {
+		case <-request.Context().Done():
+		case <-releaseHandler:
+		}
+	}))
+	defer func() {
+		close(releaseHandler)
+		server.Close()
+	}()
+	budget := DefaultBudget(4)
+	budget.Hard.MaxDuration = schema.NewDuration(50 * time.Millisecond)
+	planned := mustPlan(t, config.Target{
+		BaseURL: server.URL + "/v1", Protocol: "openai-responses", Model: "fixture-model",
+	}, budget)
+	dataRoot := filepath.Join(t.TempDir(), "data")
+	execution, err := Execute(context.Background(), ExecuteRequest{Planned: planned, DataRoot: dataRoot})
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("deadline error = %v", err)
+	}
+	if execution.Report.PrimaryExitCode != 4 || execution.Report.Outcome != schema.ProfileInconclusive || execution.RecordDigest.Validate() != nil {
+		t.Fatalf("partial deadline report = %#v", execution.Report)
+	}
+	found := false
+	for _, condition := range execution.Report.Conditions {
+		if condition.Code == "run_deadline_exceeded" {
+			found = true
+		}
+		if condition.Code == "harness_error" {
+			t.Fatalf("run deadline was reported as a harness fault: %#v", execution.Report.Conditions)
+		}
+	}
+	if !found {
+		t.Fatalf("deadline report omitted its condition: %#v", execution.Report.Conditions)
+	}
+	store, openErr := runstore.Open(filepath.Join(dataRoot, "runs"), runstore.DefaultMaxRecordBytes)
+	if openErr != nil {
+		t.Fatal(openErr)
+	}
+	if _, getErr := store.Get(string(execution.Report.RunID), false); getErr != nil {
+		t.Fatalf("partial deadline report was not persisted: %v", getErr)
+	}
+}
+
+func TestAggregateUsesDocumentedExitPrecedence(t *testing.T) {
+	completed := func(id string, verdict schema.Verdict) schema.CaseResult {
+		return schema.CaseResult{ScenarioID: id, PlanDisposition: schema.DispositionExecute, ExecutionStatus: schema.ExecutionCompleted, Verdict: verdictPointer(verdict)}
+	}
+	cancelled := func(id string) schema.CaseResult {
+		return schema.CaseResult{ScenarioID: id, PlanDisposition: schema.DispositionExecute, ExecutionStatus: schema.ExecutionCancelled}
+	}
+	errored := func(id string) schema.CaseResult {
+		return schema.CaseResult{ScenarioID: id, PlanDisposition: schema.DispositionExecute, ExecutionStatus: schema.ExecutionErrored}
+	}
+	tests := []struct {
+		name          string
+		cases         []schema.CaseResult
+		classes       map[string]executor.ErrorClass
+		executionErr  error
+		wantOutcome   schema.ProfileOutcome
+		wantDimension schema.DimensionOutcome
+		wantExit      int
+	}{
+		{
+			name:    "caller cancellation outranks permission infrastructure and failure",
+			cases:   []schema.CaseResult{errored("auth"), cancelled("cancelled"), completed("failure", schema.VerdictFail)},
+			classes: map[string]executor.ErrorClass{"auth": executor.ErrorAuthentication}, executionErr: context.Canceled,
+			wantOutcome: schema.ProfileInconclusive, wantDimension: schema.DimensionInconclusive, wantExit: 130,
+		},
+		{
+			name:    "permission outranks deadline cancellation",
+			cases:   []schema.CaseResult{errored("auth"), cancelled("deadline")},
+			classes: map[string]executor.ErrorClass{"auth": executor.ErrorAuthentication}, executionErr: context.DeadlineExceeded,
+			wantOutcome: schema.ProfileInconclusive, wantDimension: schema.DimensionInconclusive, wantExit: 5,
+		},
+		{
+			name:  "infrastructure outranks deadline cancellation",
+			cases: []schema.CaseResult{errored("driver"), cancelled("deadline")}, executionErr: context.DeadlineExceeded,
+			wantOutcome: schema.ProfileInconclusive, wantDimension: schema.DimensionInconclusive, wantExit: 3,
+		},
+		{
+			name:  "deadline cancellation outranks target failure",
+			cases: []schema.CaseResult{completed("failure", schema.VerdictFail), cancelled("deadline")}, executionErr: context.DeadlineExceeded,
+			wantOutcome: schema.ProfileInconclusive, wantDimension: schema.DimensionInconclusive, wantExit: 4,
+		},
+		{
+			name:        "target failure outranks warning",
+			cases:       []schema.CaseResult{completed("warning", schema.VerdictWarn), completed("failure", schema.VerdictFail)},
+			wantOutcome: schema.ProfileIncompatible, wantDimension: schema.DimensionFail, wantExit: 1,
+		},
+		{
+			name:        "warning remains successful degraded outcome",
+			cases:       []schema.CaseResult{completed("warning", schema.VerdictWarn)},
+			wantOutcome: schema.ProfileDegraded, wantDimension: schema.DimensionDegraded, wantExit: 0,
+		},
+		{
+			name:        "all pass",
+			cases:       []schema.CaseResult{completed("pass", schema.VerdictPass)},
+			wantOutcome: schema.ProfileCompatible, wantDimension: schema.DimensionPass, wantExit: 0,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			outcome, dimension, exitCode := aggregate(test.cases, test.classes, test.executionErr)
+			if outcome != test.wantOutcome || dimension != test.wantDimension || exitCode != test.wantExit {
+				t.Fatalf("aggregate = %s/%s/%d, want %s/%s/%d", outcome, dimension, exitCode, test.wantOutcome, test.wantDimension, test.wantExit)
+			}
+		})
+	}
+}
+
 func TestExecuteKeepsSecretInMemoryAndRedactsBeforeAllPersistence(t *testing.T) {
 	reference, err := referenceserver.New(referenceserver.Config{})
 	if err != nil {
@@ -344,6 +649,9 @@ func TestExecuteKeepsSecretInMemoryAndRedactsBeforeAllPersistence(t *testing.T) 
 	credential := []byte(referenceserver.SyntheticBearerToken)
 	if bytes.Contains(plannedJSON, credential) {
 		t.Fatal("plan-only result contains a resolved credential")
+	}
+	if bytes.Contains(plannedJSON, []byte(target.Auth.Token.Ref)) {
+		t.Fatal("plan-only result contains a secret reference")
 	}
 	resolver := &staticSecretResolver{value: credential}
 	dataRoot := filepath.Join(t.TempDir(), "data")
@@ -373,6 +681,65 @@ func TestExecuteKeepsSecretInMemoryAndRedactsBeforeAllPersistence(t *testing.T) 
 	}
 	if !bytes.Contains(persisted.Bytes(), []byte("[REDACTED]")) {
 		t.Fatal("no redaction marker was persisted for the authenticated request")
+	}
+	store, err := runstore.Open(filepath.Join(dataRoot, "runs"), runstore.DefaultMaxRecordBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, err := store.Get(string(execution.Report.RunID), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var persistedPlan PersistedPlan
+	if err := json.Unmarshal(record.Plan, &persistedPlan); err != nil {
+		t.Fatal(err)
+	}
+	if persistedPlan.Target.BaseURL != target.BaseURL || persistedPlan.Target.Auth == nil || !persistedPlan.Target.Auth.CredentialConfigured {
+		t.Fatalf("persisted plan did not preserve safe target context: %#v", persistedPlan.Target)
+	}
+	if bytes.Contains(record.Plan, credential) || bytes.Contains(record.Plan, []byte(target.Auth.Token.Ref)) {
+		t.Fatal("persisted plan contains a credential or secret reference")
+	}
+}
+
+func TestExecuteOmitsSensitiveMetadataFromPersistence(t *testing.T) {
+	credential := []byte("synthetic-plan-canary-secret")
+	reference, err := referenceserver.New(referenceserver.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	requests := &pathRecorder{next: reference}
+	server := httptest.NewServer(requests)
+	defer server.Close()
+	secretRef := "env://SENSITIVE_REF_MARKER"
+	target := config.Target{
+		BaseURL: server.URL + "/v1", Protocol: "openai-responses", Model: "fixture-model",
+		Auth:     &config.Auth{Type: "bearer", Token: config.SecretReference{Ref: secretRef}},
+		Metadata: map[string]string{"must_not_persist": string(credential)},
+	}
+	dataRoot := filepath.Join(t.TempDir(), "data")
+	execution, err := Execute(context.Background(), ExecuteRequest{
+		Planned: mustPlan(t, target, schema.BudgetPolicy{}), DataRoot: dataRoot,
+		Secrets: &staticSecretResolver{value: credential},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if seen := requests.snapshot(); len(seen) != 4 {
+		t.Fatalf("requests = %v", seen)
+	}
+	store, err := runstore.Open(filepath.Join(dataRoot, "runs"), runstore.DefaultMaxRecordBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, err := store.Get(string(execution.Report.RunID), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, forbidden := range [][]byte{credential, []byte(secretRef), []byte("must_not_persist")} {
+		if bytes.Contains(record.Plan, forbidden) {
+			t.Fatalf("sensitive value %q reached persisted plan", forbidden)
+		}
 	}
 }
 
@@ -470,25 +837,44 @@ func TestExecuteRedactsReflectedCredentialBeforeAssertionAndFingerprint(t *testi
 
 func TestExecuteSeparatesTargetFailureFromTransportAndAuthenticationErrors(t *testing.T) {
 	tests := []struct {
-		name        string
-		status      int
-		contentType string
-		body        []byte
-		wantOutcome schema.ProfileOutcome
-		wantExit    int
-		wantStatus  schema.ExecutionStatus
-		wantReason  schema.ReasonCode
-		wantVerdict *schema.Verdict
+		name         string
+		protocol     string
+		status       int
+		contentType  string
+		body         []byte
+		wantOutcome  schema.ProfileOutcome
+		wantExit     int
+		wantStatus   schema.ExecutionStatus
+		wantReason   schema.ReasonCode
+		wantVerdict  *schema.Verdict
+		wantFindings bool
 	}{
 		{
 			name: "ordinary target rejection", status: http.StatusBadRequest, contentType: "application/json",
 			body: validChatDocument(), wantOutcome: schema.ProfileIncompatible, wantExit: 1,
-			wantStatus: schema.ExecutionCompleted, wantVerdict: verdictPointer(schema.VerdictFail),
+			wantStatus: schema.ExecutionCompleted, wantVerdict: verdictPointer(schema.VerdictFail), wantFindings: true,
+		},
+		{
+			name: "Chat provider output-limit field unsupported", protocol: "openai-chat", status: http.StatusBadRequest, contentType: "application/json",
+			body:        []byte(`{"error":{"message":"Unsupported parameter: 'max_completion_tokens'.","param":"max_completion_tokens","code":"unsupported_parameter"}}`),
+			wantOutcome: schema.ProfileInconclusive, wantExit: 4, wantStatus: schema.ExecutionCompleted,
+			wantReason: schema.ReasonUnsupportedCapability, wantVerdict: verdictPointer(schema.VerdictInconclusive),
+		},
+		{
+			name: "Responses provider output-limit field unsupported", protocol: "openai-responses", status: http.StatusBadRequest, contentType: "application/json",
+			body:        []byte(`{"error":{"message":"Unknown parameter: max_output_tokens","param":"max_output_tokens","code":"unknown_parameter"}}`),
+			wantOutcome: schema.ProfileInconclusive, wantExit: 4, wantStatus: schema.ExecutionCompleted,
+			wantReason: schema.ReasonUnsupportedCapability, wantVerdict: verdictPointer(schema.VerdictInconclusive),
 		},
 		{
 			name: "authentication", status: http.StatusUnauthorized, contentType: "application/json",
 			body: []byte(`{"error":{"code":"synthetic"}}`), wantOutcome: schema.ProfileInconclusive, wantExit: 5,
-			wantStatus: schema.ExecutionErrored, wantReason: schema.ReasonHarnessError,
+			wantStatus: schema.ExecutionErrored, wantReason: schema.ReasonAuthenticationFailed,
+		},
+		{
+			name: "permission", status: http.StatusForbidden, contentType: "application/json",
+			body: []byte(`{"error":{"code":"synthetic"}}`), wantOutcome: schema.ProfileInconclusive, wantExit: 5,
+			wantStatus: schema.ExecutionErrored, wantReason: schema.ReasonPermissionDenied,
 		},
 		{
 			name: "transient", status: http.StatusTooManyRequests, contentType: "application/json",
@@ -504,13 +890,22 @@ func TestExecuteSeparatesTargetFailureFromTransportAndAuthenticationErrors(t *te
 				_, _ = writer.Write(test.body)
 			}))
 			defer server.Close()
-			planned := mustPlan(t, config.Target{BaseURL: server.URL, Protocol: "openai-chat", Model: "fixture-model"}, schema.BudgetPolicy{})
-			execution, err := Execute(context.Background(), ExecuteRequest{Planned: planned, DataRoot: filepath.Join(t.TempDir(), "data")})
+			protocol := test.protocol
+			if protocol == "" {
+				protocol = "openai-chat"
+			}
+			planned := mustPlan(t, config.Target{BaseURL: server.URL, Protocol: protocol, Model: "fixture-model"}, schema.BudgetPolicy{})
+			dataRoot := filepath.Join(t.TempDir(), "data")
+			execution, err := Execute(context.Background(), ExecuteRequest{Planned: planned, DataRoot: dataRoot})
 			if err != nil {
 				t.Fatal(err)
 			}
 			if execution.Report.Outcome != test.wantOutcome || execution.Report.PrimaryExitCode != test.wantExit {
 				t.Fatalf("aggregate = %s/%d", execution.Report.Outcome, execution.Report.PrimaryExitCode)
+			}
+			evidenceStore, err := cas.Open(filepath.Join(dataRoot, "evidence"), cas.DefaultMaxObjectBytes)
+			if err != nil {
+				t.Fatal(err)
 			}
 			for _, item := range execution.Report.Cases {
 				if item.ExecutionStatus != test.wantStatus || item.ReasonCode != test.wantReason {
@@ -518,6 +913,18 @@ func TestExecuteSeparatesTargetFailureFromTransportAndAuthenticationErrors(t *te
 				}
 				if test.wantVerdict == nil && item.Verdict != nil || test.wantVerdict != nil && (item.Verdict == nil || *item.Verdict != *test.wantVerdict) {
 					t.Fatalf("case verdict = %#v", item)
+				}
+				if test.wantFindings != (len(item.Findings) > 0) {
+					t.Fatalf("case findings = %#v", item.Findings)
+				}
+				if len(item.EvidenceRefs) == 0 {
+					t.Fatalf("case lost persisted response evidence: %#v", item)
+				}
+				for _, ref := range item.EvidenceRefs {
+					evidence, err := evidenceStore.GetEvidence(context.Background(), ref)
+					if err != nil || evidence.RunID != execution.Report.RunID {
+						t.Fatalf("case Evidence ref does not close over this run: ref=%#v evidence=%#v err=%v", ref, evidence, err)
+					}
 				}
 			}
 		})
@@ -550,6 +957,36 @@ type pathRecorder struct {
 	mu   sync.Mutex
 	next http.Handler
 	seen []string
+}
+
+type limitedChatHandler struct {
+	next http.Handler
+}
+
+func (handler *limitedChatHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	recorded := httptest.NewRecorder()
+	handler.next.ServeHTTP(recorded, request)
+	if strings.HasPrefix(recorded.Header().Get("Content-Type"), "text/event-stream") {
+		body := strings.Replace(recorded.Body.String(), `"finish_reason":"stop"`, `"finish_reason":"length"`, 1)
+		recorded.Body.Reset()
+		recorded.Body.WriteString(body)
+	} else if recorded.Code == http.StatusOK {
+		var value map[string]any
+		if err := json.Unmarshal(recorded.Body.Bytes(), &value); err == nil {
+			choices, _ := value["choices"].([]any)
+			if len(choices) > 0 {
+				choices[0].(map[string]any)["finish_reason"] = "length"
+				rewriteJSON(recorded, value)
+			}
+		}
+	}
+	for name, values := range recorded.Header() {
+		for _, value := range values {
+			writer.Header().Add(name, value)
+		}
+	}
+	writer.WriteHeader(recorded.Code)
+	_, _ = writer.Write(recorded.Body.Bytes())
 }
 
 func (recorder *pathRecorder) ServeHTTP(writer http.ResponseWriter, request *http.Request) {

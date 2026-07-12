@@ -2,9 +2,17 @@
 
 [Documentation home](README.md) | [Getting Started](getting-started/README.md)
 
-The `doctor` CLI reads YAML configuration from
-`.agentapi/config.yaml` by default. Pass `--config <path>` to commands that
-support an alternate file.
+One-off checks do not require configuration:
+
+```sh
+doctor test --base-url https://api.example.invalid/v1 \
+  --protocol openai-responses --model example-model \
+  --auth-env EXAMPLE_API_TOKEN --format terminal
+```
+
+For repeated checks, named targets, baselines, or CI, the `doctor` CLI reads
+YAML configuration from `.agentapi/config.yaml` by default. Pass
+`--config <path>` to commands that support an alternate file.
 
 ## Create the initial file
 
@@ -90,17 +98,21 @@ defaults:
 credentials, query strings, fragments, escaped path separators, backslashes,
 and non-canonical path segments are rejected.
 
-The runner appends the protocol endpoint to the base path:
+The runner treats a non-root base path as the complete API prefix and appends
+only the protocol operation:
 
-| Protocol | Derived suffix |
+| Protocol | Appended operation |
 | --- | --- |
-| `openai-chat` | `/v1/chat/completions` |
-| `openai-responses` | `/v1/responses` |
-| `anthropic-messages` | `/v1/messages` |
+| `openai-chat` | `chat/completions` |
+| `openai-responses` | `responses` |
+| `anthropic-messages` | `messages` |
 
-If the configured path already ends in `/v1`, it is not duplicated. For
-example, `https://host.example/gateway/v1` plus `openai-responses` becomes
-`/gateway/v1/responses` on that exact origin. Redirects are not followed.
+An origin-only URL defaults to the `/v1` API prefix. Otherwise the runner does
+not insert a version segment: `https://host.example/gateway/v1` plus
+`openai-responses` becomes `/gateway/v1/responses`, while an
+OpenAI-compatible `/api/v3` prefix becomes `/api/v3/chat/completions`. Include
+the version segment required by your endpoint in `baseURL`. Redirects are not
+followed.
 
 Plain HTTP is accepted for an explicitly configured target, which is useful
 for loopback development. Use HTTPS for a remote endpoint and never send a
@@ -120,7 +132,8 @@ Bearer authentication produces:
 Authorization: Bearer <resolved-secret>
 ```
 
-For an API that uses a custom token header, edit the YAML:
+For a one-off API that uses a custom token header, combine
+`--auth-env NAME --auth-header x-api-key`. For a stored target, edit the YAML:
 
 ```yaml
 auth:

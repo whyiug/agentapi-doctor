@@ -13,8 +13,8 @@ treated as deployed merely because its risks are described here.
 2. Execute only the authorized target, scenarios, tools, and budgets.
 3. Keep untrusted packs, drivers, artifacts, archives, and reports from
    escaping their declared file, process, and network boundaries.
-4. Bind results and evidence to exact source, immutable inputs, producer, and
-   content digests.
+4. Bind results and evidence to their run, immutable inputs, producer, and
+   content digests; record source identity when an execution path provides it.
 5. Prevent a Registry or sponsor from silently changing trust labels,
    observations, disputes, or denominators.
 6. Preserve availability through bounded resources, finalizers, quarantine,
@@ -92,10 +92,10 @@ artifacts.
 
 An actor may rebind an ID, omit failing denominator members, replay an old
 attestation, self-award a trust label, or alter Registry-derived metadata.
-Canonical immutable projections, source and producer binding, explicit
-denominators, signer authorization, freshness windows, append-only audit, and
-independent replay prevent those shortcuts. A Registry-derived trust or dispute
-field never changes the submitted observation identity.
+Canonical immutable projections, recorded provenance facts, producer binding,
+explicit denominators, signer authorization, freshness windows, append-only
+audit, and independent replay prevent those shortcuts. A Registry-derived trust
+or dispute field never changes the submitted observation identity.
 
 ### Resource exhaustion and persistence
 

@@ -32,7 +32,11 @@ func Terminal(bundle Bundle) ([]byte, error) {
 		if result.Verdict != nil {
 			label = strings.ToUpper(string(*result.Verdict))
 		}
-		fmt.Fprintf(&output, "%-14s %s\n", label, safeLine(result.ScenarioID))
+		reason := ""
+		if result.ReasonCode != "" {
+			reason = " (" + safeLine(string(result.ReasonCode)) + ")"
+		}
+		fmt.Fprintf(&output, "%-14s %s%s\n", label, safeLine(result.ScenarioID), reason)
 	}
 	return []byte(output.String()), nil
 }

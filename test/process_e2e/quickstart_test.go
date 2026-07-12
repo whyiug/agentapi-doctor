@@ -39,14 +39,6 @@ type cliEnvelope struct {
 	Data            json.RawMessage `json:"data"`
 }
 
-type testSummary struct {
-	RunID           string         `json:"run_id"`
-	ProfileOutcome  string         `json:"profile_outcome"`
-	PrimaryExitCode int            `json:"primary_exit_code"`
-	RunStore        string         `json:"run_store"`
-	Conditions      []cliCondition `json:"conditions"`
-}
-
 type inspectSummary struct {
 	RunID        string `json:"run_id"`
 	BundleDigest string `json:"bundle_digest"`
@@ -70,6 +62,15 @@ func TestQuickstartRunsThroughRealProcesses(t *testing.T) {
 	doctor := buildBinary(t, repositoryRoot, buildRoot, buildEnvironment, "doctor", "./cmd/doctor")
 	reference := buildBinary(t, repositoryRoot, buildRoot, buildEnvironment, "reference-server", "./cmd/reference-server")
 
+	demoWorkspace := filepath.Join(runtimeRoot, "demo-workspace")
+	if err := os.MkdirAll(demoWorkspace, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	demoOutput := runPlain(t, doctor, demoWorkspace, runtimeEnvironment, "demo")
+	demoRunID := assertPassingTerminal(t, "demo", demoOutput)
+	assertQuickstartPersistence(t, demoWorkspace, demoRunID)
+	assertNoQuickstartConfig(t, demoWorkspace)
+
 	address, stopReference := startReferenceServer(t, reference, runtimeRoot, runtimeEnvironment)
 	defer stopReference()
 	host, portText, err := net.SplitHostPort(address)
@@ -82,63 +83,29 @@ func TestQuickstartRunsThroughRealProcesses(t *testing.T) {
 	}
 	waitForReferenceServer(t, address)
 
-	workspace := filepath.Join(runtimeRoot, "workspace")
+	workspace := filepath.Join(runtimeRoot, "inline-workspace")
 	if err := os.MkdirAll(workspace, 0o700); err != nil {
 		t.Fatal(err)
 	}
 
-	initialized := runEnvelope(t, doctor, workspace, runtimeEnvironment, "init")
-	assertPassingEnvelope(t, "init", initialized)
-	var initData struct {
-		Config string `json:"config"`
-	}
-	decodeData(t, "init", initialized.Data, &initData)
-	wantConfig := filepath.Join(workspace, ".agentapi", "config.yaml")
-	if !sameExistingPath(initData.Config, wantConfig) {
-		t.Fatalf("init returned unexpected config path: %q", initData.Config)
-	}
-
 	baseURL := "http://" + address + "/v1"
-	added := runEnvelope(t, doctor, workspace, runtimeEnvironment,
-		"target", "add", "smoke",
+	terminal := runPlain(t, doctor, workspace, runtimeEnvironment,
+		"test",
 		"--base-url", baseURL,
 		"--protocol", "openai-responses",
 		"--model", "fixture-model",
+		"--allow-plain-http",
+		"--format", "terminal",
 	)
-	assertPassingEnvelope(t, "target add", added)
-	var addData struct {
-		Target string `json:"target"`
-	}
-	decodeData(t, "target add", added.Data, &addData)
-	if addData.Target != "smoke" {
-		t.Fatalf("target add returned unexpected target: %q", addData.Target)
-	}
-
-	tested := runEnvelope(t, doctor, workspace, runtimeEnvironment, "test", "smoke")
-	assertPassingEnvelope(t, "test", tested)
-	var summary testSummary
-	decodeData(t, "test", tested.Data, &summary)
-	if summary.RunID == "" || summary.PrimaryExitCode != 0 {
-		t.Fatalf("test did not return a successful run identity: %#v", summary)
-	}
-	if summary.ProfileOutcome != "compatible" {
-		t.Fatalf("test profile outcome = %q, want compatible", summary.ProfileOutcome)
-	}
-	if !hasCondition(summary.Conditions, candidateCondition) {
-		t.Fatalf("test omitted the required candidate interpretation condition: %#v", summary.Conditions)
-	}
-	wantRunStore := filepath.Join(workspace, ".agentapi", "runs")
-	if !sameExistingPath(summary.RunStore, wantRunStore) {
-		t.Fatalf("test run store = %q, want %q", summary.RunStore, wantRunStore)
-	}
-	assertRegularFile(t, filepath.Join(wantRunStore, "latest.json"))
-	assertRegularFile(t, filepath.Join(wantRunStore, summary.RunID, "record.json"))
+	runID := assertPassingTerminal(t, "inline test", terminal)
+	assertQuickstartPersistence(t, workspace, runID)
+	assertNoQuickstartConfig(t, workspace)
 
 	inspected := runEnvelope(t, doctor, workspace, runtimeEnvironment, "run", "inspect", "latest")
 	assertPassingEnvelope(t, "run inspect", inspected)
 	var persisted inspectSummary
 	decodeData(t, "run inspect", inspected.Data, &persisted)
-	if persisted.RunID != summary.RunID || persisted.Bundle.RunID != summary.RunID || persisted.BundleDigest == "" {
+	if persisted.RunID != runID || persisted.Bundle.RunID != runID || persisted.BundleDigest == "" {
 		t.Fatalf("run inspect did not load the persisted test run: %#v", persisted)
 	}
 	if persisted.Bundle.Outcome != "compatible" || persisted.Bundle.PrimaryExitCode != 0 {
@@ -147,17 +114,40 @@ func TestQuickstartRunsThroughRealProcesses(t *testing.T) {
 	if !hasCondition(persisted.Bundle.Conditions, candidateCondition) {
 		t.Fatalf("persisted report omitted the candidate condition: %#v", persisted.Bundle.Conditions)
 	}
+}
 
-	terminal := runPlain(t, doctor, workspace, runtimeEnvironment, "report", "terminal", "latest")
+func assertPassingTerminal(t *testing.T, command, output string) string {
+	t.Helper()
 	for _, expected := range []string{
-		"Run: " + summary.RunID,
 		"Profile outcome: COMPATIBLE",
 		"Cases: 4 candidate / 4 applicable / 4 executed",
 		"Verdicts: PASS 4",
 	} {
-		if !strings.Contains(terminal, expected) {
-			t.Fatalf("terminal report omitted %q:\n%s", expected, terminal)
+		if !strings.Contains(output, expected) {
+			t.Fatalf("%s omitted %q:\n%s", command, expected, output)
 		}
+	}
+	for _, line := range strings.Split(output, "\n") {
+		if runID, found := strings.CutPrefix(line, "Run: "); found && runID != "" {
+			return runID
+		}
+	}
+	t.Fatalf("%s omitted its run ID:\n%s", command, output)
+	return ""
+}
+
+func assertQuickstartPersistence(t *testing.T, workspace, runID string) {
+	t.Helper()
+	runStore := filepath.Join(workspace, ".agentapi", "runs")
+	assertRegularFile(t, filepath.Join(runStore, "latest.json"))
+	assertRegularFile(t, filepath.Join(runStore, runID, "record.json"))
+}
+
+func assertNoQuickstartConfig(t *testing.T, workspace string) {
+	t.Helper()
+	path := filepath.Join(workspace, ".agentapi", "config.yaml")
+	if _, err := os.Lstat(path); !os.IsNotExist(err) {
+		t.Fatalf("one-shot quick start created a persistent target config at %q: %v", path, err)
 	}
 }
 
@@ -454,10 +444,4 @@ func assertRegularFile(t *testing.T, path string) {
 	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 || info.Size() == 0 {
 		t.Fatalf("persisted run path is not a non-empty regular file: %q (%v)", path, info.Mode())
 	}
-}
-
-func sameExistingPath(left, right string) bool {
-	leftInfo, leftErr := os.Stat(left)
-	rightInfo, rightErr := os.Stat(right)
-	return leftErr == nil && rightErr == nil && os.SameFile(leftInfo, rightInfo)
 }

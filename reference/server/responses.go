@@ -14,12 +14,13 @@ type responsesTool struct {
 }
 
 type responsesRequest struct {
-	Model        string          `json:"model"`
-	Input        json.RawMessage `json:"input"`
-	Instructions string          `json:"instructions,omitempty"`
-	Tools        []responsesTool `json:"tools,omitempty"`
-	Stream       bool            `json:"stream,omitempty"`
-	Store        *bool           `json:"store,omitempty"`
+	Model           string          `json:"model"`
+	Input           json.RawMessage `json:"input"`
+	Instructions    string          `json:"instructions,omitempty"`
+	Tools           []responsesTool `json:"tools,omitempty"`
+	Stream          bool            `json:"stream,omitempty"`
+	Store           *bool           `json:"store,omitempty"`
+	MaxOutputTokens *int            `json:"max_output_tokens,omitempty"`
 }
 
 func (handler *Handler) buildResponses(writer http.ResponseWriter, request *http.Request) (Exchange, error) {

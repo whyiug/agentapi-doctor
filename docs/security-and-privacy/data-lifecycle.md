@@ -13,6 +13,10 @@
 Local runs do not opt into upload or telemetry. Tests must not read a real home
 directory, keychain, `.env`, or ambient credentials.
 
+When the configured target is remote, it receives bounded synthetic requests
+and may retain them under the target operator's own policy. Use authorized test
+accounts and synthetic inputs; local redaction cannot control remote retention.
+
 ## Future Registry lifecycle
 
 A future hosted path adds quarantine, a public-projection preview, affirmative

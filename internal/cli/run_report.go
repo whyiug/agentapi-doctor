@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -11,13 +10,24 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/whyiug/agentapi-doctor/internal/productrun"
 	"github.com/whyiug/agentapi-doctor/internal/report"
 	"github.com/whyiug/agentapi-doctor/internal/runstore"
 )
 
+type validatedRun struct {
+	Record runstore.Record
+	Bundle report.Bundle
+	Plan   *productrun.PersistedPlan
+}
+
+var errRunLookup = errors.New("run lookup failed")
+
+const runInspectUsage = "usage: doctor run inspect <run-ref> [--store <path>] [--allow-latest] [--include-plan]"
+
 func runRun(args []string, dependencies Dependencies) int {
 	if len(args) == 0 {
-		return writeError(dependencies.Stderr, ExitInput, "missing_run_command", "usage: doctor run inspect <run-ref>")
+		return writeError(dependencies.Stderr, ExitInput, "missing_run_command", runInspectUsage)
 	}
 	switch args[0] {
 	case "inspect":
@@ -29,29 +39,39 @@ func runRun(args []string, dependencies Dependencies) int {
 
 func runInspect(args []string, dependencies Dependencies) int {
 	if len(args) == 0 || args[0] == "" || args[0][0] == '-' {
-		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor run inspect <run-ref> [--store <path>] [--allow-latest]")
+		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", runInspectUsage)
 	}
 	reference := args[0]
 	flags := flag.NewFlagSet("run inspect", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	storePath := flags.String("store", filepath.Join(dependencies.WorkingDir, ".agentapi", "runs"), "run store")
 	allowLatest := flags.Bool("allow-latest", true, "allow local latest pointer")
+	includePlan := flags.Bool("include-plan", false, "include the persisted canonical run plan")
 	if err := flags.Parse(args[1:]); err != nil || flags.NArg() != 0 {
-		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor run inspect <run-ref> [--store <path>] [--allow-latest]")
+		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", runInspectUsage)
 	}
 	store, err := runstore.Open(absolutePath(dependencies.WorkingDir, *storePath), 0)
 	if err != nil {
 		return writeError(dependencies.Stderr, ExitInfrastructure, "run_store_open_failed", err.Error())
 	}
-	record, err := store.Get(reference, *allowLatest)
+	loaded, err := loadValidatedRecord(store, reference, *allowLatest)
 	if err != nil {
-		return writeError(dependencies.Stderr, ExitInput, "run_not_found", err.Error())
-	}
-	var bundle any
-	if err := json.Unmarshal(record.Bundle, &bundle); err != nil {
+		if errors.Is(err, errRunLookup) {
+			return writeError(dependencies.Stderr, ExitInput, "run_not_found", err.Error())
+		}
 		return writeError(dependencies.Stderr, ExitInfrastructure, "run_corrupt", err.Error())
 	}
-	return writeSuccess(dependencies.Stdout, map[string]any{"run_id": record.RunID, "bundle_digest": record.BundleDigest, "bundle": bundle})
+	data := map[string]any{
+		"run_id": loaded.Record.RunID, "bundle_digest": loaded.Record.BundleDigest, "bundle": loaded.Bundle,
+		"plan_digest": loaded.Record.PlanDigest, "plan_available": loaded.Plan != nil,
+	}
+	if *includePlan && loaded.Plan == nil {
+		return writeError(dependencies.Stderr, ExitInput, "plan_unavailable", "this legacy run record does not contain a persisted plan")
+	}
+	if *includePlan {
+		data["plan"] = *loaded.Plan
+	}
+	return writeSuccess(dependencies.Stdout, data)
 }
 
 func runReport(args []string, dependencies Dependencies) int {
@@ -74,14 +94,14 @@ func runReport(args []string, dependencies Dependencies) int {
 	if err != nil {
 		return writeError(dependencies.Stderr, ExitInfrastructure, "run_store_open_failed", err.Error())
 	}
-	record, err := store.Get(reference, *allowLatest)
+	loaded, err := loadValidatedRecord(store, reference, *allowLatest)
 	if err != nil {
-		return writeError(dependencies.Stderr, ExitInput, "run_not_found", err.Error())
-	}
-	bundle, err := report.Decode(record.Bundle)
-	if err != nil {
+		if errors.Is(err, errRunLookup) {
+			return writeError(dependencies.Stderr, ExitInput, "run_not_found", err.Error())
+		}
 		return writeError(dependencies.Stderr, ExitInfrastructure, "invalid_report_bundle", err.Error())
 	}
+	bundle := loaded.Bundle
 	renderers := map[string]func(report.Bundle) ([]byte, error){"terminal": report.Terminal, "json": report.JSON, "junit": report.JUnit, "sarif": report.SARIF, "markdown": report.Markdown, "html": report.HTML}
 	rendered, err := renderers[format](bundle)
 	if err != nil {
@@ -101,6 +121,41 @@ func runReport(args []string, dependencies Dependencies) int {
 		_, _ = dependencies.Stdout.Write([]byte("\n"))
 	}
 	return ExitSuccess
+}
+
+func loadValidatedRun(reference, storePath string, allowLatest bool, dependencies Dependencies) (validatedRun, error) {
+	store, err := runstore.Open(absolutePath(dependencies.WorkingDir, storePath), 0)
+	if err != nil {
+		return validatedRun{}, err
+	}
+	return loadValidatedRecord(store, reference, allowLatest)
+}
+
+func loadValidatedRecord(store *runstore.Store, reference string, allowLatest bool) (validatedRun, error) {
+	record, err := store.Get(reference, allowLatest)
+	if err != nil {
+		return validatedRun{}, fmt.Errorf("%w: %v", errRunLookup, err)
+	}
+	bundle, err := report.Decode(record.Bundle)
+	if err != nil {
+		return validatedRun{}, fmt.Errorf("decode report bundle: %w", err)
+	}
+	if bundle.RunID != record.RunID {
+		return validatedRun{}, errors.New("report run_id does not match its local run record")
+	}
+	loaded := validatedRun{Record: record, Bundle: bundle}
+	if len(record.Plan) == 0 {
+		return loaded, nil
+	}
+	plan, err := productrun.DecodePlanJSON(record.Plan)
+	if err != nil {
+		return validatedRun{}, fmt.Errorf("validate persisted plan: %w", err)
+	}
+	if bundle.IntentPlanRef != plan.Intent.ObjectRef || bundle.ResolvedPlanRef != plan.Resolved.ObjectRef {
+		return validatedRun{}, errors.New("report plan references do not match the persisted plan snapshot")
+	}
+	loaded.Plan = &plan
+	return loaded, nil
 }
 
 func absolutePath(workingDirectory, path string) string {

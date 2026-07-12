@@ -28,6 +28,10 @@ type RunError struct {
 	Err        error
 	Usage      budget.Usage
 	UsageKnown bool
+	// EvidenceRefs preserves observations already committed before a
+	// non-verdict terminal condition such as authentication or transport
+	// failure. The executor validates and carries them into the attempt/case.
+	EvidenceRefs []schema.ObjectRef
 }
 
 func (runError *RunError) Error() string {
@@ -124,7 +128,7 @@ func Execute(ctx context.Context, plan schema.ResolvedRunPlan, expectedDigest sc
 		if err := ctx.Err(); err != nil {
 			executionErr = err
 			if decision.Disposition == schema.DispositionExecute {
-				caseResult, attempt := nonRunAttempt(runID, decision, schema.ExecutionCancelled, schema.ReasonCancelledByUser, config.NewID)
+				caseResult, attempt := nonRunAttempt(runID, decision, schema.ExecutionCancelled, contextReason(err), config.NewID)
 				result.Attempts = append(result.Attempts, attempt)
 				result.Cases = append(result.Cases, caseResult)
 				states[decision.ScenarioID] = caseResult
@@ -160,6 +164,15 @@ func Execute(ctx context.Context, plan schema.ResolvedRunPlan, expectedDigest sc
 		result.Attempts = append(result.Attempts, attempts...)
 		result.Cases = append(result.Cases, caseResult)
 		states[decision.ScenarioID] = caseResult
+		// A cancellation that occurs while the final scenario is running has no
+		// subsequent loop iteration in which to observe ctx.Err(). Preserve it
+		// immediately so callers receive the same terminal error regardless of
+		// which scenario was active when the run stopped.
+		if caseResult.ExecutionStatus == schema.ExecutionCancelled {
+			if err := ctx.Err(); err != nil {
+				executionErr = err
+			}
+		}
 	}
 	// The optional resolver extension below runs finalizers without weakening
 	// the required Runner interface for simple built-in drivers.
@@ -217,6 +230,7 @@ func runScenario(ctx context.Context, runID schema.InstanceID, plan schema.Resol
 	}
 	attempts := []schema.Attempt{}
 	attemptIDs := []schema.InstanceID{}
+	caseEvidenceRefs := []schema.ObjectRef{}
 	maxAttempts := plan.Runtime.Retries + 1
 	for number := int64(1); number <= maxAttempts; number++ {
 		attemptID, err := config.NewID()
@@ -238,8 +252,17 @@ func runScenario(ctx context.Context, runID schema.InstanceID, plan schema.Resol
 		if runErr != nil {
 			actual := estimate
 			var typed *RunError
-			if errors.As(runErr, &typed) && typed.UsageKnown {
-				actual = typed.Usage
+			attemptEvidenceRefs := []schema.ObjectRef{}
+			if errors.As(runErr, &typed) {
+				if typed.UsageKnown {
+					actual = typed.Usage
+				}
+				if err := validateEvidenceRefs(typed.EvidenceRefs); err != nil {
+					runErr = &RunError{Class: ErrorHarness, Err: fmt.Errorf("runner returned invalid error evidence: %w", err), Usage: actual, UsageKnown: typed.UsageKnown}
+				} else {
+					attemptEvidenceRefs = append([]schema.ObjectRef(nil), typed.EvidenceRefs...)
+					caseEvidenceRefs = appendUniqueEvidenceRefs(caseEvidenceRefs, typed.EvidenceRefs...)
+				}
 			}
 			_ = reservation.Commit(actual)
 			reason, class := reasonForError(ctx, runErr)
@@ -247,24 +270,40 @@ func runScenario(ctx context.Context, runID schema.InstanceID, plan schema.Resol
 			if errors.Is(ctx.Err(), context.Canceled) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
 				status = schema.ExecutionCancelled
 			}
-			attempts = append(attempts, schema.Attempt{AttemptID: attemptID, InvocationID: invocationID, ExecutionStatus: status, ReasonCode: reason, Driver: decision.Driver, ConsumedBudget: consumption(actual)})
+			attempts = append(attempts, schema.Attempt{AttemptID: attemptID, InvocationID: invocationID, ExecutionStatus: status, ReasonCode: reason, EvidenceRefs: attemptEvidenceRefs, Driver: decision.Driver, ConsumedBudget: consumption(actual)})
 			if class == ErrorTransient && number < maxAttempts {
 				continue
 			}
-			return caseForAttempts(decision, attemptIDs, status, nil, reason, nil, nil), attempts
+			result := caseForAttempts(decision, attemptIDs, status, nil, reason, nil, nil)
+			result.EvidenceRefs = append([]schema.ObjectRef(nil), caseEvidenceRefs...)
+			return result, attempts
 		}
 		if validationErr := validateOutcome(outcome); validationErr != nil {
 			_ = reservation.Commit(outcome.Usage)
-			attempts = append(attempts, erroredAttempt(invocationID, attemptID, decision.Driver, schema.ReasonHarnessError))
-			return caseForAttempts(decision, attemptIDs, schema.ExecutionErrored, nil, schema.ReasonHarnessError, nil, nil), attempts
+			attemptEvidenceRefs := []schema.ObjectRef{}
+			if validateEvidenceRefs(outcome.EvidenceRefs) == nil {
+				attemptEvidenceRefs = append([]schema.ObjectRef(nil), outcome.EvidenceRefs...)
+				caseEvidenceRefs = appendUniqueEvidenceRefs(caseEvidenceRefs, outcome.EvidenceRefs...)
+			}
+			attempt := erroredAttempt(invocationID, attemptID, decision.Driver, schema.ReasonHarnessError)
+			attempt.EvidenceRefs = attemptEvidenceRefs
+			attempts = append(attempts, attempt)
+			result := caseForAttempts(decision, attemptIDs, schema.ExecutionErrored, nil, schema.ReasonHarnessError, nil, nil)
+			result.EvidenceRefs = append([]schema.ObjectRef(nil), caseEvidenceRefs...)
+			return result, attempts
 		}
+		caseEvidenceRefs = appendUniqueEvidenceRefs(caseEvidenceRefs, outcome.EvidenceRefs...)
 		commitErr := reservation.Commit(outcome.Usage)
 		attempt := schema.Attempt{AttemptID: attemptID, InvocationID: invocationID, ExecutionStatus: schema.ExecutionCompleted, ReasonCode: outcome.ReasonCode, EvidenceRefs: append([]schema.ObjectRef(nil), outcome.EvidenceRefs...), Driver: decision.Driver, ConsumedBudget: consumption(outcome.Usage)}
 		attempts = append(attempts, attempt)
 		if commitErr != nil {
-			return caseForAttempts(decision, attemptIDs, schema.ExecutionCompleted, &outcome.Verdict, schema.ReasonBudgetExhausted, outcome.AssertionResults, outcome.Findings), attempts
+			result := caseForAttempts(decision, attemptIDs, schema.ExecutionCompleted, &outcome.Verdict, schema.ReasonBudgetExhausted, outcome.AssertionResults, outcome.Findings)
+			result.EvidenceRefs = append([]schema.ObjectRef(nil), caseEvidenceRefs...)
+			return result, attempts
 		}
-		return caseForAttempts(decision, attemptIDs, schema.ExecutionCompleted, &outcome.Verdict, outcome.ReasonCode, outcome.AssertionResults, outcome.Findings), attempts
+		result := caseForAttempts(decision, attemptIDs, schema.ExecutionCompleted, &outcome.Verdict, outcome.ReasonCode, outcome.AssertionResults, outcome.Findings)
+		result.EvidenceRefs = append([]schema.ObjectRef(nil), caseEvidenceRefs...)
+		return result, attempts
 	}
 	return caseForAttempts(decision, attemptIDs, schema.ExecutionErrored, nil, schema.ReasonHarnessError, nil, nil), attempts
 }
@@ -300,7 +339,13 @@ func caseForAttempts(decision schema.ScenarioDecision, ids []schema.InstanceID, 
 	return schema.CaseResult{ScenarioID: decision.ScenarioID, PlanDisposition: decision.Disposition, AttemptIDs: append([]schema.InstanceID(nil), ids...), ExecutionStatus: status, Verdict: verdict, ReasonCode: reason, AssertionResults: append([]schema.AssertionResult(nil), assertions...), Findings: append([]schema.Finding(nil), findings...), CandidateMember: true, ApplicableMember: true, ExecutedMember: status == schema.ExecutionCompleted, AttemptAggregation: "last_completed"}
 }
 func reasonForError(ctx context.Context, err error) (schema.ReasonCode, ErrorClass) {
-	if errors.Is(ctx.Err(), context.Canceled) || errors.Is(err, context.Canceled) {
+	if contextErr := ctx.Err(); contextErr != nil {
+		return contextReason(contextErr), ErrorHarness
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return schema.ReasonBudgetExhausted, ErrorHarness
+	}
+	if errors.Is(err, context.Canceled) {
 		return schema.ReasonCancelledByUser, ErrorHarness
 	}
 	var typed *RunError
@@ -308,6 +353,10 @@ func reasonForError(ctx context.Context, err error) (schema.ReasonCode, ErrorCla
 		return schema.ReasonHarnessError, ErrorHarness
 	}
 	switch typed.Class {
+	case ErrorAuthentication:
+		return schema.ReasonAuthenticationFailed, typed.Class
+	case ErrorPermission:
+		return schema.ReasonPermissionDenied, typed.Class
 	case ErrorTransient:
 		return schema.ReasonTransientError, typed.Class
 	case ErrorDriver:
@@ -315,6 +364,13 @@ func reasonForError(ctx context.Context, err error) (schema.ReasonCode, ErrorCla
 	default:
 		return schema.ReasonHarnessError, typed.Class
 	}
+}
+
+func contextReason(err error) schema.ReasonCode {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return schema.ReasonBudgetExhausted
+	}
+	return schema.ReasonCancelledByUser
 }
 func consumption(usage budget.Usage) schema.BudgetConsumption {
 	return schema.BudgetConsumption{Requests: usage.Requests, RequestBytes: usage.RequestBytes, ResponseBytes: usage.ResponseBytes, ArtifactBytes: usage.ArtifactBytes, InputTokens: pointerIfKnown(usage.InputTokens), OutputTokens: pointerIfKnown(usage.OutputTokens)}
@@ -328,10 +384,8 @@ func validateOutcome(outcome Outcome) error {
 	if len(outcome.EvidenceRefs) == 0 {
 		return errors.New("completed outcome requires evidence")
 	}
-	for _, ref := range outcome.EvidenceRefs {
-		if err := ref.Validate(); err != nil {
-			return err
-		}
+	if err := validateEvidenceRefs(outcome.EvidenceRefs); err != nil {
+		return err
 	}
 	for _, assertion := range outcome.AssertionResults {
 		if err := assertion.Validate(); err != nil {
@@ -339,4 +393,28 @@ func validateOutcome(outcome Outcome) error {
 		}
 	}
 	return nil
+}
+
+func validateEvidenceRefs(refs []schema.ObjectRef) error {
+	for index, ref := range refs {
+		if err := ref.Validate(); err != nil {
+			return fmt.Errorf("evidence ref %d: %w", index, err)
+		}
+	}
+	return nil
+}
+
+func appendUniqueEvidenceRefs(destination []schema.ObjectRef, refs ...schema.ObjectRef) []schema.ObjectRef {
+	seen := make(map[schema.ObjectRef]struct{}, len(destination)+len(refs))
+	for _, ref := range destination {
+		seen[ref] = struct{}{}
+	}
+	for _, ref := range refs {
+		if _, exists := seen[ref]; exists {
+			continue
+		}
+		seen[ref] = struct{}{}
+		destination = append(destination, ref)
+	}
+	return destination
 }

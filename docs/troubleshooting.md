@@ -68,6 +68,14 @@ Validate without contacting a target:
 See [Configuration](configuration.md) and the
 [configuration schema](../schemas/config/config.schema.json).
 
+## An inline test rejects plain HTTP
+
+One-off `doctor test --base-url ...` commands require HTTPS by default. For a
+trusted local or private-network endpoint, explicitly add
+`--allow-plain-http`. Do not use it to send a credential across an untrusted
+network. The flag is invalid with an `https://` URL so accidental, stale flags
+remain visible.
+
 ## Port 8090 is already in use
 
 The default `local-reference` target expects `127.0.0.1:8090`. Do not stop an
@@ -129,10 +137,11 @@ value into the config, a command argument, an issue, or a report.
 
 ## The request reaches the wrong path
 
-Configure the service base URL, normally ending in `/v1`, not a complete
-operation URL. The runner appends `chat/completions`, `responses`, or
-`messages` according to the configured protocol. A gateway prefix is
-preserved.
+Configure the API prefix, not a complete operation URL. The runner appends
+`chat/completions`, `responses`, or `messages` according to the configured
+protocol. An origin-only URL defaults to `/v1`; any non-root path is treated
+as the complete prefix, so include the endpoint's required version segment.
+For example, `/gateway/v1` and `/api/v3` are both preserved exactly.
 
 The transport is bound to the configured scheme and host and does not follow
 redirects. Redirect responses, DNS failures, TLS errors, timeouts, oversized

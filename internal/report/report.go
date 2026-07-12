@@ -14,7 +14,10 @@ import (
 	"github.com/whyiug/agentapi-doctor/pkg/schema"
 )
 
-const SchemaVersion = "urn:agentapi-doctor:report-bundle:v1alpha1"
+const (
+	SchemaVersion       = "urn:agentapi-doctor:report-bundle:v1alpha2"
+	legacySchemaVersion = "urn:agentapi-doctor:report-bundle:v1alpha1"
+)
 
 type Condition struct {
 	Code    string `json:"code"`
@@ -58,7 +61,7 @@ func Decode(raw []byte) (Bundle, error) {
 }
 
 func (bundle Bundle) Validate() error {
-	if bundle.SchemaVersion != SchemaVersion {
+	if bundle.SchemaVersion != SchemaVersion && bundle.SchemaVersion != legacySchemaVersion {
 		return fmt.Errorf("unsupported report schema %q", bundle.SchemaVersion)
 	}
 	if err := bundle.RunID.Validate(); err != nil {

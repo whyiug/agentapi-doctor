@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:agentapi-doctor:schema:report-bundle:v1alpha1",
+  "$id": "urn:agentapi-doctor:schema:report-bundle:v1alpha2",
   "title": "AgentAPI Doctor provisional report Bundle",
   "description": "Single truth model used by all renderers. It records target findings and harness conditions independently.",
   "type": "object",
@@ -10,7 +10,7 @@
     "conditions", "primary_exit_code"
   ],
   "properties": {
-    "schema_version": {"const": "urn:agentapi-doctor:report-bundle:v1alpha1"},
+    "schema_version": {"const": "urn:agentapi-doctor:report-bundle:v1alpha2"},
     "run_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
     "intent_plan_ref": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"},
     "resolved_plan_ref": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"},
@@ -20,7 +20,7 @@
       "items": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/artifactPin"}
     },
     "support_lock_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
-    "denominators": {"$ref": "urn:agentapi-doctor:schema:result:v1alpha1#/$defs/denominatorSummary"},
+    "denominators": {"$ref": "urn:agentapi-doctor:schema:result:v1alpha2#/$defs/denominatorSummary"},
     "profile_outcome": {"enum": ["compatible", "degraded", "incompatible", "inconclusive"]},
     "dimension_outcomes": {
       "type": ["object", "null"],
@@ -29,7 +29,7 @@
     },
     "cases": {
       "type": ["array", "null"],
-      "items": {"$ref": "urn:agentapi-doctor:schema:result:v1alpha1#/$defs/caseResult"}
+      "items": {"$ref": "urn:agentapi-doctor:schema:result:v1alpha2#/$defs/caseResult"}
     },
     "conditions": {"type": ["array", "null"], "items": {"$ref": "#/$defs/condition"}},
     "primary_exit_code": {"enum": [0, 1, 2, 3, 4, 5, 6, 130]}
