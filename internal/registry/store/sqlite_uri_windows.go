@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/url"
 	"path/filepath"
-	"strings"
 )
 
 func validateSQLiteLocalPath(filename string) error {
@@ -21,11 +20,10 @@ func isASCIILetter(value byte) bool {
 
 func sqliteFileURL(filename string) url.URL {
 	slashPath := filepath.ToSlash(filename)
-	volume := filepath.ToSlash(filepath.VolumeName(filename))
-	if volume != "" && !strings.HasPrefix(slashPath, "/") {
-		// A drive letter belongs in the path, not in the URI authority where
-		// net/url would parse its colon as a port separator.
-		slashPath = "/" + slashPath
-	}
-	return url.URL{Scheme: "file", Path: slashPath}
+	// SQLite's pure-Go VFS passes a URI path directly to os.OpenFile. The
+	// conventional file:///C:/ form therefore becomes the invalid Windows path
+	// /C:. Use SQLite's file:C:/... opaque form while still escaping spaces,
+	// percent signs, query delimiters, and fragments as path data.
+	escapedPath := (&url.URL{Path: slashPath}).EscapedPath()
+	return url.URL{Scheme: "file", Opaque: escapedPath}
 }

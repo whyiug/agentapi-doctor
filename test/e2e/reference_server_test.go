@@ -238,7 +238,10 @@ type slowFixtureTransformer struct{}
 
 func (slowFixtureTransformer) ID() string { return "synthetic-slow-transformer" }
 func (slowFixtureTransformer) Apply(*referenceserver.Exchange) error {
-	time.Sleep(5 * time.Millisecond)
+	// Windows timer resolution can exceed a few milliseconds. Keep this delay
+	// well beyond that resolution so the deadline assertion is deterministic on
+	// every supported runner.
+	time.Sleep(100 * time.Millisecond)
 	return nil
 }
 
