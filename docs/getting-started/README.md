@@ -1,131 +1,212 @@
 # Getting Started from Source
 
-The repository provides a source-buildable `doctor` candidate and a
-deterministic local reference server. It does not provide a supported package
-release or compatibility certification. Everything below is pre-Genesis,
-pre-release development behavior outside any claim of active phase execution.
+[Documentation home](../README.md) | [简体中文](../zh-CN/getting-started.md)
+
+This guide moves from a source checkout to an authorized target run, stored
+evidence, and exported reports. There is no tagged release or published
+package yet, and a passing result is not vendor certification.
+
+For the shortest credential-free path, use the
+[60-second Quick Start](../quick-start.md).
 
 ## Prerequisites
 
-- Git;
-- the Go toolchain selected by `go.mod`; and
-- Python 3 for bootstrap, integration, and documentation checks.
+- Git
+- The Go toolchain selected by `go.mod`
+- A POSIX-compatible shell for the examples below
+- Python 3 and Make for the full contributor checks
+- Docker only for container checks and local Compose services
 
-Docker is optional and needed only for the container/Compose paths. Do not put
-an API key in the repository: the synthetic quickstart uses no credential.
-
-## Run the local synthetic fixture
-
-The following session builds both binaries, starts only a loopback listener,
-and installs a trap that stops the process and removes its temporary log. Run
-it from a fresh checkout because `doctor init` intentionally refuses to
-overwrite an existing `.agentapi/config.yaml`.
+## Build from the default branch
 
 ```sh
-git clone --branch agent/full-project-r4 --single-branch https://github.com/whyiug/agentapi-doctor.git
+git clone https://github.com/whyiug/agentapi-doctor.git
 cd agentapi-doctor
 
 mkdir -p ./bin
-go build -o ./bin/doctor ./cmd/doctor
-go build -o ./bin/reference-server ./cmd/reference-server
+go build -trimpath -o ./bin/doctor ./cmd/doctor
+go build -trimpath -o ./bin/reference-server ./cmd/reference-server
 
-reference_log="${TMPDIR:-/tmp}/agentapi-doctor-reference.$$"
-./bin/reference-server -listen 127.0.0.1:8090 >"$reference_log" 2>&1 &
-reference_pid=$!
-trap 'kill "$reference_pid" 2>/dev/null || true; wait "$reference_pid" 2>/dev/null || true; rm -f "$reference_log"' EXIT INT TERM
-sleep 1
+./bin/doctor version
+./bin/doctor self-check
+```
 
+Windows users can build `./bin/doctor.exe` and
+`./bin/reference-server.exe` with the same package paths. See
+[Installation](../installation.md) for a PowerShell example and local Docker
+images.
+
+## Initialize the local project
+
+```sh
 ./bin/doctor init
+./bin/doctor target list
+```
+
+Initialization creates `.agentapi/config.yaml` and refuses to overwrite it.
+The generated `local-reference` target points to
+`http://127.0.0.1:8090/v1` and uses `openai-responses`.
+
+Read [Configuration](../configuration.md) before editing the file or adding a
+credential.
+
+## Run the synthetic fixture
+
+Start the checked-in fixture in one shell:
+
+```sh
+./bin/reference-server -listen 127.0.0.1:8090
+```
+
+Run the configured checks in another:
+
+```sh
 ./bin/doctor test local-reference
+./bin/doctor run inspect latest
 ./bin/doctor report terminal latest
 ```
 
-The generated config defines `local-reference` as an `openai-responses` target
-at `http://127.0.0.1:8090/v1`. The test command therefore executes exactly four
-candidate checks from that built-in protocol slice. It saves a canonical report
-under `.agentapi/runs`, and the report command reads that same store by default.
+Stop only the reference-server process you started. A normal run stores
+canonical records in `.agentapi/runs` and redacted evidence in
+`.agentapi/evidence`.
 
-The candidate runner also has four selected checks for each of `openai-chat`
-and `anthropic-messages`. A configured target selects one protocol and four
-checks per run; the quickstart does not execute all twelve checks at once.
+## Add an authorized endpoint
 
-## Inspect a run plan without network access
+Use a secret reference rather than a secret value:
 
-`--plan-only` builds and validates the candidate IntentPlan and exact
-ResolvedRunPlan without dialing the target, resolving a secret, or writing run
+```sh
+export EXAMPLE_API_TOKEN='replace-with-a-local-or-test-token'
+
+./bin/doctor target add example \
+  --base-url https://api.example.invalid/v1 \
+  --protocol openai-responses \
+  --model example-model \
+  --auth-ref env://EXAMPLE_API_TOKEN
+```
+
+`example.invalid` is deliberately non-routable. Replace it only with a local
+service or endpoint you are explicitly authorized to test.
+
+The current runner implements `openai-chat`, `openai-responses`, and
+`anthropic-messages`. It appends the corresponding operation path to the
+configured base URL, stays on the exact configured origin, and does not follow
+redirects.
+
+Inspect the target without revealing its secret reference:
+
+```sh
+./bin/doctor target inspect example
+```
+
+## Inspect the plan before network access
+
+`--plan-only` does not dial the target, resolve credentials, or write run
 evidence:
 
 ```sh
-./bin/doctor test local-reference --plan-only
-./bin/doctor test local-reference --plan-only --output ./local-plan.json
+./bin/doctor test example --plan-only
+./bin/doctor test example --plan-only --resolve
+./bin/doctor test example --plan-only --resolve --output ./example-plan.json
 ```
 
-`--resolve` is accepted only together with `--plan-only`. The current built-in
-slice has no capability probe and resolves its exact candidate artifacts
-offline; the separate flag preserves the intended planning boundary rather
-than turning a normal run into an implicit probe.
+`--resolve` requires `--plan-only`. Output files are created only when the path
+does not already exist.
 
-The complete candidate command shape is:
+## Execute and keep an exact run reference
 
-```text
-doctor test <target> [--config <path>] [--data-root <path>] [--plan-only] [--resolve] [--output <path>]
+```sh
+./bin/doctor test example
 ```
 
-A normal run stores records in `<data-root>/runs`; the default data root is
-`.agentapi`, so `doctor report terminal latest` uses `.agentapi/runs`. If a run
-uses a custom data root, point the renderer to it explicitly:
+The JSON result contains `data.run_id` and the primary exit code. Use that
+exact run ID for CI and durable evidence:
+
+```sh
+RUN_ID='<exact-run-id-from-doctor-test>'
+./bin/doctor run inspect "$RUN_ID" --allow-latest=false
+./bin/doctor report json "$RUN_ID" --allow-latest=false --output ./doctor-report.json
+```
+
+`latest` is convenient for interactive local work but is intentionally a
+mutable pointer.
+
+For a custom data root, pass its run store to later commands:
 
 ```sh
 ./bin/doctor test local-reference --data-root ./local-data
 ./bin/doctor report terminal latest --store ./local-data/runs
 ```
 
-Use an exact run ID instead of `latest` in CI or durable evidence references.
-Report output is also available as JSON, JUnit, SARIF, Markdown, and standalone
-HTML.
+## Render reports and compare runs
 
-## Understand what the result means
-
-- The reference fixture is deterministic, synthetic, and operated by the
-  local user. A PASS verifies only the selected candidate assertions against
-  that fixture.
-- The 12 checked-in targeted mutation modes are executable local fixtures.
-  Separately, the Requirement Catalog's 260 candidate scenarios and associated
-  reference/mutant records are metadata; they are not 260 executable mutants.
-- Catalog assertions remain `candidate` / `pending_review`. No support Tier,
-  real SDK/client result, vendor endorsement, or stable protocol claim follows
-  from a run.
-- A normal test is allowed to contact only the configured target. Never point
-  it at a public service unless you are explicitly authorized to test it.
-
-## Run repository checks
-
-For development, run the narrowest relevant test first and then the applicable
-aggregate checks:
+Reports are available as `terminal`, `json`, `junit`, `sarif`, `markdown`,
+and `html`:
 
 ```sh
-make -f Product.mk product-check
-make test-protected-verifier
-make -f Product.mk race-product
+./bin/doctor report junit latest --output ./doctor-junit.xml
+./bin/doctor report sarif latest --output ./doctor.sarif
+./bin/doctor report html latest --output ./doctor-report.html
 ```
 
-`make -f Product.mk docker-build-check` additionally builds and smokes the
-three hardened container targets without build-time network access.
-`make test-protected-verifier` runs the bounded verifier unit tests only. The
-whole-tree `make verify` command and complete `make test-bootstrap` suite
-intentionally reject product implementation before Genesis unless they are run
-against a separately approved exact control-plane candidate;
-`candidate_valid`, when applicable there, does not activate P00 or approve a
-phase.
-
-The redaction and content-addressed-store security fixtures use synthetic
-canaries only:
+Create and compare a named local baseline:
 
 ```sh
-go test ./internal/redaction -run TestJSONAndTextNeverPersistCanaryOrCredential -v
-go test ./internal/cas -run TestStoreAcceptsOnlySanitizedPayloadAndDetectsTamper -v
+./bin/doctor baseline accept latest --name local-known-good
+./bin/doctor baseline list
+./bin/doctor baseline compare latest --baseline local-known-good
 ```
 
-See [Synthetic fixtures](synthetic-fixtures.md) before contributing evidence,
-and [Compatibility layers](../concepts/compatibility-layers.md) for the failure
-boundaries a complete result preserves.
+You can also compare two exact runs from the default store:
+
+```sh
+OLD_RUN_ID='<exact-older-run-id>'
+NEW_RUN_ID='<exact-newer-run-id>'
+./bin/doctor compare "$OLD_RUN_ID" "$NEW_RUN_ID"
+```
+
+See the [CLI reference](../cli-reference.md) for exact flags, baseline naming,
+output behavior, and exit codes.
+
+## Interpret the result correctly
+
+- The local fixture is synthetic and deterministic. Its PASS only verifies the
+  current runner and fixture together.
+- A normal target run selects four built-in raw-wire checks for the configured
+  protocol.
+- The reference server contains 12 executable targeted modes.
+- The Requirement Catalog's 260 candidate scenario records are metadata, not
+  260 executable tests.
+- Current checks do not prove complete SDK, agent, model, provider, or
+  deployment compatibility.
+- A report is not certification, endorsement, or a guarantee of behavior
+  outside the exact tested version and configuration.
+
+Only test endpoints you are authorized to assess. Keep real credentials,
+private traces, and unredacted payloads out of issues and artifacts.
+
+## Run contributor checks
+
+Run the narrowest relevant test first, then the appropriate aggregate:
+
+```sh
+make check
+make test
+make race
+make docker-check
+```
+
+- `make check` runs the complete local quality gate.
+- `make test` runs all Go tests.
+- `make race` runs all Go tests with the race detector.
+- `make docker-check` builds and smokes the hardened local image targets.
+
+Read [Synthetic fixtures](synthetic-fixtures.md) before contributing evidence,
+and [CONTRIBUTING.md](../../CONTRIBUTING.md) before opening a pull request.
+
+## Where to go next
+
+- [Troubleshooting](../troubleshooting.md)
+- [Concepts](../concepts/README.md)
+- [Security and privacy](../security-and-privacy/README.md)
+- [Registry self-hosting](../registry/README.md)
+- [Known limitations](../known-limitations/README.md)

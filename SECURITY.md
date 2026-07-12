@@ -49,10 +49,9 @@ When a report is valid, maintainers should coordinate a minimal fix, regression
 test, affected-version analysis, advisory, and release evidence before public
 technical detail is added.
 
-Security work does not bypass review, provenance, or release-signing rules.
-Emergency fixes may be applied first when needed, but the governance record and
-ADR/RFC follow-up must be completed within the period defined in
-[GOVERNANCE.md](GOVERNANCE.md).
+Security work does not bypass provenance or release-signing rules. Emergency
+fixes may be applied first when needed, with public rationale added after
+coordinated disclosure when it is safe to do so.
 
 ## Research boundary
 

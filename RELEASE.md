@@ -1,102 +1,71 @@
 # Release Policy
 
-## Current status
+AgentAPI Doctor currently has no tagged release. Until the first prerelease is
+published, build from source as described in the [Quick Start](docs/quick-start.md).
 
-AgentAPI Doctor has no stable or release-candidate release. This policy defines
-the evidence required for future releases; it does not announce a version,
-date, package, Registry, or support commitment.
+## Versioning and channels
 
-## Versioned surfaces
+- CLI and service releases use [Semantic Versioning](https://semver.org/).
+- Tags are `vMAJOR.MINOR.PATCH` or `vMAJOR.MINOR.PATCH-rc.N`.
+- Release candidates are GitHub prereleases. Stable tags create stable GitHub
+  releases.
+- Before 1.0, release notes identify the supported configuration, schema, and
+  protocol surface; breaking changes may occur in a minor version.
 
-The project uses separate version axes:
+Schemas, protocol packs, profiles, and the Driver RPC carry their own explicit
+version fields so stored evidence can be interpreted independently of the CLI
+version.
 
-- CLI/Core: Semantic Versioning;
-- Result and Observation schemas: explicit schema versions;
-- Packs: CalVer `YYYY.MM.patch`, with independent protocol revision and
-  immutable OCI digest;
-- Profiles: Semantic Versioning;
-- Driver RPC: protocol Semantic Versioning with capability negotiation;
-- Registry API: URL major, additive-first within a major; and
-- Requirement Catalog: source revision plus content digest.
+## Preparing a release
 
-No previous stable major is invented for v1.0. Any explicitly supported
-pre-1.0 migration floor must be listed by ID, version, digest, and fixture.
+1. Start from a commit on protected `main` with all required checks passing.
+2. Update [CHANGELOG.md](CHANGELOG.md), compatibility or migration guidance,
+   and known limitations.
+3. Add `release-notes/vX.Y.Z.md` (or `vX.Y.Z-rc.N.md`) using the checked-in
+   template and validator.
+4. Create a signed annotated tag for that exact commit and push it once.
 
-## Release gates
+The tag-triggered workflow then:
 
-A real RC or stable release requires:
+- verifies the tag, its GitHub signature status, SemVer, release notes, and
+  ancestry from `main`;
+- reruns tests, static analysis, vulnerability checks, race tests, and offline
+  container smoke tests;
+- builds Linux, macOS, and Windows archives for `amd64` and `arm64`;
+- produces SHA-256 checksums, SPDX and CycloneDX SBOMs, provenance, and a
+  Sigstore bundle;
+- smoke-tests each archive and both multi-architecture OCI images;
+- publishes an exact allowlisted asset set through the protected `release`
+  environment; and
+- downloads the public artifacts and verifies them again.
 
-1. a protected, immutable source tag pointing to reviewed main history;
-2. all required CI, security, compatibility, migration, and clean-install
-   checks for the exact commit;
-3. Linux, macOS, and Windows artifacts for `amd64` and `arm64`;
-4. a non-root OCI image with a minimal base pinned by digest;
-5. SHA-256 checksums, SPDX and CycloneDX SBOMs, SLSA provenance, and Sigstore
-   signatures bound to the released subjects;
-6. changelog, migration notes, known issues, and an explicit support window;
-7. a protected release environment approved by two real maintainers;
-8. a Release Manager and an independent verifier from a different
-   organization; and
-9. post-release installation, signature verification, and smoke tests using
-   the public download locations.
+Release artifacts and tags are immutable. A failed release is fixed with a new
+version; published assets and tags are never replaced. GitHub's immutable
+release setting and the protected signed-tag ruleset enforce this policy.
 
-GitHub's `verified` result proves that a tag object's signature is valid for an
-identity known to GitHub; it does not by itself authorize that identity to cut
-a release. The no-bypass tag ruleset, protected release environment, exact
-review evidence, and Release Manager assignment provide that separate
-authorization boundary.
+## Authorization and credentials
 
-The exact tag must also include a reviewed
-`release-notes/<tag>.md` file that passes the offline release-note validator.
-The release workflow gives a verified draft its final channel classification
-before publication: RC tags remain prereleases and stable tags publish as
-stable. It publishes the complete draft once under repository-enforced release
-immutability, then re-downloads and verifies it through the public URL. A failed
-post-publication check is an incident against an immutable release, never a
-reason to rewrite assets or move the tag. Generated Homebrew and Scoop files are
-release assets; they do not claim that a tap or bucket exists.
+Only maintainers with release permission may create a version tag or approve
+the release environment. The workflow uses the scoped GitHub token and OIDC
+keyless signing; long-lived signing or registry credentials must not be added
+to the repository or exposed to pull requests.
 
-The checked-in workflow is intentionally unavailable for publication today.
-RC tags use a separate fail-closed placeholder until an exact post-Genesis RC
-gate is independently approved; stable tags require the authoritative GA gate.
-GitHub Environment approval is only one control and does not replace the two
-real maintainer approvals or independent-organization evidence required above.
+GitHub's `verified` tag result proves signature validity for an identity known
+to GitHub. Maintainer authorization, protected `main`, the tag ruleset, and the
+release environment determine whether that identity may publish.
 
-OIDC-issued short-lived credentials are preferred for signing and publication.
-Long-lived signing or registry credentials must not be committed or exposed to
-fork pull requests.
+OCI identities are recorded as exact `name@sha256:...` subjects in the signed
+`oci-images.json` release asset. Temporary `build-<commit>-<run>-<attempt>`
+tags are transport handles, not stable release identities.
 
-OCI images are release identities only by the exact `name@sha256:...` subjects
-in the checksum- and Sigstore-covered `oci-images.json` asset. The workflow's
-unique `candidate-<commit>-<run>-<attempt>` tags are mutable transport pointers,
-not release identities. It deliberately creates no semantic OCI tag because
-GHCR does not provide the atomic create-if-absent guarantee required to call
-such a tag immutable.
+## Support and security fixes
 
-## Release channels
+Before 1.0, each release note states its support window and known limitations.
+Once a stable support policy is announced, deprecations will include a public
+rationale, replacement, and migration path.
 
-- Development builds make no compatibility promise.
-- RCs are for final contract and migration validation.
-- Stable releases begin only after all GA gates and the required RC observation
-  window have completed.
+Security fixes normally land on `main` before release. Coordinated disclosure
+may use a private preparation branch; see [SECURITY.md](SECURITY.md).
 
-Published tags and artifacts are never overwritten. If an artifact is wrong,
-maintainers may stop promotion or yank a mutable channel pointer, preserve the
-audit evidence, and publish a new patch release. Security fixes enter main
-before any supported backport unless coordinated disclosure requires a private
-preparation branch.
-
-## Support and deprecation
-
-Before stable v1, support is defined per release note. For future stable
-releases, the intended policy is to support the current and previous minor and
-provide 12 months of security fixes for the last minor of a major, subject to a
-publicly announced capacity review before that commitment takes effect.
-
-A stable deprecation requires a public rationale and replacement, at least two
-minor releases and 90 days, machine-readable warnings, and removal only in the
-next major. Old artifacts remain readable or receive an offline migration path
-according to the published schema policy.
-
-The release checklist cannot be self-certified. Missing people, evidence,
-signatures, or time windows leave a release blocked rather than waived.
+Users can verify downloaded artifacts with the steps in
+[Release verification](docs/operations/release-verification.md).

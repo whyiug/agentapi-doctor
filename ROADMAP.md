@@ -1,29 +1,40 @@
 # Roadmap
 
-AgentAPI Doctor uses evidence-based exit gates, not promised calendar dates.
-The detailed requirements and phase dependencies are in
-[agentapi-doctor-Plan.md](agentapi-doctor-Plan.md). This summary is not a claim
-that a phase has passed.
+AgentAPI Doctor follows outcome-based priorities rather than fixed delivery
+dates. The roadmap may change as users contribute evidence and real integration
+needs.
 
-If `execution/phase-state.yaml` is absent, the project is still before
-authoritative Genesis and no coding phase or work unit is active.
+## Available from source
 
-| Phase | Intended result | Completion evidence |
-|---|---|---|
-| P00 — Validation and Bootstrap | Differentiation, lawful corpus, risk-retirement experiments, provisional RFC/security/data design | Protected P00 gates plus real external and human review |
-| P01 — Contracts and Catalog | Stable candidate schemas, identity, canonicalization, requirements and source lock | Schema, digest, old-reader and independent protocol review evidence |
-| P02 — Kernel and Evidence | Planner, budgets, capture, redaction, CAS and replay | Deterministic, cross-platform, privacy and security gates |
-| P03 — Core Protocol Conformance | OpenAI Chat/Responses and Anthropic packs with reference/mutant coverage | Scenario, mutation, historical and protocol-review thresholds |
-| P04 — Client-observed Runtime | Real SDK/agent drivers, profiles, sandbox and support matrix | Locked client matrix and real adopter validation |
-| P05 — Diagnosis and CI Product | Attribution, minimization, reports, baselines and GitHub integration | Ground-truth quality and actual upstream/CI adoption evidence |
-| P06 — Protocol Expansion | Google, MCP and explicit external/dialect adapters | Requirement/reference/mutant gates and Pack Maintainer review |
-| P07 — Trusted Registry | Signed observations, ownership, ingest, dispute, self-host and operations | Security, privacy, recovery, consistency and external review |
-| P08 — GA Hardening | Contract freeze, migration, release chain, documentation and governance | Two RCs over at least six weeks, adopter window and TSC vote |
+- Local diagnostics for OpenAI Chat Completions, OpenAI Responses, and
+  Anthropic Messages protocol slices.
+- Deterministic reference and targeted-mutant fixtures.
+- Evidence redaction, content-addressed storage, run comparison, baselines, and
+  terminal/JSON/JUnit/SARIF/Markdown/HTML reports.
+- A single-node self-hosted Registry, static Matrix UI, Docker/Compose setup,
+  schemas, OpenAPI, CI integrations, and release packaging automation.
 
-The project is GA-ready only when P00–P08 are converged and every applicable
-Definition-of-Done criterion has real evidence. Code volume, a green bootstrap
-test, stars, or closed issues are not substitutes.
+## Near term
 
-Priorities may change only through the scope/RFC process. A pivot that preserves
-open schemas, fixtures, and evidence is preferable to maintaining an
-unvalidated hosted service.
+- Publish the first signed prerelease and verify clean installation on Linux,
+  macOS, and Windows.
+- Improve CLI onboarding, diagnostics, and actionable remediation guidance.
+- Expand executable protocol cases while keeping metadata and runnable coverage
+  clearly separated.
+- Exercise the GitHub Action and reusable workflow in real downstream test
+  repositories.
+- Stabilize configuration, result, and report schemas before a 1.0 release.
+
+## Later
+
+- Add locked SDK and agent-client drivers with explicit version support.
+- Add more protocol families through independently versioned packs.
+- Strengthen sandboxing and network isolation for untrusted drivers.
+- Mature Registry verification, ownership, dispute, privacy, backup, and
+  operational controls before any hosted service is offered.
+- Build a community-maintained compatibility matrix from consented, verifiable
+  observations.
+
+Priorities are discussed through issues, pull requests, and RFCs. A checked box
+or large catalog is not a compatibility claim: support is declared only for
+behavior covered by executable tests and release documentation.

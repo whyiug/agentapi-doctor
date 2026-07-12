@@ -1,119 +1,61 @@
 # Governance
 
-## Current status: Bootstrap Charter
-
-AgentAPI Doctor is a pre-release project operating under a temporary Bootstrap
-Charter. There is no Technical Steering Committee (TSC), release quorum, or
-claim of multi-organization governance today. The only currently recorded role
-holder is listed in [MAINTAINERS.md](MAINTAINERS.md).
-
-The Bootstrap Charter exists to establish reviewable contracts without
-pretending that one author constitutes an independent community. It expires
-only after all of the following are true:
-
-- at least three release-capable maintainers participate;
-- those maintainers represent at least three independent organizations or
-  employers;
-- Core, Pack, and Security responsibilities have real owners; and
-- a public formation procedure creates a TSC and re-ratifies provisional RFCs.
-
-Until then, governance documents and RFCs may be useful and public, but a sole
-maintainer cannot self-create the independent approvals required by the plan.
+AgentAPI Doctor is currently a maintainer-led open-source project. The active
+maintainers and their scopes are recorded in [MAINTAINERS.md](MAINTAINERS.md).
+This model keeps routine work lightweight while the contributor community
+grows.
 
 ## Roles
 
-| Role | Responsibility | Authority source |
-|---|---|---|
-| Contributor | Issues, fixtures, documentation, code, and review | Accepted contributions and this policy |
-| Reviewer | Review in demonstrated areas of expertise | Maintainer nomination recorded in MAINTAINERS.md |
-| Pack Maintainer | Requirement sources, scenarios, protocol drift | Named scope and conflict disclosure |
-| Driver Maintainer | SDK/client matrix and release compatibility | Named ecosystem scope |
-| Core Maintainer | Core merges and release-candidate approval | Sustained cross-module contribution and trust |
-| Registry Operator | Hosted operations, privacy, disputes, and audit | Separate least-privilege appointment |
-| Security Team | Private vulnerability and incident handling | Explicit confidential appointment |
-| TSC | Scope, governance, budget, and major RFC decisions | Future public formation procedure |
-
-Emergency security access is not granted automatically to every maintainer.
-Registry, release, security, Core, and Pack duties should be separated as the
-team grows.
+- **Contributors** propose code, tests, fixtures, documentation, and designs.
+- **Reviewers** provide informed feedback in areas where they have experience.
+- **Maintainers** triage work, merge changes, manage releases, and uphold the
+  project's security and compatibility policies.
+- **Security maintainers** receive private vulnerability reports and coordinate
+  fixes and disclosure. Security access is granted explicitly and kept to the
+  minimum necessary.
 
 ## Decisions
 
-Routine implementation changes follow CODEOWNERS and required checks. The
-following changes require an RFC:
+Routine changes are decided through pull-request review by a maintainer. The
+maintainer considers technical quality, compatibility, security, maintenance
+cost, and community feedback; consensus is preferred, but unanimity is not
+required.
 
-- result or observation schemas and scoring;
-- a new protocol family or normative support tier;
-- Registry trust, privacy, retention, or dispute policy;
-- plugin or driver ABI;
-- breaking CLI or configuration behavior;
-- telemetry;
-- governance, license, trademark, or sponsorship policy.
+Changes to public schemas, protocol semantics, driver ABI, Registry trust or
+privacy, telemetry defaults, licensing, or governance should use an RFC under
+[`rfcs/`](rfcs/). The review period and evidence should be proportional to the
+impact. Architecture decisions are recorded under [`adrs/`](adrs/).
 
-An RFC remains open for public comment for at least 14 days and normally needs
-two maintainer approvals, including one reviewer from an organization other
-than the author. Pack normative changes likewise require approval from two
-independent parties. Implementation decisions use ADRs that record context,
-alternatives, the decision, and consequences.
+Urgent security fixes may be prepared privately and merged before the normal
+design process when delay would increase harm. Public rationale can follow
+after coordinated disclosure without exposing embargoed details.
 
-During bootstrap:
+## Conflicts and independence
 
-- the Bootstrap Maintainer may mark an RFC only `draft` or `provisional`;
-- foundational RFCs should invite review from at least two independent
-  upstream maintainers or subject-matter experts;
-- a normative, security, or schema RFC needs at least one substantive external
-  review before it can freeze a later-phase contract;
-- absence of review leaves the relevant gate waiting; silence is not approval;
-- no stable badge, hosted-result dispute, or security gate may be self-approved.
+Anyone making a decision should disclose a material employment, financial,
+authorship, or competitive interest and recuse when it prevents impartial
+judgment. Sponsors and vendors do not receive compatibility waivers, ranking
+benefits, or the ability to remove valid failures.
 
-A security emergency may be fixed before the normal RFC period when delaying
-would increase harm. An ADR or RFC explaining the decision must follow within
-seven days, without publishing embargoed exploit detail.
+## Becoming a maintainer
 
-## Conflicts of interest and vendor independence
+Maintainer access is based on sustained, constructive contributions and sound
+judgment. An existing maintainer records the appointment in
+[MAINTAINERS.md](MAINTAINERS.md) after the contributor agrees to the role.
+Permissions are reviewed periodically and may be reduced after prolonged
+inactivity or immediately after credential compromise.
 
-Anyone deciding a profile, result dispute, exception, sponsorship policy, or
-normative change must disclose material employment, financial, authorship, or
-competitive interests and recuse when those interests impair independent
-judgment.
+Removal for conduct or trust reasons should include an unconflicted review and
+an appeal path under the [Code of Conduct](CODE_OF_CONDUCT.md), except for
+temporary access suspension needed to contain an active security incident.
 
-When a TSC exists:
+As the maintainer group grows, the project may adopt a steering committee or
+more formal voting rules through a public governance RFC.
 
-- one employer may not control more than one third of its seats;
-- a vendor may not solely approve its own profile, result dispute, or
-  exception;
-- sponsors receive no testing waiver, ranking benefit, private passing badge,
-  specification veto, or paid removal of failures; and
-- income, material infrastructure support, and potential conflicts are
-  disclosed in an annual transparency report.
+## Records and amendments
 
-## Appointment, inactivity, and removal
-
-Reviewer or maintainer appointment requires a public nomination describing the
-candidate's scope and contributions, confirmation by the candidate, conflict
-disclosure, and the approvals required by the then-current governance body.
-Permissions are reviewed at least quarterly.
-
-After six months of inactivity, maintainers should first attempt private
-contact. Access may then be reduced to the minimum needed, with a public
-role-record update that does not disclose private circumstances. Returning
-maintainers can be restored through the normal appointment process.
-
-Access may be suspended immediately for credential compromise or credible
-security risk. Permanent removal for conduct or trust reasons requires an
-unconflicted review and an appeal path under the
-[Code of Conduct](CODE_OF_CONDUCT.md).
-
-## Meetings and records
-
-If public maintainer meetings begin, their schedule and non-sensitive minutes
-will be published. Security, personal, and embargoed material remains private.
-No meeting, vote, organization affiliation, or external endorsement should be
-recorded unless it actually occurred and can be verified.
-
-## Amending governance
-
-Changes to this document require the RFC process. During bootstrap they remain
-provisional unless they receive the independent review required above. After a
-TSC is formed, it must re-ratify this charter and replace bootstrap-only
-language through a public decision.
+Public project decisions belong in issues, pull requests, RFCs, ADRs, release
+notes, or meeting minutes. Security, personal, and embargoed material remains
+private. Changes to this document follow the same pull-request process as other
+project policy changes.

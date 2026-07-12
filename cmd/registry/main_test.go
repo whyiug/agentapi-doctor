@@ -1,10 +1,31 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"path/filepath"
 	"testing"
+
+	"github.com/whyiug/agentapi-doctor/internal/buildinfo"
 )
+
+func TestVersionReportsExactBuildIdentity(t *testing.T) {
+	var output bytes.Buffer
+	if err := writeVersion(nil, &output); err != nil {
+		t.Fatal(err)
+	}
+	var got buildinfo.Info
+	if err := json.Unmarshal(output.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got != buildinfo.Current() {
+		t.Fatalf("version = %+v, want %+v", got, buildinfo.Current())
+	}
+	if err := writeVersion([]string{"unexpected"}, io.Discard); err == nil {
+		t.Fatal("version accepted an argument")
+	}
+}
 
 func TestValidateListenAddressDefaultsToLoopback(t *testing.T) {
 	for _, address := range []string{"127.0.0.1:8080", "[::1]:8080", "localhost:8080"} {

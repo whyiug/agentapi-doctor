@@ -35,6 +35,18 @@ CLI/Core versions will follow
 - Community, governance, security, privacy, data-license, operations,
   contribution, architecture, and bilingual getting-started documentation.
 
+### Changed
+
+- Replaced the internal bootstrap lifecycle machinery with a conventional
+  protected-main pull-request workflow and standard `make` development targets.
+- Added English and Simplified Chinese project home pages and Quick Starts,
+  plus installation, configuration, CLI reference, and troubleshooting guides.
+- Release archives and minimal OCI images now carry a generated third-party
+  license bundle; Registry and reference-server binaries expose exact build
+  identity, and release smoke tests verify every native archive.
+- Release publication now emits checksum-covered image-specific SPDX SBOMs for
+  both published OCI image digests.
+
 ### Security
 
 - Added fail-closed archive extraction checks, exact-origin/no-redirect network
@@ -48,5 +60,4 @@ CLI/Core versions will follow
   network mode while preserving explicitly authorized local-target behavior.
 
 There are no tagged RC or stable releases. This section records development
-facts only; it does not establish Genesis, phase completion, support, review,
-adoption, publication, or GA readiness.
+facts and does not claim support, external review, adoption, or publication.

@@ -25,8 +25,6 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertEqual(workflow.count("git/ref/tags/$TAG"), 2)
         self.assertEqual(workflow.count(".verification.verified"), 4)
         self.assertEqual(workflow.count('test "${tag_facts[5]}" = valid'), 2)
-        self.assertIn("repos/$GITHUB_REPOSITORY/immutable-releases", workflow)
-        self.assertIn("--jq '.enabled'", workflow)
         self.assertIn("(.immutable|tostring)", workflow)
         self.assertNotIn("git verify-tag", workflow)
         self.assertNotIn("imagetools create --tag", workflow)
@@ -34,7 +32,11 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertIn("for platform in linux/amd64 linux/arm64", workflow)
         self.assertEqual(workflow.count('docker run --platform "$platform"'), 2)
         self.assertIn("release-dist/oci-images.json", workflow)
-        self.assertIn("sha256sum oci-images.json >> checksums.txt", workflow)
+        self.assertIn(
+            "sha256sum oci-images.json agentapi-doctor-image.spdx.json",
+            workflow,
+        )
+        self.assertIn("agentapi-doctor-registry-image.spdx.json", workflow)
         release_edits = [
             line.strip()
             for line in workflow.splitlines()

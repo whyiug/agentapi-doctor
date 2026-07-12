@@ -24,7 +24,12 @@ builds:
     goos: [linux]
     goarch: [amd64, arm64]
     flags: [-trimpath, -buildvcs=true, -mod=vendor]
-    ldflags: [-s -w]
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.Version={{.Version}}
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.Commit={{.FullCommit}}
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.BuiltAt={{.CommitDate}}
     mod_timestamp: "{{ .CommitTimestamp }}"
   - id: reference-server
     main: ./cmd/reference-server
@@ -33,7 +38,12 @@ builds:
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
     flags: [-trimpath, -buildvcs=true, -mod=vendor]
-    ldflags: [-s -w]
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.Version={{.Version}}
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.Commit={{.FullCommit}}
+        -X github.com/whyiug/agentapi-doctor/internal/buildinfo.BuiltAt={{.CommitDate}}
     mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:
@@ -46,6 +56,7 @@ archives:
       - README.md
       - LICENSE
       - NOTICE
+      - THIRD_PARTY_LICENSES.txt
       - SECURITY.md
       - DATA_POLICY.md
   - id: registry
@@ -57,6 +68,7 @@ archives:
       - README.md
       - LICENSE
       - NOTICE
+      - THIRD_PARTY_LICENSES.txt
       - SECURITY.md
       - DATA_POLICY.md
   - id: reference-server
@@ -68,6 +80,7 @@ archives:
       - README.md
       - LICENSE
       - NOTICE
+      - THIRD_PARTY_LICENSES.txt
       - SECURITY.md
       - DATA_POLICY.md
 

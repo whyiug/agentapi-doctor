@@ -32,7 +32,7 @@ body:
     attributes:
       label: Affected surface
       options:
-        - Bootstrap or phase gate
+        - Build, CI, or release tooling
         - CLI or configuration
         - Protocol pack or assertion
         - Recorder, redaction, or evidence

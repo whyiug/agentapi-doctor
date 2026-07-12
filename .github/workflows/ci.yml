@@ -71,7 +71,7 @@ jobs:
           tar -xzf "$archive" -C "$RUNNER_TEMP/actionlint" actionlint
           "$RUNNER_TEMP/actionlint/actionlint" .github/workflows/*.yml
       - name: Verify formatting, schemas, tests, and static analysis
-        run: make -f Product.mk product-check
+        run: make check
       - name: Exercise data races
         run: go test -race ./...
       - name: Ensure the module is tidy
@@ -94,7 +94,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
       - name: Build and smoke all minimal images without build-time network
-        run: make -f Product.mk docker-build-check
+        run: make docker-check
 
   aggregate:
     name: Product CI / aggregate

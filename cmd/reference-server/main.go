@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -14,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/whyiug/agentapi-doctor/internal/buildinfo"
 	mutantserver "github.com/whyiug/agentapi-doctor/reference/mutant-server"
 	referenceserver "github.com/whyiug/agentapi-doctor/reference/server"
 )
@@ -30,9 +33,17 @@ func run() error {
 	allowNonLoopback := flag.Bool("allow-non-loopback", false, "explicitly permit a non-loopback synthetic fixture listener")
 	mutationID := flag.String("mutant", "", "enable one stable primary mutation ID")
 	listMutants := flag.Bool("list-mutants", false, "list stable mutation IDs and exit")
+	version := flag.Bool("version", false, "print the exact build identity as JSON and exit")
 	maxBodyBytes := flag.Int64("max-body-bytes", 1<<20, "maximum JSON request bytes")
 	requestTimeout := flag.Duration("request-timeout", 2*time.Second, "per-request fixture deadline")
 	flag.Parse()
+	if flag.NArg() != 0 {
+		return errors.New("unexpected positional arguments")
+	}
+
+	if *version {
+		return writeVersion(os.Stdout)
+	}
 
 	if *listMutants {
 		for _, entry := range mutantserver.Catalog() {
@@ -91,6 +102,10 @@ func run() error {
 		return err
 	}
 	return nil
+}
+
+func writeVersion(output io.Writer) error {
+	return json.NewEncoder(output).Encode(buildinfo.Current())
 }
 
 func validateListenAddress(address string, allowNonLoopback bool) error {

@@ -39,7 +39,11 @@ OPTIONAL_UNCHECKSUMMED_ASSETS = {
 # OCI subjects do not exist until the verified multi-architecture images have
 # been pushed. If this optional final-publication asset is present, it must be
 # covered by checksums.txt before the manifest can be signed or uploaded.
-OPTIONAL_CHECKSUMMED_ASSETS = {"oci-images.json": "oci-subjects"}
+OPTIONAL_CHECKSUMMED_ASSETS = {
+    "agentapi-doctor-image.spdx.json": "image-sbom",
+    "agentapi-doctor-registry-image.spdx.json": "image-sbom",
+    "oci-images.json": "oci-subjects",
+}
 OPTIONAL_ASSETS = OPTIONAL_UNCHECKSUMMED_ASSETS | OPTIONAL_CHECKSUMMED_ASSETS
 
 

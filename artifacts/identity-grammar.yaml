@@ -3,7 +3,6 @@ kind: IdentityGrammar
 status: provisional
 jsonPublicFieldStyle: snake_case
 authoredYAMLVersionField: apiVersion
-controlPlaneFieldStyle: versioned-camelCase
 identifiers:
   instanceID:
     type: UUIDv7

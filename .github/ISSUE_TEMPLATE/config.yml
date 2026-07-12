@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Ask a question
+    url: https://github.com/whyiug/agentapi-doctor/discussions
+    about: Use Discussions for setup help, usage questions, and ideas.
   - name: Report a vulnerability privately
     url: https://github.com/whyiug/agentapi-doctor/security/advisories/new
     about: Never disclose vulnerabilities, secrets, or private traces in a public issue.

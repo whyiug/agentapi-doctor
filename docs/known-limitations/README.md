@@ -1,67 +1,50 @@
 # Known Limitations
 
-AgentAPI Doctor is a pre-Genesis, pre-release candidate. The following
-limitations are part of its current product boundary, not a release roadmap
-that should be represented as completed work.
+AgentAPI Doctor is in active pre-release development. These are the current
+product boundaries; they are not hidden compatibility claims.
 
 ## Execution and compatibility
 
-- There is no supported binary/package release or stable CLI/config contract;
-  the `doctor` binary is currently built from source.
-- The runnable local slice covers only raw HTTP behavior for `openai-chat`,
-  `openai-responses`, and `anthropic-messages`. It selects four candidate
-  checks for the configured target protocol.
-- No real SDK/client driver or complete agent loop has an approved support
-  Tier. Checked-in driver, profile, runtime-adapter, and support manifests are
-  candidate/unresolved metadata.
-- The Requirement Catalog has 260 candidate scenario records with reference
-  and targeted-mutant metadata. They are not 260 executable conformance tests.
-  The local reference server exposes 12 executable targeted mutation modes.
-- No real provider result, live canary result, public compatibility report,
-  certification badge, or vendor endorsement is published.
-- Built-in Requirement Catalog interpretations remain
-  `candidate` / `pending_review`; they have not completed independent source
-  review.
-- Windows does not currently accept `file://` secret references because Go's
-  synthesized mode bits cannot prove that a DACL is private; use `env://` in
-  this candidate. Unix-like systems continue to require no group/other mode
-  bits. `exec://` remains disabled unless explicitly approved.
+- There is not yet a tagged binary or package release. Build the `doctor`
+  command from source.
+- Local execution currently covers raw HTTP behavior for `openai-chat`,
+  `openai-responses`, and `anthropic-messages`, with four built-in checks chosen
+  for the configured protocol.
+- Real SDK/client drivers and complete agent loops are not yet supported. The
+  checked-in driver, profile, and runtime manifests are development inputs.
+- The Requirement Catalog contains 260 metadata scenarios. These are not 260
+  executable conformance tests; the reference server currently exposes 12
+  executable targeted mutation modes.
+- Catalog interpretations marked `candidate` / `pending_review` have not
+  completed independent protocol-source review.
+- No public result is a vendor certification, endorsement, or guarantee of
+  behavior outside the exact version, target, plan, and evidence tested.
+- Windows rejects `file://` secret references because Go mode bits cannot prove
+  that a Windows DACL is private. Use `env://` on Windows. Unix-like systems
+  require no group/other permission bits. `exec://` remains opt-in.
 
-## Registry, Matrix, and distribution
+## Registry and Matrix
 
-- A runnable single-node SQLite self-hosted Registry candidate, static Matrix
-  source, backup command, Docker targets, and local Compose bundle exist. They
-  do not constitute a production-supported service.
-- On Windows, SQLite paths must use a local drive-letter path. UNC shares,
-  device paths, and drive-relative paths are rejected rather than treated as
-  local durable storage.
-- No hosted verifier, project-operated Registry or Matrix, public runner,
-  managed image, production SLO, recovery drill, or public Registry dataset
-  exists. A local durable upload cannot receive a project trust label.
-- Homebrew, Scoop, GitHub Action, reusable-workflow, release, SBOM, provenance,
-  and signature configuration are unpublished distribution candidates. No RC
-  or stable artifact has been released.
-- The candidate release workflow is fail-closed: there is no approved RC gate,
-  the GA gate has no authoritative phase state, and the currently configured
-  release Environment cannot itself prove the required two-maintainer and
-  independent-organization approvals.
-- Public JSON Schemas and Registry OpenAPI are versioned candidate artifacts;
-  there is no stable compatibility or migration promise yet.
+- The self-hosted Registry is a single-node implementation using memory or
+  SQLite storage. It has no clustering, managed upgrades, or production SLO.
+- Windows SQLite storage requires a local drive-letter path; UNC, device, and
+  drive-relative paths are rejected.
+- There is no project-operated Registry, hosted verifier, public runner, hosted
+  Matrix, or public Registry dataset. A local observation does not receive a
+  project trust label.
+- Operators must provide their own TLS termination, authentication boundary,
+  backups, monitoring, retention policy, and recovery testing.
 
-## Governance and readiness
+## Distribution and contracts
 
-- Genesis has not occurred. There is no authoritative phase state, active work
-  unit, approved P00/P01 transition, phase completion, or GA result.
-- No completed independent security design review, penetration test, privacy or
-  legal review, verified adopter set, external support evidence, TSC, release
-  quorum, or GA vote exists.
-- There is no completed six-week/two-RC observation window, stable support
-  period, or historical-corpus rights review.
+- Homebrew, Scoop, GitHub Action, reusable-workflow, OCI, SBOM, provenance, and
+  release automation are tested in the repository but remain unpublished until
+  the first tagged release.
+- Public JSON Schemas and Registry OpenAPI are versioned pre-release contracts.
+  A stable compatibility and migration floor has not been declared.
+- No external penetration test, privacy/legal review, verified adopter set, or
+  long-term support window is claimed.
 
-Bootstrap validation establishes only that the phase-external P00.B00 candidate
-passes its own structural and anti-placeholder checks. Product tests establish
-only their asserted local behavior. Neither is approval or phase state.
-
-Limitations are removed only after their authoritative contract and evidence
-gates actually pass. This page must not be edited merely to improve project
-appearance.
+Product tests establish only the behavior asserted by those tests. Limitations
+should be removed when the corresponding implementation, documentation, and
+repeatable evidence exist.

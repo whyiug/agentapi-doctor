@@ -28,7 +28,7 @@ type packDefinition struct {
 }
 
 // commonFeatures is an independently authored semantic matrix derived from
-// Plan section 14. Feature selection uses a coprime stride so smaller packs
+// Feature selection uses a coprime stride so smaller packs
 // sample across the complete taxonomy instead of merely taking a prefix.
 var commonFeatures = []featureDefinition{
 	{Slug: "endpoint-method", Taxonomy: "endpoint-discovery", SourceRole: "general", Locator: "endpoint and HTTP method", Summary: "uses the documented endpoint path and HTTP method", Mutation: "replace-endpoint-method"},

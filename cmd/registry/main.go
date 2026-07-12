@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/whyiug/agentapi-doctor/internal/buildinfo"
 	domain "github.com/whyiug/agentapi-doctor/internal/registry"
 	"github.com/whyiug/agentapi-doctor/internal/registry/httpapi"
 	"github.com/whyiug/agentapi-doctor/internal/registry/store"
@@ -49,6 +51,8 @@ func main() {
 func run(arguments []string) error {
 	if len(arguments) > 0 {
 		switch arguments[0] {
+		case "version":
+			return writeVersion(arguments[1:], os.Stdout)
 		case "serve":
 			arguments = arguments[1:]
 		case "backup":
@@ -60,6 +64,13 @@ func run(arguments []string) error {
 		return err
 	}
 	return serve(options)
+}
+
+func writeVersion(arguments []string, output io.Writer) error {
+	if len(arguments) != 0 {
+		return errors.New("usage: registry version")
+	}
+	return json.NewEncoder(output).Encode(buildinfo.Current())
 }
 
 func parseServerOptions(arguments []string, output io.Writer) (serverOptions, error) {

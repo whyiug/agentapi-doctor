@@ -83,6 +83,17 @@ class ReleaseSmokeSafetyTests(unittest.TestCase):
         ):
             selected = release_smoke.choose_archive(Path(temporary), checksums, "1.2.3")
             self.assertEqual(selected.name, "agentapi-doctor_1.2.3_linux_amd64.tar.gz")
+            for component, expected in {
+                "doctor": "agentapi-doctor_1.2.3_linux_amd64.tar.gz",
+                "registry": "agentapi-doctor_registry_1.2.3_linux_amd64.tar.gz",
+                "reference-server": "agentapi-doctor_reference-server_1.2.3_linux_amd64.tar.gz",
+            }.items():
+                self.assertEqual(
+                    release_smoke.choose_component_archive(
+                        Path(temporary), checksums, "1.2.3", component
+                    ).name,
+                    expected,
+                )
 
     def test_archive_selection_rejects_prefixed_or_missing_version(self) -> None:
         digest = "a" * 64

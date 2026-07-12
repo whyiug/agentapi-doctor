@@ -1,6 +1,5 @@
-// Package agentapidoctor exposes the immutable candidate contracts bundled
-// into release binaries. The embedded files remain provisional until their
-// independent review and phase gates are complete.
+// Package agentapidoctor exposes the versioned public contracts bundled into
+// release binaries.
 package agentapidoctor
 
 import (

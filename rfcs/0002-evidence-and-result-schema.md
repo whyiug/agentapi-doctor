@@ -1,8 +1,7 @@
 # RFC-0002: Evidence and Result Schema
 
-- **Status:** provisional
+- **Status:** draft
 - **Review:** none recorded
-- **Target phase:** P01 contract input
 
 ## Problem
 
@@ -26,7 +25,7 @@ Immutable public objects use a versioned envelope containing `schema_version`,
 `kind`, optional instance ID, `content_digest`, a matching object reference,
 producer identity/digest, creation time, and namespaced extensions. Public JSON
 uses `snake_case`; authored resource YAML may use Kubernetes-style
-`apiVersion`/`kind`. The P00 bootstrap format remains separately versioned.
+`apiVersion`/`kind`.
 
 Content digests use SHA-256 over an explicit immutable projection encoded with
 RFC 8785 JSON Canonicalization Scheme. Duplicate keys, invalid UTF-8,
@@ -65,9 +64,9 @@ are verified separately and do not rewrite the observation's immutable facts.
 
 Unknown optional fields are preserved or safely ignored according to the
 schema contract. Removing/reinterpreting fields, reducing privacy defaults,
-changing denominators, or making old artifacts unreadable is breaking. P01
-creates an explicit pre-1.0 migration floor; no fictional previous major is
-invented.
+changing denominators, or making old artifacts unreadable is breaking. A
+release declares its explicit pre-1.0 migration floor; no fictional previous
+major is invented.
 
 ## Security considerations
 

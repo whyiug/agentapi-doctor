@@ -73,6 +73,19 @@ class ReleaseAssetManifestTests(unittest.TestCase):
                 manifest.write(f"{digest}  {asset.name}\n")
             release_assets.build_manifest(root, self.version)
 
+    def test_image_sboms_are_optional_but_must_be_checksummed(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.populate(root)
+            asset = root / "agentapi-doctor-image.spdx.json"
+            asset.write_text('{"spdxVersion":"SPDX-2.3"}\n', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "checksum asset set mismatch"):
+                release_assets.build_manifest(root, self.version)
+            digest = hashlib.sha256(asset.read_bytes()).hexdigest()
+            with (root / "checksums.txt").open("a", encoding="utf-8") as manifest:
+                manifest.write(f"{digest}  {asset.name}\n")
+            release_assets.build_manifest(root, self.version)
+
     def test_required_sboms_and_package_manifests_are_checksummed(self) -> None:
         covered = release_assets.checksummed_release_assets(self.version)
         self.assertTrue(

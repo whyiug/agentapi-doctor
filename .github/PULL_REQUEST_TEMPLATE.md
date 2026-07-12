@@ -12,9 +12,9 @@ Excluded:
 
 -
 
-## Authority and requirements
+## Requirements and compatibility
 
-- Requirement Catalog / Plan / RFC / ADR:
+- Requirement Catalog / RFC / ADR:
 - Public contract or interface affected:
 - Source/provenance and license facts:
 
@@ -25,8 +25,7 @@ Excluded:
 ## Verification
 
 - [ ] I ran the narrowest relevant tests and recorded the exact commands/results below.
-- [ ] I ran `make -f Product.mk product-check` for product-candidate changes, or explained why it is not applicable.
-- [ ] I ran the applicable protected-control-plane check, or recorded its expected pre-Genesis rejection without weakening it.
+- [ ] I ran `make check`, or explained why it is not applicable.
 - [ ] A bug fix has a minimal regression fixture.
 - [ ] A normative assertion has a cited source, reference-pass case, and targeted-mutant-fail case.
 - [ ] Cross-platform, migration, generated-drift, and old-reader checks are included where applicable.

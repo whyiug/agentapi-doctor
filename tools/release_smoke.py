@@ -82,6 +82,27 @@ def choose_archive(directory: Path, checksums: dict[str, str], version: str) -> 
     return directory / expected
 
 
+def choose_component_archive(
+    directory: Path, checksums: dict[str, str], version: str, component: str
+) -> Path:
+    if RELEASE_VERSION.fullmatch(version) is None:
+        raise ValueError("release version must be an exact SemVer without a v prefix")
+    os_name, arch = platform_tokens()
+    prefixes = {
+        "doctor": "agentapi-doctor",
+        "registry": "agentapi-doctor_registry",
+        "reference-server": "agentapi-doctor_reference-server",
+    }
+    if component not in prefixes:
+        raise ValueError(f"unknown release component: {component}")
+    if component == "registry" and os_name != "linux":
+        raise ValueError("registry archives are currently published only for Linux")
+    expected = f"{prefixes[component]}_{version}_{os_name}_{arch}.tar.gz"
+    if expected not in checksums:
+        raise ValueError(f"checksum manifest is missing exact archive: {expected}")
+    return directory / expected
+
+
 def safe_extract(archive: Path, destination: Path) -> None:
     with tarfile.open(archive, "r:gz") as bundle:
         members = bundle.getmembers()
@@ -138,39 +159,70 @@ def safe_extract(archive: Path, destination: Path) -> None:
                     )
 
 
-def smoke(directory: Path, version: str) -> None:
+def smoke(directory: Path, version: str, commit: str | None = None) -> None:
     checksums = parse_checksums(directory / "checksums.txt")
     verify(directory, checksums)
-    archive = choose_archive(directory, checksums, version)
+    if commit is not None and re.fullmatch(r"[0-9a-f]{40}", commit) is None:
+        raise ValueError("release commit must be a full lowercase SHA-1")
+    os_name, _ = platform_tokens()
+    components = ["doctor", "reference-server"]
+    if os_name == "linux":
+        components.append("registry")
+    binary_names = {
+        "doctor": "doctor",
+        "registry": "agentapi-doctor-registry",
+        "reference-server": "agentapi-doctor-reference-server",
+    }
+    arguments = {
+        "doctor": ["version", "--json"],
+        "registry": ["version"],
+        "reference-server": ["-version"],
+    }
     with tempfile.TemporaryDirectory(prefix="agentapi-doctor-smoke-") as temporary:
-        destination = Path(temporary)
-        safe_extract(archive, destination)
-        binary = destination / (
-            "doctor.exe" if platform.system().lower() == "windows" else "doctor"
-        )
-        if not binary.is_file():
-            raise ValueError("doctor binary is absent from archive")
-        completed = subprocess.run(
-            [str(binary), "version", "--json"],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        payload = json.loads(completed.stdout)
-        if (
-            payload.get("status") != "pass"
-            or payload.get("data", {}).get("version") != version
-        ):
-            raise ValueError(f"unexpected version response: {payload}")
+        root = Path(temporary)
+        for component in components:
+            destination = root / component
+            destination.mkdir()
+            archive = choose_component_archive(
+                directory, checksums, version, component
+            )
+            safe_extract(archive, destination)
+            for notice in ("LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.txt"):
+                path = destination / notice
+                if not path.is_file() or path.is_symlink() or path.stat().st_size == 0:
+                    raise ValueError(f"{component} archive is missing {notice}")
+            executable = binary_names[component]
+            if os_name == "windows":
+                executable += ".exe"
+            binary = destination / executable
+            if not binary.is_file() or binary.is_symlink():
+                raise ValueError(f"{component} binary is absent from archive")
+            completed = subprocess.run(
+                [str(binary), *arguments[component]],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            payload = json.loads(completed.stdout)
+            identity = payload.get("data", {}) if component == "doctor" else payload
+            if identity.get("version") != version:
+                raise ValueError(
+                    f"unexpected {component} version response: {payload}"
+                )
+            if commit is not None and identity.get("commit") != commit:
+                raise ValueError(
+                    f"unexpected {component} commit response: {payload}"
+                )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("directory", type=Path)
     parser.add_argument("--version", required=True)
+    parser.add_argument("--commit")
     arguments = parser.parse_args()
-    smoke(arguments.directory.resolve(), arguments.version)
+    smoke(arguments.directory.resolve(), arguments.version, arguments.commit)
     return 0
 
 

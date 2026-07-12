@@ -1,6 +1,7 @@
-# Threat Model v1 Candidate
+# Threat Model
 
-**Status:** provisional P00 design; no external security review is recorded.
+**Status:** maintained project threat model; no external security review is
+recorded.
 
 This model covers the planned local CLI, drivers, evidence store, reports,
 self-hosted components, and future hosted Registry. A future component is not

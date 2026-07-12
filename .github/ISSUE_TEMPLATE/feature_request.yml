@@ -11,7 +11,7 @@ body:
     attributes:
       label: Preparation
       options:
-        - label: I searched existing issues, the roadmap, and provisional RFCs.
+        - label: I searched existing issues, the roadmap, and RFCs.
           required: true
         - label: This proposal does not require testing an unauthorized public target.
           required: true
@@ -35,7 +35,7 @@ body:
     id: requirements
     attributes:
       label: Requirement and source basis
-      description: Link primary sources, Requirement Catalog entries, RFCs, ADRs, or Plan sections.
+      description: Link primary sources, Requirement Catalog entries, RFCs, or ADRs.
     validations:
       required: true
   - type: textarea

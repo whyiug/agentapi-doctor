@@ -1,6 +1,6 @@
 # RFC-0003: Scenario and Pack Model
 
-- **Status:** provisional
+- **Status:** draft
 - **Review:** none recorded
 - **Target phase:** P01/P03 contract input
 

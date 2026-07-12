@@ -1,6 +1,6 @@
 # RFC-0005: Registry Trust and Attestation
 
-- **Status:** provisional
+- **Status:** draft
 - **Review:** none recorded
 - **Target phase:** P07 contract input
 - **Deployment status:** no hosted Registry exists

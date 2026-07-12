@@ -9,6 +9,13 @@
 .vscode/
 *.swp
 
+# Local agent instructions and planning notes
+/AGENTS.md
+/agents.md
+/agentapi-doctor-Plan.md
+/plan.md
+/PLAN.md
+
 # Local build, test, and runtime output
 .cache/
 .agentapi/

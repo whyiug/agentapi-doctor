@@ -13,10 +13,8 @@ need native Python, Node, or other ecosystem-specific runtimes. In-process
 language plugins would expand both the dependency graph and the trusted crash
 boundary.
 
-This proposal follows the default in
-[Plan section 32](../agentapi-doctor-Plan.md) and the driver boundary in
-[RFC-0004](../rfcs/0004-driver-isolation.md). Neither document records an
-accepted implementation decision.
+This proposal follows the driver boundary in
+[RFC-0004](../rfcs/0004-driver-isolation.md).
 
 ## Proposed decision
 

@@ -1,61 +1,43 @@
 # AgentAPI Doctor
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 AgentAPI Doctor is an evidence-first compatibility laboratory for agentic LLM
-APIs. It is designed to explain whether a failure belongs to the wire,
-provider/model, client, or harness layer instead of treating one successful
-HTTP request as compatibility.
+APIs. It helps you determine whether a failure belongs to the HTTP/wire layer,
+the provider or model, the client, or the test harness—and keeps the evidence
+needed to reproduce that conclusion.
 
-> **Status:** this is a pre-Genesis, pre-release development candidate. The
-> authoritative execution boundary remains P00.B00. The source tree contains
-> runnable local components, but it has no stable release,
-> support tier, certification, approved protocol claim, hosted verifier, or GA
-> result. Candidate output must not be presented as vendor certification.
+> **Project status:** active development. The CLI can be built and exercised
+> from source, but there is currently no tagged release, published package, or
+> hosted service. A passing result is a version-bound observation, not vendor
+> certification or an endorsement.
 
-The digest-bound files under `execution/` are historical control-plane
-artifacts, not a live repository-settings API. Fields named `currentStatus` or
-`currentEnvironment` record the environment observed when that exact candidate
-was assembled. They are intentionally not rewritten by this product branch;
-changed GitHub settings must be captured and independently approved in a new
-exact control-plane candidate before Genesis.
+## What works today
 
-## Why this project exists
+- A local raw-HTTP runner for `openai-chat`, `openai-responses`, and
+  `anthropic-messages`.
+- Four built-in checks selected for each target protocol.
+- A loopback-only synthetic reference server with 12 executable targeted
+  reference/mutant modes.
+- Offline planning, hard request/token/time budgets, exact-origin transport,
+  redaction before persistence, and content-addressed evidence.
+- Local run inspection, comparison, baselines, and terminal, JSON, JUnit,
+  SARIF, Markdown, and standalone HTML reports.
+- A source-buildable SQLite Registry, local Compose setup, and Matrix UI.
 
-An endpoint can look compatible to `curl` and still fail in an SSE parser,
-tool-call state machine, SDK validator, retry path, or agent loop. AgentAPI
-Doctor keeps raw evidence, normalized results, and failure attribution separate
-so a maintainer can reproduce the smallest relevant behavior without receiving
-production secrets or an unbounded trace.
+The Requirement Catalog contains **260 candidate scenario records**. Those
+records are metadata for future coverage and review; they are not 260
+executable tests. The current reference server exposes **12 executable
+targeted modes**, while a normal target run selects **4 checks** for that
+target's protocol.
 
-The current source candidate deliberately starts smaller than that full design:
+## 60-second local check
 
-- a local raw-HTTP runner for `openai-chat`, `openai-responses`, and
-  `anthropic-messages`;
-- four Requirement-Catalog-linked candidate checks selected by the configured
-  target protocol (four checks per run, not twelve);
-- a loopback-only synthetic reference server and 12 executable targeted
-  reference/mutant pairs;
-- redaction-before-persistence, content-addressed evidence, hard budgets,
-  exact-origin transport, local run storage, and terminal/JSON/JUnit/SARIF/
-  Markdown/HTML report renderers;
-- a single-node SQLite self-hosted Registry candidate, backup command, local
-  Compose bundle, and static Matrix source; and
-- versioned candidate JSON Schemas, Registry OpenAPI, offline checks, release
-  packaging configuration, and CI/CD workflows.
-
-The Requirement Catalog also contains **260 metadata candidate scenarios** with
-reference and targeted-mutant metadata. That number does not mean 260 mutants
-are executable, reviewed, supported, or assigned to a Tier. The catalog and
-its source interpretations remain `candidate` / `pending_review`.
-
-## About 60 seconds: a local synthetic run
-
-This quickstart builds from source, binds the fixture only to
-`127.0.0.1:8090`, runs the four OpenAI Responses candidate checks selected by
-the default `local-reference` target, renders the stored report, and cleans up
-the process it started. It needs no API key and contacts no public target.
+This example uses only a synthetic service bound to `127.0.0.1`. It needs no
+API key and contacts no public endpoint.
 
 ```sh
-git clone --branch agent/full-project-r4 --single-branch https://github.com/whyiug/agentapi-doctor.git
+git clone https://github.com/whyiug/agentapi-doctor.git
 cd agentapi-doctor
 
 mkdir -p ./bin
@@ -73,56 +55,71 @@ sleep 1
 ./bin/doctor report terminal latest
 ```
 
-`doctor init` creates `.agentapi/config.yaml` and refuses to overwrite an
-existing file. A normal `doctor test` run writes its canonical report under
-`.agentapi/runs`; `latest` is a local convenience pointer. To inspect an exact
-offline plan without contacting the target, run:
+The final report should show `COMPATIBLE` and four passing cases for the local
+fixture. That verifies the checked-in runner and fixture together; it does not
+make a claim about another endpoint.
+
+See the dedicated [Quick Start](docs/quick-start.md) for interpretation and
+cleanup details.
+
+## Install and use
+
+There is no supported binary or package release yet. Build the current source
+with the Go toolchain selected by `go.mod`:
 
 ```sh
-./bin/doctor test local-reference --plan-only
+mkdir -p ./bin
+go build -trimpath -o ./bin/doctor ./cmd/doctor
+./bin/doctor version
 ```
 
-These results exercise a deterministic synthetic fixture. They are useful as a
-development and regression path, not evidence that a real provider, SDK, or
-agent is compatible.
+`make build` compile-checks all project commands but does not install them.
+Docker images can also be built locally from the checked-in Dockerfile.
 
-## Current boundaries
+Start with:
 
-- Only the three raw protocol slices above are executable through the local
-  candidate runner. Real SDK/client drivers and agent profiles are not a
-  supported surface yet.
-- The self-hosted Registry candidate can persist local records in SQLite, but
-  its commit flow cannot perform hosted verification or publish project trust
-  labels. No project-operated Registry, Matrix, runner, or service exists.
-- Distribution manifests and workflows are candidates. No package, container,
-  Homebrew formula, Scoop manifest, RC, or stable release is published.
-- Public schemas and OpenAPI are versioned candidate artifacts, not a stable
-  migration promise.
-- There is no Genesis, active phase state, external security/privacy/legal
-  review, adopter evidence, release quorum, TSC vote, or GA approval.
+- [Installation](docs/installation.md)
+- [Configuration](docs/configuration.md)
+- [CLI reference](docs/cli-reference.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Full documentation map](docs/README.md)
 
-Use only endpoints and source repositories you are authorized to test. Never
-put production keys, private traces, or unredacted provider payloads in an
-issue, pull request, fixture, report, or artifact.
+## Develop
 
-The authoritative design is [agentapi-doctor-Plan.md](agentapi-doctor-Plan.md).
-The pre-Genesis execution boundary is documented in
-[execution/README.md](execution/README.md), and the complete current limitations
-are listed in [docs/known-limitations](docs/known-limitations/README.md).
+The main local checks are:
 
-## Contributing and security
+```sh
+make check
+make test
+make race
+make docker-check
+```
 
-- Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change. Commits
-  require a Developer Certificate of Origin sign-off.
-- Use [SUPPORT.md](SUPPORT.md) to choose the appropriate public channel.
-- Report suspected vulnerabilities through [SECURITY.md](SECURITY.md), never
-  through a public issue.
-- Governance is described in [GOVERNANCE.md](GOVERNANCE.md). The repository is
-  still governed by its Bootstrap Charter; no TSC has been formed.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before sending a change. Commits use
+the Developer Certificate of Origin sign-off.
+
+## Safety and result boundaries
+
+Only test endpoints and source repositories you are authorized to assess.
+Never place production keys, private traces, or unredacted provider payloads
+in issues, pull requests, fixtures, reports, or artifacts.
+
+Current results cover a deliberately small raw-wire slice. They do not yet
+establish compatibility for a complete SDK, agent, model, provider, or
+deployment. See [Known limitations](docs/known-limitations/README.md) for the
+exact current boundaries.
+
+## Community and security
+
+- Ask usage questions through [SUPPORT.md](SUPPORT.md).
+- Report suspected vulnerabilities privately through [SECURITY.md](SECURITY.md).
+- Follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+- See [GOVERNANCE.md](GOVERNANCE.md) and [MAINTAINERS.md](MAINTAINERS.md) for
+  project stewardship.
 
 ## License
 
-Unless a file states otherwise, repository content is licensed under the
-[Apache License 2.0](LICENSE). Data and Registry-specific rights are described
-in [DATA_LICENSE.md](DATA_LICENSE.md); no public Registry dataset currently
-exists.
+Unless a file says otherwise, source and documentation are licensed under the
+[Apache License 2.0](LICENSE). Dataset and Registry-specific terms are
+described in [DATA_LICENSE.md](DATA_LICENSE.md). Dependency license texts are
+collected in [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt).

@@ -1,9 +1,9 @@
 # Architecture Decision Records
 
-This directory now contains the exact twelve ADR topics required by
-[Plan section 32.1](../agentapi-doctor-Plan.md). Every ADR remains **proposed**:
-no decider, independent review, acceptance, or freeze is recorded. Candidate
-implementations and tests may inform a later decision but do not accept an ADR.
+Architecture Decision Records capture important technical choices, their
+tradeoffs, and the validation expected before a decision becomes stable. The
+status in each ADR is authoritative for that document; proposed ADRs remain
+open to review even when source code is available for experimentation.
 
 1. [ADR-0001: Core language and binary distribution](ADR-0001-core-language-and-binary-distribution.md)
 2. [ADR-0002: Canonical JSON and digest boundaries](ADR-0002-canonical-json-and-digest-boundaries.md)
@@ -16,14 +16,7 @@ implementations and tests may inform a later decision but do not accept an ADR.
 9. [ADR-0009: Result dimension and no-single-score](ADR-0009-result-dimension-and-no-single-score.md)
 10. [ADR-0010: Registry trust and attestation](ADR-0010-registry-trust-and-attestation.md)
 11. [ADR-0011: Source snapshot and copyright policy](ADR-0011-source-snapshot-and-copyright-policy.md)
-12. [ADR-0012: Goal phase gate and evidence format](ADR-0012-goal-phase-gate-and-evidence-format.md)
 
-ADR-0007 retains the useful local SQLite/future PostgreSQL storage boundary
-from the earlier provisional ADR set while making local CAS and its evidence
-manifest the primary decision required by the Plan.
-
-Acceptance must record the applicable context, decision, alternatives,
-consequences, validation evidence, deciders, review, and date through the
-governance process. Reversal creates a superseding ADR; it does not rewrite
-history. Before Genesis, these files remain design candidates and create no
-phase state or approval.
+New ADRs should record context, alternatives, the decision, consequences,
+validation evidence, deciders, and date. Reversing a decision creates a
+superseding ADR instead of rewriting the historical rationale.

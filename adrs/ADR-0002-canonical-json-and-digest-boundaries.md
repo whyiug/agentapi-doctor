@@ -13,9 +13,7 @@ duplicate keys or trailing values, which makes the bytes a signer reviewed
 different from the object another reader uses.
 
 The proposed envelope and result model are described in
-[RFC-0002](../rfcs/0002-evidence-and-result-schema.md). The P00 bootstrap
-control plane uses a separately named provisional canonicalization and must not
-be silently reinterpreted as this production contract.
+[RFC-0002](../rfcs/0002-evidence-and-result-schema.md).
 
 ## Proposed decision
 
@@ -34,12 +32,10 @@ be silently reinterpreted as this production contract.
 - Treat field names as case-sensitive. An alternate casing is not an alias
   unless an explicit migration defines it.
 - Keep distinct digest domains for immutable object content, manifests,
-  artifact bytes, source snapshots, and aggregate control-plane inputs. A
+  artifact bytes, and source snapshots. A
   reference names both the digest algorithm and exact subject type/version.
 - Verify an artifact's digest again on import and read. A matching digest does
   not replace schema, authorization, provenance, or rights validation.
-- Preserve the P00 bootstrap canonicalization and its historical digests under
-  their own version rather than recanonicalizing them in place.
 
 ## Consequences
 
@@ -68,6 +64,6 @@ signer authority, or correctness. Those checks remain separate.
 Use independent JCS vectors and targeted duplicate-key, number, escaping,
 Unicode, depth, ordering, casing, and projection-sensitivity mutants in every
 supported language. Cross-platform tests must produce identical bytes and
-digests, and old bootstrap fixtures must remain verifiable without migration.
+digests, and old versioned fixtures must remain verifiable without migration.
 Independent schema and security review are still required; implementation
 tests do not accept this ADR.

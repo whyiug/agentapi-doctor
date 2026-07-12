@@ -1,9 +1,7 @@
 # RFC-0001: Compatibility Layers
 
-- **Status:** provisional
+- **Status:** draft
 - **Review:** none recorded
-- **Target phase:** P00 design input; later schema/pack contracts require
-  separate approval
 
 ## Problem
 
@@ -87,6 +85,6 @@ bounded excerpts and synthetic repros.
 
 ## Evidence required before acceptance
 
-P00 must reproduce a lawful corpus, demonstrate correlated capture/client views,
-show unknown behavior under insufficient evidence, and receive substantive
-external review. None of that evidence is asserted by this draft.
+Acceptance requires a lawful corpus, correlated capture/client views, explicit
+unknown behavior under insufficient evidence, and substantive review. None of
+that evidence is asserted by this draft.

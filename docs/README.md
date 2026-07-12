@@ -1,55 +1,81 @@
-# Documentation
+# AgentAPI Doctor Documentation
 
-This is the documentation map for AgentAPI Doctor. The repository is
-pre-Genesis and pre-release: runnable source is not evidence that a protocol,
-client, hosted service, support Tier, or release is approved.
+[Project home](../README.md) | [简体中文](zh-CN/README.md)
 
-Status words are used deliberately:
+AgentAPI Doctor is under active development. You can build and run the current
+source, but there is no tagged release, published package, or hosted service
+yet. Reports are reproducible observations tied to the tested version and
+configuration; they are not vendor certification.
 
-- **current candidate** — can be exercised from checked-in source and tests,
-  but has no stable/support claim;
-- **provisional** — design or metadata awaiting the applicable review; and
-- **future** — required by the Plan but not implemented or operated.
+## Start here
 
-## Learn and use
+- [Quick Start](quick-start.md) — run a credential-free local check in about
+  60 seconds.
+- [Installation](installation.md) — build from source or build local Docker
+  images; understand what is not published yet.
+- [Getting Started](getting-started/README.md) — configure a target, plan a
+  run, execute checks, and render reports.
+- [Configuration](configuration.md) — target URLs, protocols, budgets,
+  capture modes, retries, and secret references.
+- [CLI reference](cli-reference.md) — every implemented command, flag, output
+  mode, and exit code.
+- [Troubleshooting](troubleshooting.md) — common build, config, credential,
+  network, run-store, and Docker failures.
+- [Known limitations](known-limitations/README.md) — current coverage and
+  publication boundaries.
 
-- [Getting started](getting-started/README.md) — build the candidate CLI and run
-  a cleaned-up, loopback-only synthetic check.
-- [Known limitations](known-limitations/README.md) — exact gaps in execution,
-  hosting, distribution, governance, and readiness.
-- [Concepts](concepts/README.md) — compatibility layers, evidence, oracles,
-  packs, and profiles.
-- [Protocol families](protocols/README.md) — provisional protocol boundaries
-  and candidate catalog context, without support claims.
-- [Clients](clients/README.md) — driver/profile identity and future
-  support-matrix rules.
+## Understand the results
 
-## Build and operate
+- [Concepts](concepts/README.md)
+  - [Compatibility layers](concepts/compatibility-layers.md)
+  - [Evidence and oracles](concepts/evidence-and-oracles.md)
+  - [Profiles and packs](concepts/profiles-and-packs.md)
+- [Protocol families](protocols/README.md)
+- [Clients](clients/README.md)
+- [Reference](reference/README.md) — executable surfaces, schemas, catalog
+  counts, Registry, and distribution sources.
+
+The Requirement Catalog contains 260 candidate metadata scenario records.
+The local reference server currently exposes 12 executable targeted modes,
+and a normal target run selects 4 checks for that target's protocol.
+
+## Operate and integrate
+
+- [Security and privacy](security-and-privacy/README.md)
+- [Self-hosted Registry](registry/README.md)
+- [Operations](operations/README.md)
+  - [Release verification](operations/release-verification.md)
+  - [Backup and recovery](operations/backup-and-recovery.md)
+  - [Incident response](operations/incident-response.md)
+  - [Offline proxy and CA notes](operations/offline-proxy-and-ca.md)
+- [Migration](migration/README.md)
+
+## Extend the project
 
 - [Authoring packs](authoring-packs/README.md)
 - [Authoring drivers](authoring-drivers/README.md)
-- [Security and privacy](security-and-privacy/README.md)
-- [Registry](registry/README.md) — runnable SQLite self-host candidate; no
-  hosted Registry or verifier exists.
-- [Operations](operations/README.md)
-- [Migration](migration/README.md)
-- [Reference](reference/README.md) — current executable, schema, catalog,
-  Registry, and distribution candidate surfaces.
+- [Synthetic fixtures](getting-started/synthetic-fixtures.md)
 - [Contributing documentation](contributing/README.md)
+- [Naming research](naming/README.md)
 
-## Core Chinese guides
+## Project context and policies
 
-The [简体中文核心指南](zh-CN/README.md) covers getting started, architecture,
-contributing, and protocol boundaries. English and versioned source artifacts
-remain normative; the translations are explicitly draft and make no invented
-source-commit or review claim.
+- [Roadmap](../ROADMAP.md)
+- [Competitive landscape](COMPETITIVE-LANDSCAPE.md)
+- [Security policy](../SECURITY.md)
+- [Data policy](../DATA_POLICY.md)
+- [Threat-model overview](security-and-privacy/threat-model.md) and
+  [full threat model](THREAT-MODEL.md)
+- [Governance](../GOVERNANCE.md), [maintainers](../MAINTAINERS.md), and
+  [Code of Conduct](../CODE_OF_CONDUCT.md)
 
-## Authority
+## Language coverage
 
-The implementation design is [the Plan](../agentapi-doctor-Plan.md). Before
-Genesis, repository rules permit only the phase-external P00.B00 bootstrap
-candidate: there is no authoritative phase state or active work unit. After a
-real Genesis and P01 approval, the Plan assigns execution authority to the
-versioned manifests and append-only transition chain. Generated reference
-material may explain a schema, but only the versioned artifact and its digest
-define that candidate contract.
+The [简体中文指南](zh-CN/README.md) includes the project overview, Quick
+Start, source workflow, architecture, protocol boundaries, and contribution
+guide. Detailed reference pages that have not yet been translated are linked
+from that index and clearly marked as English.
+
+Machine-readable behavior is defined by the checked-in schemas and
+`cli/spec.yaml`. If prose and a versioned schema disagree, treat that as a
+documentation bug and report it.

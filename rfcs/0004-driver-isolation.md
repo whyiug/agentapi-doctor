@@ -1,6 +1,6 @@
 # RFC-0004: Driver Process and Isolation
 
-- **Status:** provisional
+- **Status:** draft
 - **Review:** none recorded
 - **Target phase:** P01/P04 contract input
 

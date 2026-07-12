@@ -61,9 +61,8 @@ func (ref ObjectRef) Validate() error {
 	return nil
 }
 
-// EnvelopeMeta is embedded by immutable public objects.  JSON public
-// contracts use snake_case; authored YAML resources use apiVersion/kind, and
-// the P00 control plane retains its separately versioned camelCase format.
+// EnvelopeMeta is embedded by immutable public objects. JSON public contracts
+// use snake_case; authored YAML resources use apiVersion/kind.
 type EnvelopeMeta struct {
 	SchemaVersion string                     `json:"schema_version"`
 	Kind          string                     `json:"kind"`

@@ -1,85 +1,200 @@
 # 从源码开始
 
-**英文来源：** [Getting Started from Source](../getting-started/README.md)。
-本页与英文文档都描述 pre-Genesis、pre-release 的源码候选，不代表已发布、
-已认证或已进入任何支持 Tier。
+[中文文档首页](README.md) | [English](../getting-started/README.md)
 
-## 本地合成快速开始
+本指南从源码 checkout 开始，依次完成授权 target 的配置、运行、证据保存和
+报告导出。当前还没有 tagged release 或已发布软件包，PASS 也不是厂商认证。
 
-需要 `go.mod` 指定的 Go 工具链。以下命令不需要 API key，只启动
-`127.0.0.1:8090` 回环监听，并在 shell 退出时清理本次启动的进程和临时日志。
-请在全新 checkout 中运行，因为 `doctor init` 会拒绝覆盖已有配置。
+如果只想走最短且不需要凭据的路径，请使用
+[60 秒快速开始](quick-start.md)。
+
+## 前置条件
+
+- Git
+- `go.mod` 选定的 Go 工具链
+- 用于下列示例的 POSIX 兼容 Shell
+- 完整贡献者检查需要 Python 3 和 Make
+- 只有容器检查和本地 Compose 服务需要 Docker
+
+## 从默认分支构建
 
 ```sh
-git clone --branch agent/full-project-r4 --single-branch https://github.com/whyiug/agentapi-doctor.git
+git clone https://github.com/whyiug/agentapi-doctor.git
 cd agentapi-doctor
 
 mkdir -p ./bin
-go build -o ./bin/doctor ./cmd/doctor
-go build -o ./bin/reference-server ./cmd/reference-server
+go build -trimpath -o ./bin/doctor ./cmd/doctor
+go build -trimpath -o ./bin/reference-server ./cmd/reference-server
 
-reference_log="${TMPDIR:-/tmp}/agentapi-doctor-reference.$$"
-./bin/reference-server -listen 127.0.0.1:8090 >"$reference_log" 2>&1 &
-reference_pid=$!
-trap 'kill "$reference_pid" 2>/dev/null || true; wait "$reference_pid" 2>/dev/null || true; rm -f "$reference_log"' EXIT INT TERM
-sleep 1
+./bin/doctor version
+./bin/doctor self-check
+```
 
+Windows 用户可以用相同 package path 构建 `./bin/doctor.exe` 和
+`./bin/reference-server.exe`。PowerShell 示例和本地 Docker 镜像说明见
+[安装文档（英文）](../installation.md)。
+
+## 初始化本地项目
+
+```sh
 ./bin/doctor init
+./bin/doctor target list
+```
+
+初始化会创建 `.agentapi/config.yaml`，但不会覆盖已有文件。生成的
+`local-reference` target 指向 `http://127.0.0.1:8090/v1`，协议为
+`openai-responses`。
+
+修改文件或添加凭据前，请先阅读[配置文档（英文）](../configuration.md)。
+
+## 运行合成 fixture
+
+在一个 Shell 中启动仓库自带的 fixture：
+
+```sh
+./bin/reference-server -listen 127.0.0.1:8090
+```
+
+在另一个 Shell 中运行检查：
+
+```sh
 ./bin/doctor test local-reference
+./bin/doctor run inspect latest
 ./bin/doctor report terminal latest
 ```
 
-默认 `local-reference` 使用 `openai-responses`，因此本次运行只执行该协议
-切片的 4 个 candidate checks，并把规范报告保存在 `.agentapi/runs`。
-候选 runner 也包含 `openai-chat` 和 `anthropic-messages`，每个协议各 4 个
-检查；一个 target 按自身 protocol 选择 4 个，并非一次执行 12 个。
+只停止你自己启动的 reference-server 进程。普通运行会把规范记录保存在
+`.agentapi/runs`，把已脱敏证据保存在 `.agentapi/evidence`。
 
-## 离线检查计划
+## 添加获准测试的 endpoint
 
-`--plan-only` 不连接 target、不解析 secret，也不写入 run evidence：
+使用 secret reference，不要把 secret value 写入配置：
 
 ```sh
-./bin/doctor test local-reference --plan-only
-./bin/doctor test local-reference --plan-only --output ./local-plan.json
+export EXAMPLE_API_TOKEN='replace-with-a-local-or-test-token'
+
+./bin/doctor target add example \
+  --base-url https://api.example.invalid/v1 \
+  --protocol openai-responses \
+  --model example-model \
+  --auth-ref env://EXAMPLE_API_TOKEN
 ```
 
-完整候选命令接口为：
+`example.invalid` 刻意设置为不可路由。只把它替换成你明确获准测试的本地
+服务或 endpoint。
 
-```text
-doctor test <target> [--config <path>] [--data-root <path>] [--plan-only] [--resolve] [--output <path>]
+当前 runner 实现 `openai-chat`、`openai-responses` 和
+`anthropic-messages`。它会根据协议在 base URL 后追加 operation path，
+始终绑定到精确配置的 Origin，并且不跟随 redirect。
+
+检查 target 时不会暴露 secret reference 的具体标识：
+
+```sh
+./bin/doctor target inspect example
 ```
 
-`--resolve` 只能与 `--plan-only` 一起使用；当前内置切片没有 capability
-probe，IntentPlan 和精确 ResolvedRunPlan 均离线生成。普通运行把结果写入
-`<data-root>/runs`；使用自定义 data root 后，报告命令应显式指定 store：
+## 在联网前检查计划
+
+`--plan-only` 不连接 target、不解析凭据，也不写 run evidence：
+
+```sh
+./bin/doctor test example --plan-only
+./bin/doctor test example --plan-only --resolve
+./bin/doctor test example --plan-only --resolve --output ./example-plan.json
+```
+
+`--resolve` 必须与 `--plan-only` 一起使用。只有目标路径不存在时才会创建
+输出文件。
+
+## 执行并保存精确 run reference
+
+```sh
+./bin/doctor test example
+```
+
+JSON 结果包含 `data.run_id` 和主退出码。CI 和长期证据应使用精确 run ID：
+
+```sh
+RUN_ID='<doctor-test-返回的精确-run-id>'
+./bin/doctor run inspect "$RUN_ID" --allow-latest=false
+./bin/doctor report json "$RUN_ID" --allow-latest=false --output ./doctor-report.json
+```
+
+`latest` 适合本地交互，但它是一个会变化的指针。
+
+如果使用自定义 data root，后续命令需要指定对应 store：
 
 ```sh
 ./bin/doctor test local-reference --data-root ./local-data
 ./bin/doctor report terminal latest --store ./local-data/runs
 ```
 
-CI 和长期证据引用应使用精确 run ID，不要使用 `latest`。
+## 导出报告和比较运行
+
+报告格式包括 `terminal`、`json`、`junit`、`sarif`、`markdown` 和
+`html`：
+
+```sh
+./bin/doctor report junit latest --output ./doctor-junit.xml
+./bin/doctor report sarif latest --output ./doctor.sarif
+./bin/doctor report html latest --output ./doctor-report.html
+```
+
+创建并比较本地 baseline：
+
+```sh
+./bin/doctor baseline accept latest --name local-known-good
+./bin/doctor baseline list
+./bin/doctor baseline compare latest --baseline local-known-good
+```
+
+也可以比较默认 store 中的两个精确 run：
+
+```sh
+OLD_RUN_ID='<较早的精确-run-id>'
+NEW_RUN_ID='<较新的精确-run-id>'
+./bin/doctor compare "$OLD_RUN_ID" "$NEW_RUN_ID"
+```
+
+完整 flag、baseline 命名、输出行为和退出码见
+[CLI 参考（英文）](../cli-reference.md)。
 
 ## 正确解释结果
 
-- 合成 reference fixture 上的 PASS 只证明该候选断言与该 fixture 的行为。
-- 当前有 12 个可执行的定向 reference/mutant pairs；Requirement Catalog 中
-  的 260 个 candidate scenarios 及 reference/mutant 记录是 metadata，不是
-  260 个可执行 mutant。
-- Catalog 仍为 `candidate` / `pending_review`，没有 Tier、真实 SDK/client
-  验证、厂商背书或稳定兼容结论。
-- 不得把真实 key、私有 trace、生产日志或未经授权的公网目标放进测试。
+- 本地 fixture 是合成且确定性的；它的 PASS 只验证当前 runner 与 fixture。
+- 一次普通 target run 会根据配置协议选择 4 个内置 raw-wire 检查。
+- Reference server 当前有 12 个可执行定向模式。
+- Requirement Catalog 中的 260 条候选场景记录是 metadata，不是 260 个
+  可执行测试。
+- 当前检查不能证明完整 SDK、Agent、模型、Provider 或部署兼容。
+- 报告不是认证、背书，也不保证精确被测版本和配置之外的行为。
 
-开发者可依次运行适用检查：
+只测试你获准评估的 endpoint。不要把真实凭据、私有 trace 或未经脱敏的
+payload 放进 issue 和 artifact。
+
+## 运行贡献者检查
+
+先运行最窄的相关测试，再运行适用的聚合命令：
 
 ```sh
-make -f Product.mk product-check
-make test-protected-verifier
-make -f Product.mk race-product
+make check
+make test
+make race
+make docker-check
 ```
 
-`make test-protected-verifier` 只运行边界明确的 verifier 单元测试，不产生
-阶段状态。完整的 `make verify` 与 `make test-bootstrap` 都包含针对精确获批
-P00.B00 candidate 的 whole-tree 保护断言；在 Genesis 之前，它们会按设计
-拒绝当前独立的 product-candidate tree。即使在适用的独立 candidate 上得到
-`candidate_valid`，也不代表激活 P00、批准 contract 或通过阶段门禁。
+- `make check` 运行完整本地质量门。
+- `make test` 运行全部 Go 测试。
+- `make race` 使用 race detector 运行全部 Go 测试。
+- `make docker-check` 构建并 smoke test 本地加固镜像目标。
+
+贡献证据前阅读[合成 fixture（英文）](../getting-started/synthetic-fixtures.md)，
+创建 PR 前阅读 [CONTRIBUTING.md](../../CONTRIBUTING.md)。
+
+## 后续文档
+
+- [故障排查（英文）](../troubleshooting.md)
+- [概念（英文）](../concepts/README.md)
+- [安全与隐私（英文）](../security-and-privacy/README.md)
+- [Registry（英文）](../registry/README.md)
+- [已知限制（英文）](../known-limitations/README.md)

@@ -22,7 +22,7 @@ remain in [LICENSE](../LICENSE) and [NOTICE](../NOTICE).
 
 - Record each external fact in a source lock with source type, original and
   resolved URL, retrieval time, exact revision/tag/API date, content digest,
-  license and reuse status, affected Requirement/Plan section, and
+  license and reuse status, affected Requirement/RFC/ADR, and
   revalidation trigger. The current machine-readable shape is
   [source-lock.schema.json](../schemas/pack/source-lock.schema.json).
 - Store only a concise original requirement summary and the minimum quotation
