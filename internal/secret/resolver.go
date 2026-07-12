@@ -79,8 +79,8 @@ func resolveFile(path string) ([]byte, error) {
 	if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
 		return nil, errors.New("secret file must be a regular non-symlink file")
 	}
-	if info.Mode().Perm()&0o077 != 0 {
-		return nil, fmt.Errorf("secret file permissions %04o expose group or other bits", info.Mode().Perm())
+	if err := validatePrivateFilePermissions(clean, info.Mode()); err != nil {
+		return nil, err
 	}
 	if info.Size() <= 0 || info.Size() > MaxSecretBytes {
 		return nil, fmt.Errorf("secret file size must be between 1 and %d bytes", MaxSecretBytes)

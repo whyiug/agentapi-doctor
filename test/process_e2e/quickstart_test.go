@@ -93,7 +93,8 @@ func TestQuickstartRunsThroughRealProcesses(t *testing.T) {
 		Config string `json:"config"`
 	}
 	decodeData(t, "init", initialized.Data, &initData)
-	if initData.Config != filepath.Join(workspace, ".agentapi", "config.yaml") {
+	wantConfig := filepath.Join(workspace, ".agentapi", "config.yaml")
+	if !sameExistingPath(initData.Config, wantConfig) {
 		t.Fatalf("init returned unexpected config path: %q", initData.Config)
 	}
 
@@ -127,7 +128,7 @@ func TestQuickstartRunsThroughRealProcesses(t *testing.T) {
 		t.Fatalf("test omitted the required candidate interpretation condition: %#v", summary.Conditions)
 	}
 	wantRunStore := filepath.Join(workspace, ".agentapi", "runs")
-	if summary.RunStore != wantRunStore {
+	if !sameExistingPath(summary.RunStore, wantRunStore) {
 		t.Fatalf("test run store = %q, want %q", summary.RunStore, wantRunStore)
 	}
 	assertRegularFile(t, filepath.Join(wantRunStore, "latest.json"))
@@ -453,4 +454,10 @@ func assertRegularFile(t *testing.T, path string) {
 	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 || info.Size() == 0 {
 		t.Fatalf("persisted run path is not a non-empty regular file: %q (%v)", path, info.Mode())
 	}
+}
+
+func sameExistingPath(left, right string) bool {
+	leftInfo, leftErr := os.Stat(left)
+	rightInfo, rightErr := os.Stat(right)
+	return leftErr == nil && rightErr == nil && os.SameFile(leftInfo, rightInfo)
 }

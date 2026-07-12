@@ -36,7 +36,9 @@ are not implemented.
 `-database` is required for durable mode. A relative path is resolved to an
 absolute path before opening. `-allow-ephemeral` is an explicit, mutually
 exclusive memory-only option for tests and short-lived development; it loses
-all state on exit and is not a backup substitute.
+all state on exit and is not a backup substitute. On Windows the resulting
+database path must be on a local drive; UNC shares and device paths are
+rejected.
 
 ## Run the checked-in Compose candidate
 

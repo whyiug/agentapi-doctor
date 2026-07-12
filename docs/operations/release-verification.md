@@ -15,6 +15,7 @@ for the same immutable tag:
 - the exact OS/architecture archive;
 - `checksums.txt`;
 - `checksums.txt.sigstore.json`;
+- `oci-images.json`, when the release includes OCI subjects;
 - SPDX and CycloneDX SBOM assets plus verifiable provenance attestations; and
 - release notes naming the supported version and known issues.
 

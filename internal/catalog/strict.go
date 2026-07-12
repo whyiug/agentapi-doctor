@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"path/filepath"
+	"path"
 	"regexp"
 	"slices"
 	"strings"
@@ -282,7 +282,9 @@ func validateFixtureSet(set FixtureSet, expectedKind string, requirements Requir
 }
 
 func validateLogicalFixtureRef(value string) error {
-	if value == "" || strings.Contains(value, "\\") || strings.HasPrefix(value, "/") || filepath.Clean(value) != value {
+	// Fixture refs are portable logical names, not host filesystem paths. Keep
+	// their slash-separated representation stable on every operating system.
+	if value == "" || strings.Contains(value, "\\") || strings.HasPrefix(value, "/") || path.Clean(value) != value {
 		return fmt.Errorf("unsafe fixture ref %q", value)
 	}
 	for _, segment := range strings.Split(value, "/") {

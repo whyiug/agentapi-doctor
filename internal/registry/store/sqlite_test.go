@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -58,6 +59,21 @@ func assertPrivateFileMode(t *testing.T, path string) {
 	}
 	if got := info.Mode().Perm(); got != 0o600 {
 		t.Fatalf("%s mode = %04o, want 0600", path, got)
+	}
+}
+
+func TestSQLiteDSNIsAParseableNativeFileURI(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "directory with spaces", "registry.db")
+	dsn := sqliteDSN(path)
+	parsed, err := url.Parse(dsn)
+	if err != nil {
+		t.Fatalf("parse SQLite DSN %q: %v", dsn, err)
+	}
+	if parsed.Scheme != "file" || parsed.Query().Get("_txlock") != "immediate" {
+		t.Fatalf("unexpected SQLite DSN: %q", dsn)
+	}
+	if runtime.GOOS == "windows" && filepath.VolumeName(path) != "" && parsed.Host != "" {
+		t.Fatalf("Windows drive was encoded as URI authority %q in %q", parsed.Host, dsn)
 	}
 }
 

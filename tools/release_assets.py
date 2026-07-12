@@ -28,13 +28,19 @@ MAX_MANIFEST_BYTES = 4 * 1024 * 1024
 OPERATING_SYSTEMS = ("darwin", "linux", "windows")
 ARCHITECTURES = ("amd64", "arm64")
 
-# These names are optional because signing and provenance export happen after
-# the checksum-covered archive, SBOM, and package-manifest set is assembled.
-OPTIONAL_ASSETS = {
+# Signing and provenance exports are added only after the checksum-covered
+# release set is assembled, so they are allowlisted but never checksum inputs.
+OPTIONAL_UNCHECKSUMMED_ASSETS = {
     "agentapi-doctor.intoto.jsonl": "provenance",
     "agentapi-doctor.slsa-provenance.json": "provenance",
     "checksums.txt.sigstore.json": "signature",
 }
+
+# OCI subjects do not exist until the verified multi-architecture images have
+# been pushed. If this optional final-publication asset is present, it must be
+# covered by checksums.txt before the manifest can be signed or uploaded.
+OPTIONAL_CHECKSUMMED_ASSETS = {"oci-images.json": "oci-subjects"}
+OPTIONAL_ASSETS = OPTIONAL_UNCHECKSUMMED_ASSETS | OPTIONAL_CHECKSUMMED_ASSETS
 
 
 def validate_version(version: str) -> None:
@@ -217,6 +223,11 @@ def _parse_checksums(path: Path) -> dict[str, str]:
 def _validate_checksums(directory: Path, version: str) -> None:
     checksums = _parse_checksums(directory / "checksums.txt")
     expected = checksummed_release_assets(version)
+    expected.update(
+        name
+        for name in OPTIONAL_CHECKSUMMED_ASSETS
+        if (directory / name).is_file() and not (directory / name).is_symlink()
+    )
     if set(checksums) != expected:
         missing = sorted(expected - set(checksums))
         unknown = sorted(set(checksums) - expected)

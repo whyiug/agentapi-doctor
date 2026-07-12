@@ -24,6 +24,27 @@ func repositoryRoot(t testing.TB) string {
 	return filepath.Clean(filepath.Join(filepath.Dir(filename), "..", ".."))
 }
 
+func TestLogicalFixtureRefUsesPortableSlashSemantics(t *testing.T) {
+	for _, value := range []string{
+		"canonical/openai-chat-001.json",
+		"nested/canonical/fixture.json",
+	} {
+		if err := validateLogicalFixtureRef(value); err != nil {
+			t.Fatalf("portable fixture ref %q: %v", value, err)
+		}
+	}
+	for _, value := range []string{
+		"canonical\\fixture.json",
+		"/canonical/fixture.json",
+		"canonical//fixture.json",
+		"canonical/../fixture.json",
+	} {
+		if err := validateLogicalFixtureRef(value); err == nil {
+			t.Fatalf("accepted unsafe fixture ref %q", value)
+		}
+	}
+}
+
 func TestGenerateDeterministicCandidateMatrix(t *testing.T) {
 	root := repositoryRoot(t)
 	sources, err := LoadSourceLocks(root)

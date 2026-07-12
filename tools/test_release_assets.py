@@ -46,12 +46,32 @@ class ReleaseAssetManifestTests(unittest.TestCase):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
             self.populate(root)
-            for name in release_assets.OPTIONAL_ASSETS:
+            for name in release_assets.OPTIONAL_UNCHECKSUMMED_ASSETS:
                 (root / name).write_text(f"optional:{name}\n", encoding="utf-8")
+            for name in release_assets.OPTIONAL_CHECKSUMMED_ASSETS:
+                asset = root / name
+                asset.write_text(f"optional:{name}\n", encoding="utf-8")
+                digest = hashlib.sha256(asset.read_bytes()).hexdigest()
+                with (root / "checksums.txt").open("a", encoding="utf-8") as manifest:
+                    manifest.write(f"{digest}  {name}\n")
             manifest = release_assets.build_manifest(root, self.version)
             kinds = {asset["name"]: asset["kind"] for asset in manifest["assets"]}
             for name, kind in release_assets.OPTIONAL_ASSETS.items():
                 self.assertEqual(kinds[name], kind)
+
+    def test_optional_oci_subjects_must_be_checksummed(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.populate(root)
+            asset = root / "oci-images.json"
+            asset.write_text('{"schema":"synthetic"}\n', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "checksum asset set mismatch"):
+                release_assets.build_manifest(root, self.version)
+
+            digest = hashlib.sha256(asset.read_bytes()).hexdigest()
+            with (root / "checksums.txt").open("a", encoding="utf-8") as manifest:
+                manifest.write(f"{digest}  {asset.name}\n")
+            release_assets.build_manifest(root, self.version)
 
     def test_required_sboms_and_package_manifests_are_checksummed(self) -> None:
         covered = release_assets.checksummed_release_assets(self.version)
@@ -65,7 +85,9 @@ class ReleaseAssetManifestTests(unittest.TestCase):
             <= covered
         )
         self.assertNotIn("checksums.txt", covered)
-        self.assertTrue(set(release_assets.OPTIONAL_ASSETS).isdisjoint(covered))
+        self.assertTrue(
+            set(release_assets.OPTIONAL_UNCHECKSUMMED_ASSETS).isdisjoint(covered)
+        )
 
     def test_rejects_unknown_unsafe_missing_and_duplicate_names(self) -> None:
         cases = ("unknown.bin", "unsafe name", "AGENTAPI-DOCTOR.RB")

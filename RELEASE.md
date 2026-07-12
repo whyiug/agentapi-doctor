@@ -40,11 +40,20 @@ A real RC or stable release requires:
 9. post-release installation, signature verification, and smoke tests using
    the public download locations.
 
+GitHub's `verified` result proves that a tag object's signature is valid for an
+identity known to GitHub; it does not by itself authorize that identity to cut
+a release. The no-bypass tag ruleset, protected release environment, exact
+review evidence, and Release Manager assignment provide that separate
+authorization boundary.
+
 The exact tag must also include a reviewed
 `release-notes/<tag>.md` file that passes the offline release-note validator.
-The release workflow initially exposes every verified draft as a prerelease,
-re-downloads and verifies it through the public URL, and only then removes the
-prerelease marker for a stable tag. Generated Homebrew and Scoop files are
+The release workflow gives a verified draft its final channel classification
+before publication: RC tags remain prereleases and stable tags publish as
+stable. It publishes the complete draft once under repository-enforced release
+immutability, then re-downloads and verifies it through the public URL. A failed
+post-publication check is an incident against an immutable release, never a
+reason to rewrite assets or move the tag. Generated Homebrew and Scoop files are
 release assets; they do not claim that a tap or bucket exists.
 
 The checked-in workflow is intentionally unavailable for publication today.
@@ -56,6 +65,13 @@ real maintainer approvals or independent-organization evidence required above.
 OIDC-issued short-lived credentials are preferred for signing and publication.
 Long-lived signing or registry credentials must not be committed or exposed to
 fork pull requests.
+
+OCI images are release identities only by the exact `name@sha256:...` subjects
+in the checksum- and Sigstore-covered `oci-images.json` asset. The workflow's
+unique `candidate-<commit>-<run>-<attempt>` tags are mutable transport pointers,
+not release identities. It deliberately creates no semantic OCI tag because
+GHCR does not provide the atomic create-if-absent guarantee required to call
+such a tag immutable.
 
 ## Release channels
 

@@ -22,12 +22,19 @@ that should be represented as completed work.
 - Built-in Requirement Catalog interpretations remain
   `candidate` / `pending_review`; they have not completed independent source
   review.
+- Windows does not currently accept `file://` secret references because Go's
+  synthesized mode bits cannot prove that a DACL is private; use `env://` in
+  this candidate. Unix-like systems continue to require no group/other mode
+  bits. `exec://` remains disabled unless explicitly approved.
 
 ## Registry, Matrix, and distribution
 
 - A runnable single-node SQLite self-hosted Registry candidate, static Matrix
   source, backup command, Docker targets, and local Compose bundle exist. They
   do not constitute a production-supported service.
+- On Windows, SQLite paths must use a local drive-letter path. UNC shares,
+  device paths, and drive-relative paths are rejected rather than treated as
+  local durable storage.
 - No hosted verifier, project-operated Registry or Matrix, public runner,
   managed image, production SLO, recovery drill, or public Registry dataset
   exists. A local durable upload cannot receive a project trust label.

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/whyiug/agentapi-doctor/pkg/schema"
@@ -44,6 +45,12 @@ func TestFileResolutionRequiresPrivateRegularFile(t *testing.T) {
 	}
 	resolver := Resolver{}
 	value, err := resolver.Resolve(context.Background(), "file://"+path)
+	if runtime.GOOS == "windows" {
+		if err == nil || !strings.Contains(err.Error(), "unsupported on Windows") {
+			t.Fatalf("Windows file secret did not fail closed: %v", err)
+		}
+		return
+	}
 	if err != nil {
 		t.Fatal(err)
 	}

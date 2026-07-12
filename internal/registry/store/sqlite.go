@@ -34,6 +34,9 @@ func OpenSQLite(path string) (*SQLite, error) {
 		return nil, errors.New("SQLite path must be absolute")
 	}
 	clean := filepath.Clean(path)
+	if err := validateSQLiteLocalPath(clean); err != nil {
+		return nil, err
+	}
 	if err := os.MkdirAll(filepath.Dir(clean), 0o700); err != nil {
 		return nil, err
 	}
@@ -47,7 +50,7 @@ func OpenSQLite(path string) (*SQLite, error) {
 	} else if !os.IsNotExist(err) {
 		return nil, err
 	}
-	dsn := (&url.URL{Scheme: "file", Path: clean}).String() + "?_txlock=immediate"
+	dsn := sqliteDSN(clean)
 	database, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, err
@@ -79,6 +82,14 @@ func OpenSQLite(path string) (*SQLite, error) {
 		return nil, err
 	}
 	return store, nil
+}
+
+func sqliteDSN(filename string) string {
+	uri := sqliteFileURL(filename)
+	query := url.Values{}
+	query.Set("_txlock", "immediate")
+	uri.RawQuery = query.Encode()
+	return uri.String()
 }
 
 func (store *SQLite) Close() error {

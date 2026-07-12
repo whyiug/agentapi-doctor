@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -62,7 +63,9 @@ func TestInitAndTargetLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.Mode().Perm()&0o077 != 0 {
+	// Windows exposes synthesized POSIX mode bits; ACLs are the native access
+	// control mechanism and are not represented by FileMode.Perm.
+	if runtime.GOOS != "windows" && info.Mode().Perm()&0o077 != 0 {
 		t.Fatalf("config permissions are too broad: %o", info.Mode().Perm())
 	}
 	if code, _ := run(t, directory, "init"); code != ExitInput {
@@ -264,6 +267,7 @@ func TestTestRejectsExistingOutputBeforeNetwork(t *testing.T) {
 
 func TestWriteNewFileRejectsSymlinkAncestor(t *testing.T) {
 	directory := t.TempDir()
+	directory = absolutePath(directory, directory)
 	realDirectory := filepath.Join(directory, "real")
 	if err := os.Mkdir(realDirectory, 0o700); err != nil {
 		t.Fatal(err)
@@ -277,6 +281,71 @@ func TestWriteNewFileRejectsSymlinkAncestor(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(realDirectory, "output.json")); !os.IsNotExist(err) {
 		t.Fatalf("output escaped through symlink: %v", err)
+	}
+}
+
+func TestAbsolutePathCanonicalizesOnlyTrustedWorkingDirectory(t *testing.T) {
+	directory := t.TempDir()
+	resolved, err := filepath.EvalSymlinks(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(resolved, "nested", "output.json")
+	got := absolutePath(directory, filepath.Join(directory, "nested", "output.json"))
+	if got != want {
+		t.Fatalf("absolutePath() = %q, want canonical path %q", got, want)
+	}
+
+	realDirectory := filepath.Join(resolved, "real")
+	if err := os.Mkdir(realDirectory, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	trustedLink := filepath.Join(resolved, "trusted-link")
+	if err := os.Symlink(realDirectory, trustedLink); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+	canonicalTrusted, err := filepath.EvalSymlinks(trustedLink)
+	if err != nil {
+		t.Fatal(err)
+	}
+	safe := absolutePath(trustedLink, filepath.Join(trustedLink, "safe.json"))
+	if safe != filepath.Join(canonicalTrusted, "safe.json") {
+		t.Fatalf("trusted ancestor was not canonicalized: got %q", safe)
+	}
+	if err := writeNewFile(safe, []byte("safe")); err != nil {
+		t.Fatalf("write through canonical trusted ancestor: %v", err)
+	}
+
+	escapeDirectory := filepath.Join(resolved, "escape")
+	if err := os.Mkdir(escapeDirectory, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	untrustedLink := filepath.Join(canonicalTrusted, "untrusted-link")
+	if err := os.Symlink(escapeDirectory, untrustedLink); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+	unsafe := absolutePath(trustedLink, filepath.Join(trustedLink, "untrusted-link", "escaped.json"))
+	if err := writeNewFile(unsafe, []byte("unsafe")); err == nil || !strings.Contains(err.Error(), "symlink") {
+		t.Fatalf("symlink below trusted ancestor accepted: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(escapeDirectory, "escaped.json")); !os.IsNotExist(err) {
+		t.Fatalf("output escaped through untrusted symlink: %v", err)
+	}
+
+	leafTarget := filepath.Join(escapeDirectory, "leaf-target.json")
+	if err := os.WriteFile(leafTarget, []byte("unchanged"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	leafLink := filepath.Join(canonicalTrusted, "leaf-link.json")
+	if err := os.Symlink(leafTarget, leafLink); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+	leaf := absolutePath(trustedLink, filepath.Join(trustedLink, "leaf-link.json"))
+	if err := writeNewFile(leaf, []byte("replacement")); err == nil {
+		t.Fatal("symlink destination accepted")
+	}
+	if data, err := os.ReadFile(leafTarget); err != nil || string(data) != "unchanged" {
+		t.Fatalf("symlink destination was replaced: %q, %v", data, err)
 	}
 }
 

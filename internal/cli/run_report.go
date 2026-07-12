@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/whyiug/agentapi-doctor/internal/report"
 	"github.com/whyiug/agentapi-doctor/internal/runstore"
@@ -103,10 +104,30 @@ func runReport(args []string, dependencies Dependencies) int {
 }
 
 func absolutePath(workingDirectory, path string) string {
-	if filepath.IsAbs(path) {
-		return filepath.Clean(path)
+	workingDirectory = filepath.Clean(workingDirectory)
+	canonicalWorkingDirectory := workingDirectory
+	if resolved, err := filepath.EvalSymlinks(workingDirectory); err == nil {
+		canonicalWorkingDirectory = resolved
 	}
-	return filepath.Join(workingDirectory, path)
+
+	if !filepath.IsAbs(path) {
+		return filepath.Join(canonicalWorkingDirectory, path)
+	}
+
+	clean := filepath.Clean(path)
+	relative, err := filepath.Rel(workingDirectory, clean)
+	if err == nil && pathIsWithinWorkingDirectory(relative) {
+		return filepath.Join(canonicalWorkingDirectory, relative)
+	}
+	return clean
+}
+
+// pathIsWithinWorkingDirectory permits canonicalizing only the trusted working
+// directory prefix. Symlinks in the relative suffix remain visible to
+// validateNewFilePath and are therefore rejected before a write.
+func pathIsWithinWorkingDirectory(relative string) bool {
+	return !filepath.IsAbs(relative) && relative != ".." &&
+		!strings.HasPrefix(relative, ".."+string(filepath.Separator))
 }
 
 func writeNewFile(path string, data []byte) error {
