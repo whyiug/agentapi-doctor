@@ -62,6 +62,7 @@ func chatBody(t *testing.T, stream, tool bool) []byte {
 	t.Helper()
 	request := map[string]any{
 		"model": "synthetic-model", "messages": []any{map[string]any{"role": "user", "content": "hello"}}, "stream": stream,
+		"max_completion_tokens": 64,
 	}
 	if tool {
 		request["tools"] = []any{synthetictools.OpenAIDefinition()}
@@ -71,7 +72,7 @@ func chatBody(t *testing.T, stream, tool bool) []byte {
 
 func responsesBody(t *testing.T, stream, tool bool) []byte {
 	t.Helper()
-	request := map[string]any{"model": "synthetic-model", "input": "hello", "stream": stream}
+	request := map[string]any{"model": "synthetic-model", "input": "hello", "stream": stream, "max_output_tokens": 64}
 	if tool {
 		request["tools"] = []any{map[string]any{"type": "function", "name": synthetictools.EchoName}}
 	}

@@ -1,70 +1,114 @@
 # Quick Start
 
-[Documentation home](README.md) | [简体中文](zh-CN/quick-start.md)
+[Project home](../README.md) | [简体中文](zh-CN/quick-start.md)
 
-Run a complete local check in about 60 seconds after the Go toolchain is ready.
-The example uses a deterministic synthetic API on `127.0.0.1`, requires no
-credential, and makes no request to a public endpoint.
+Two commands run a credential-free demo. One additional `doctor test` command
+can assess any authorized local, private-network, or remote HTTP(S) endpoint
+that exposes a supported API shape.
 
-## Prerequisites
+## Install the current source snapshot
 
-- Git
-- The Go toolchain selected by the repository's `go.mod`
-- A POSIX-compatible shell (Linux, macOS, WSL, or Git Bash)
-
-## Build and run
-
-Use a fresh checkout because `doctor init` will not overwrite an existing
-`.agentapi/config.yaml`.
+Requires the Go toolchain:
 
 ```sh
-git clone https://github.com/whyiug/agentapi-doctor.git
-cd agentapi-doctor
-
-mkdir -p ./bin
-go build -o ./bin/doctor ./cmd/doctor
-go build -o ./bin/reference-server ./cmd/reference-server
-
-reference_log="${TMPDIR:-/tmp}/agentapi-doctor-reference.$$"
-./bin/reference-server -listen 127.0.0.1:8090 >"$reference_log" 2>&1 &
-reference_pid=$!
-trap 'kill "$reference_pid" 2>/dev/null || true; wait "$reference_pid" 2>/dev/null || true; rm -f "$reference_log"' EXIT INT TERM
-sleep 1
-
-./bin/doctor init
-./bin/doctor test local-reference
-./bin/doctor report terminal latest
+go install github.com/whyiug/agentapi-doctor/cmd/doctor@latest
 ```
 
-The shell trap stops only the reference process started by this session and
-removes its temporary log.
+There is no tagged release or published binary package yet. `@latest` is a
+source install that follows the latest available source snapshot, so repeating
+the command later may install different code.
 
-## Expected result
+If `doctor` is not found, ensure the configured `GOBIN`—or
+`$(go env GOPATH)/bin` when `GOBIN` is empty—is on `PATH`.
 
-The terminal report should include:
+## Run the built-in demo
+
+```sh
+doctor demo
+```
+
+The demo runs an in-process synthetic fixture. It needs no API key, starts a
+temporary HTTP listener on a random loopback port, stops that listener before
+returning, and contacts no external endpoint. It writes its redacted local
+evidence under `.agentapi/`.
+
+Demo success verifies only the installed CLI and its synthetic fixture. It is
+not a claim about another endpoint.
+
+## Test an authorized endpoint
+
+The one-shot interface is:
 
 ```text
-Profile outcome: COMPATIBLE
-Cases: 4 candidate / 4 applicable / 4 executed
-Verdicts: PASS 4
+doctor test --base-url URL --protocol ID --model ID
+  [--auth-env NAME] [--auth-header x-api-key] [--allow-plain-http]
+  --format terminal
 ```
 
-The exact run ID is generated for your run. Results and evidence are stored
-under `.agentapi/runs` and `.agentapi/evidence`; both paths are ignored by Git.
+No `init` step or YAML file is required.
 
-This result proves only that the current runner can evaluate the checked-in
-synthetic fixture. It is not a compatibility claim for another endpoint and
-not vendor certification.
+### HTTPS with bearer authentication
 
-## Next steps
+```sh
+export DOCTOR_TOKEN='replace-with-a-test-token'
 
-- Follow [Getting Started](getting-started/README.md) to add an authorized
-  target, inspect an offline plan, and export reports.
-- Read [Configuration](configuration.md) before adding credentials.
-- Use the [CLI reference](cli-reference.md) for every command and exit code.
-- If the port is busy or initialization fails, see
-  [Troubleshooting](troubleshooting.md).
+doctor test \
+  --base-url 'https://replace-with-authorized-host.invalid/v1' \
+  --protocol openai-chat \
+  --model 'replace-with-model-id' \
+  --auth-env DOCTOR_TOKEN \
+  --format terminal
+```
 
-The catalog contains 260 candidate metadata scenario records. The current
-reference server has 12 executable targeted modes, and this quick start runs
-the 4 checks selected for the `openai-responses` target.
+Replace the `.invalid` URL and model before running. `--auth-env` names an
+environment variable; the token value is not placed in the command line.
+
+- No authentication: omit `--auth-env`.
+- Custom token header: use `--auth-env DOCTOR_TOKEN --auth-header x-api-key`.
+- Trusted local/private plain HTTP: add `--allow-plain-http`.
+
+Plain HTTP is rejected by default. Do not use `--allow-plain-http` when sending
+a credential across an untrusted network. This flag does not override the
+hard rejection of metadata-service, link-local, multicast, unspecified, or
+invalid destinations.
+
+## Supported endpoint shapes
+
+| Protocol ID | Derived operation |
+| --- | --- |
+| `openai-chat` | `/v1/chat/completions` |
+| `openai-responses` | `/v1/responses` |
+| `anthropic-messages` | `/v1/messages` |
+
+The endpoint may be local, on a private network, or remote. A non-root base
+path is treated as the complete API prefix, so both `/v1` and custom prefixes
+such as `/api/v3` are preserved. Requests stay on the configured origin and
+redirects are not followed.
+
+The selected endpoint receives bounded synthetic prompts and may log or retain
+them under its own policy. Use an authorized test account and test credential;
+do not send production data through these checks.
+
+## Cost, evidence, and result boundaries
+
+Each endpoint run:
+
+- sends at most **4 requests**;
+- asks for at most **64 output tokens per request**;
+- uses one **60-second execution deadline**, followed by bounded cleanup and
+  local persistence;
+- prints the requested report format; and
+- stores redacted evidence and the run record under `.agentapi/`.
+
+The current reference fixture contains 12 executable targeted modes. The
+catalog's 260 candidate records are metadata, not 260 executable requests.
+
+Only test systems you have explicit permission to assess. PASS is bound to the
+exact endpoint, model, built-in pack/profile digests, and four checks. It is
+not vendor certification and does not prove complete SDK, agent, provider, or
+deployment compatibility.
+
+Next: [CLI reference](cli-reference.md) ·
+[Installation details](installation.md) ·
+[Troubleshooting](troubleshooting.md) ·
+[Known limitations](known-limitations/README.md)

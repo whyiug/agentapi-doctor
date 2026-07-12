@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/whyiug/agentapi-doctor/internal/report"
-	"github.com/whyiug/agentapi-doctor/internal/runstore"
 )
 
 const maxBaselineBytes int64 = 16 << 20
@@ -191,15 +190,11 @@ func emitComparison(before, after report.Baseline, dependencies Dependencies) in
 }
 
 func loadReport(reference, storePath string, allowLatest bool, dependencies Dependencies) (report.Bundle, error) {
-	store, err := runstore.Open(absolutePath(dependencies.WorkingDir, storePath), 0)
+	loaded, err := loadValidatedRun(reference, storePath, allowLatest, dependencies)
 	if err != nil {
 		return report.Bundle{}, err
 	}
-	record, err := store.Get(reference, allowLatest)
-	if err != nil {
-		return report.Bundle{}, err
-	}
-	return report.Decode(record.Bundle)
+	return loaded.Bundle, nil
 }
 func baselineFile(working, directory, name string) (string, error) {
 	if !scaffoldName.MatchString(name) {

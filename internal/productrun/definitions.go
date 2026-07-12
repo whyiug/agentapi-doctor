@@ -1,4 +1,4 @@
-// Package productrun assembles the small, local-first candidate execution
+// Package productrun assembles the small, client-side candidate execution
 // slice used by the CLI. It deliberately does not claim a support tier: all
 // built-in normative interpretations remain candidate/pending_review until
 // the independent catalog gates are satisfied.
@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	builtinVersion     = "0.1.0-candidate.1"
+	builtinVersion     = "0.1.0-candidate.2"
+	outputTokenLimit   = 64
 	catalogStatus      = "candidate"
 	catalogReviewState = "pending_review"
 )
@@ -165,7 +166,7 @@ func deriveArtifacts(protocol, model, endpointPath string) (artifacts, error) {
 		Name          string `json:"name"`
 		Version       string `json:"version"`
 		Semantics     string `json:"semantics"`
-	}{"urn:agentapi-doctor:builtin-evaluator:v1", "raw-http-candidate-evaluator", builtinVersion, "strict content type, required envelope, terminal lifecycle, and post-terminal checks"}
+	}{"urn:agentapi-doctor:builtin-evaluator:v1", "raw-http-candidate-evaluator", builtinVersion, "strict content type, required envelope, terminal lifecycle, and post-terminal checks; provider output-limit support and non-truncated completion are explicit inconclusive prerequisites"}
 	evaluator, err := schema.CanonicalDigest(evaluatorManifest)
 	if err != nil {
 		return artifacts{}, err
@@ -225,7 +226,7 @@ func deriveArtifacts(protocol, model, endpointPath string) (artifacts, error) {
 		Version       string        `json:"version"`
 		Pack          schema.Digest `json:"pack_digest"`
 		Claim         string        `json:"claim"`
-	}{"urn:agentapi-doctor:builtin-profile:v1", "builtin-" + protocol + "-raw-candidate", builtinVersion, pack.Digest, "candidate local raw-wire slice; no Tier or vendor compatibility claim"}
+	}{"urn:agentapi-doctor:builtin-profile:v1", "builtin-" + protocol + "-raw-candidate", builtinVersion, pack.Digest, "candidate exact-origin raw-wire slice; no Tier or vendor compatibility claim"}
 	profile, err := pin("ConsumerCompatibilityProfile", "builtin-"+protocol+"-raw-candidate", builtinVersion, profileManifest)
 	if err != nil {
 		return artifacts{}, err
@@ -284,14 +285,17 @@ func requestBody(protocol, model string, streaming bool) (json.RawMessage, error
 	switch protocol {
 	case "openai-chat":
 		value = map[string]any{
-			"model": model, "stream": streaming,
+			"model": model, "stream": streaming, "max_completion_tokens": outputTokenLimit,
 			"messages": []any{map[string]any{"role": "user", "content": "Return a concise synthetic response."}},
 		}
 	case "openai-responses":
-		value = map[string]any{"model": model, "stream": streaming, "store": false, "input": "Return a concise synthetic response."}
+		value = map[string]any{
+			"model": model, "stream": streaming, "max_output_tokens": outputTokenLimit,
+			"input": "Return a concise synthetic response.",
+		}
 	case "anthropic-messages":
 		value = map[string]any{
-			"model": model, "stream": streaming, "max_tokens": 64,
+			"model": model, "stream": streaming, "max_tokens": outputTokenLimit,
 			"messages": []any{map[string]any{"role": "user", "content": "Return a concise synthetic response."}},
 		}
 	default:

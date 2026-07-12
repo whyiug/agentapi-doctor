@@ -14,11 +14,24 @@ the release workflow as published artifacts.
 - GNU Make and Python 3 for the complete contributor checks
 - Docker only for local container images or the Compose services
 
-The repository commits its Go vendor tree, so normal source builds do not need
-to resolve Go modules from the network after the repository and required Go
+## Fast source install
+
+Install the latest available source snapshot and run the self-contained demo:
+
+```sh
+go install github.com/whyiug/agentapi-doctor/cmd/doctor@latest
+doctor demo
+```
+
+This is not a release install: `@latest` currently resolves a mutable source
+snapshot. If `doctor` is not found, add `GOBIN`, or `$(go env GOPATH)/bin` when
+`GOBIN` is empty, to `PATH`.
+
+The repository commits its Go vendor tree, so checkout builds do not need to
+resolve Go modules from the network after the repository and required Go
 toolchain are available.
 
-## Build the CLI from source
+## Build a reproducible checkout
 
 ```sh
 git clone https://github.com/whyiug/agentapi-doctor.git
@@ -27,6 +40,7 @@ cd agentapi-doctor
 mkdir -p ./bin
 go build -trimpath -o ./bin/doctor ./cmd/doctor
 ./bin/doctor version
+./bin/doctor demo
 ```
 
 On Windows PowerShell, use an `.exe` output name:

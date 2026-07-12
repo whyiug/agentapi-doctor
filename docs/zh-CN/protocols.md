@@ -1,7 +1,6 @@
 # 协议边界
 
-**英文来源：** [Protocol Families](../protocols/README.md)（草案工作树，首次评审
-commit 尚未产生）。
+**英文来源：** [Protocol Families](../protocols/README.md)。
 
 项目分别建模 OpenAI Chat、OpenAI Responses、Anthropic Messages、Google API 和
 MCP，不把一个 provider 的字段/状态机强行套到另一个协议：

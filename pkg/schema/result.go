@@ -30,6 +30,8 @@ type ReasonCode string
 
 const (
 	ReasonUnsupportedCapability ReasonCode = "unsupported_capability"
+	ReasonAuthenticationFailed  ReasonCode = "authentication_failed"
+	ReasonPermissionDenied      ReasonCode = "permission_denied"
 	ReasonTransientError        ReasonCode = "transient_error"
 	ReasonSpecAmbiguity         ReasonCode = "spec_ambiguity"
 	ReasonBudgetExhausted       ReasonCode = "budget_exhausted"
@@ -186,6 +188,7 @@ type CaseResult struct {
 	ExecutionStatus    ExecutionStatus   `json:"execution_status,omitempty"`
 	Verdict            *Verdict          `json:"verdict,omitempty"`
 	ReasonCode         ReasonCode        `json:"reason_code,omitempty"`
+	EvidenceRefs       []ObjectRef       `json:"evidence_refs,omitempty"`
 	AssertionResults   []AssertionResult `json:"assertion_results,omitempty"`
 	Findings           []Finding         `json:"findings,omitempty"`
 	CandidateMember    bool              `json:"candidate_member"`
@@ -209,11 +212,16 @@ func (result CaseResult) Validate() error {
 			return errors.New("non-completed case cannot have a verdict")
 		}
 	} else {
-		if len(result.AttemptIDs) != 0 || result.Verdict != nil {
-			return errors.New("skip/not_applicable cannot create target attempts or verdicts")
+		if len(result.AttemptIDs) != 0 || result.Verdict != nil || len(result.EvidenceRefs) != 0 {
+			return errors.New("skip/not_applicable cannot create target attempts, verdicts, or evidence")
 		}
 		if result.ReasonCode == "" {
 			return errors.New("skip/not_applicable requires a reason code")
+		}
+	}
+	for index, ref := range result.EvidenceRefs {
+		if err := ref.Validate(); err != nil {
+			return fmt.Errorf("case evidence ref %d: %w", index, err)
 		}
 	}
 	return nil

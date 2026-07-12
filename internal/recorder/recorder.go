@@ -97,8 +97,8 @@ func New(config Config, redactorInstance *redaction.Redactor, store *cas.Store) 
 }
 
 // Record sanitizes an in-memory observation, commits the sanitized bytes to
-// CAS, and then constructs digest-bound evidence. Sequence advances only after
-// the CAS commit and evidence validation both succeed.
+// CAS, constructs digest-bound evidence, and persists that typed envelope.
+// Sequence advances only after both immutable objects validate and commit.
 func (recorder *Recorder) Record(ctx context.Context, observation Observation) (schema.Evidence, error) {
 	if ctx == nil {
 		return schema.Evidence{}, errors.New("context is required")
@@ -135,7 +135,7 @@ func (recorder *Recorder) Record(ctx context.Context, observation Observation) (
 	}
 	payloadDigest := payloadRef.ContentDigest
 	redactions := redactionRecords(payload.Report())
-	projection := evidenceProjection{
+	evidence := schema.Evidence{
 		RunID:               recorder.config.RunID,
 		InvocationID:        recorder.config.InvocationID,
 		AttemptID:           recorder.config.AttemptID,
@@ -147,43 +147,26 @@ func (recorder *Recorder) Record(ctx context.Context, observation Observation) (
 		MonotonicOffsetNS:   observation.MonotonicOffsetNS,
 		ByteOffset:          cloneInt64(observation.ByteOffset),
 		EventOffset:         cloneInt64(observation.EventOffset),
-		PayloadRef:          payloadRef,
-		PayloadDigest:       payloadDigest,
-		Redactions:          redactions,
-		Relations:           append([]schema.EvidenceRelation(nil), observation.Relations...),
-	}
-	meta, err := schema.SealMeta(
-		"urn:agentapi-doctor:evidence:v1alpha1",
-		"Evidence",
-		"",
-		recorder.config.Producer,
-		schema.NewUTCTime(recorder.config.Now()),
-		projection,
-	)
-	if err != nil {
-		return schema.Evidence{}, fmt.Errorf("seal evidence: %w", err)
-	}
-	evidence := schema.Evidence{
-		EnvelopeMeta:        meta,
-		EvidenceID:          meta.ContentDigest,
-		RunID:               projection.RunID,
-		InvocationID:        projection.InvocationID,
-		AttemptID:           projection.AttemptID,
-		Sequence:            projection.Sequence,
-		CaptureLayer:        projection.CaptureLayer,
-		InstrumentationMode: projection.InstrumentationMode,
-		Direction:           projection.Direction,
-		EvidenceKind:        projection.EvidenceKind,
-		MonotonicOffsetNS:   projection.MonotonicOffsetNS,
-		ByteOffset:          projection.ByteOffset,
-		EventOffset:         projection.EventOffset,
 		PayloadRef:          &payloadRef,
 		PayloadDigest:       &payloadDigest,
 		Redactions:          redactions,
-		Relations:           projection.Relations,
+		Relations:           append([]schema.EvidenceRelation(nil), observation.Relations...),
 	}
+	meta, err := cas.SealEvidenceMeta(recorder.config.Producer, schema.NewUTCTime(recorder.config.Now()), evidence)
+	if err != nil {
+		return schema.Evidence{}, fmt.Errorf("seal evidence: %w", err)
+	}
+	evidence.EnvelopeMeta = meta
+	evidence.EvidenceID = meta.ContentDigest
 	if err := evidence.Validate(); err != nil {
 		return schema.Evidence{}, fmt.Errorf("validate committed evidence: %w", err)
+	}
+	persistedRef, err := recorder.store.PutEvidence(ctx, evidence)
+	if err != nil {
+		return schema.Evidence{}, fmt.Errorf("persist Evidence envelope: %w", err)
+	}
+	if persistedRef != evidence.ObjectRef {
+		return schema.Evidence{}, errors.New("persisted Evidence reference differs from the sealed envelope")
 	}
 	recorder.nextSequence++
 	return evidence, nil
@@ -267,24 +250,6 @@ func redactionRecords(report redaction.Report) []schema.RedactionRecord {
 		})
 	}
 	return records
-}
-
-type evidenceProjection struct {
-	RunID               schema.InstanceID          `json:"run_id"`
-	InvocationID        schema.InstanceID          `json:"invocation_id"`
-	AttemptID           schema.InstanceID          `json:"attempt_id"`
-	Sequence            uint64                     `json:"sequence"`
-	CaptureLayer        schema.CaptureLayer        `json:"capture_layer"`
-	InstrumentationMode schema.InstrumentationMode `json:"instrumentation_mode"`
-	Direction           schema.Direction           `json:"direction"`
-	EvidenceKind        string                     `json:"evidence_kind"`
-	MonotonicOffsetNS   int64                      `json:"monotonic_offset_ns"`
-	ByteOffset          *int64                     `json:"byte_offset,omitempty"`
-	EventOffset         *int64                     `json:"event_offset,omitempty"`
-	PayloadRef          schema.ObjectRef           `json:"payload_ref"`
-	PayloadDigest       schema.Digest              `json:"payload_digest"`
-	Redactions          []schema.RedactionRecord   `json:"redactions"`
-	Relations           []schema.EvidenceRelation  `json:"relations,omitempty"`
 }
 
 func zero(data []byte) {

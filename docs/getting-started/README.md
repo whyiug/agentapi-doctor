@@ -6,8 +6,8 @@ This guide moves from a source checkout to an authorized target run, stored
 evidence, and exported reports. There is no tagged release or published
 package yet, and a passing result is not vendor certification.
 
-For the shortest credential-free path, use the
-[60-second Quick Start](../quick-start.md).
+For the shortest credential-free path, use the one-command
+[Quick Start](../quick-start.md).
 
 ## Prerequisites
 
@@ -109,8 +109,9 @@ evidence:
 ./bin/doctor test example --plan-only --resolve --output ./example-plan.json
 ```
 
-`--resolve` requires `--plan-only`. Output files are created only when the path
-does not already exist.
+`--resolve` requires `--plan-only` and includes the offline built-in
+`ResolvedRunPlan`; it does not probe target capabilities. Output files are
+created only when the path does not already exist.
 
 ## Execute and keep an exact run reference
 
@@ -179,7 +180,8 @@ output behavior, and exit codes.
 - Current checks do not prove complete SDK, agent, model, provider, or
   deployment compatibility.
 - A report is not certification, endorsement, or a guarantee of behavior
-  outside the exact tested version and configuration.
+  outside the tested endpoint, model, built-in pack/profile digests, plan, and
+  evidence. It does not automatically attest the CLI source commit.
 
 Only test endpoints you are authorized to assess. Keep real credentials,
 private traces, and unredacted payloads out of issues and artifacts.

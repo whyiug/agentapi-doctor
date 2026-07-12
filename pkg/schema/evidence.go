@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 )
 
 type CaptureLayer string
@@ -87,8 +88,20 @@ func (evidence Evidence) Validate() error {
 	if !slices.Contains([]InstrumentationMode{InstrumentationDirect, InstrumentationProxy, InstrumentationFixture, InstrumentationClient}, evidence.InstrumentationMode) {
 		return fmt.Errorf("invalid instrumentation mode %q", evidence.InstrumentationMode)
 	}
+	if !slices.Contains([]Direction{DirectionCoreToTarget, DirectionTargetToCore, DirectionProxyToClient, DirectionClientToProxy, DirectionDriverToCore}, evidence.Direction) {
+		return fmt.Errorf("invalid evidence direction %q", evidence.Direction)
+	}
+	if !validEvidenceObservationPoint(evidence.CaptureLayer, evidence.InstrumentationMode, evidence.Direction) {
+		return fmt.Errorf("instrumentation mode %q and direction %q cannot describe capture layer %q", evidence.InstrumentationMode, evidence.Direction, evidence.CaptureLayer)
+	}
 	if evidence.Sequence == 0 || evidence.MonotonicOffsetNS < 0 || evidence.EvidenceKind == "" {
 		return errors.New("evidence requires a positive sequence, nonnegative offset, and kind")
+	}
+	if evidence.ByteOffset != nil && *evidence.ByteOffset < 0 {
+		return errors.New("evidence byte_offset cannot be negative")
+	}
+	if evidence.EventOffset != nil && *evidence.EventOffset < 0 {
+		return errors.New("evidence event_offset cannot be negative")
 	}
 	if (evidence.PayloadRef == nil) != (evidence.PayloadDigest == nil) {
 		return errors.New("payload_ref and payload_digest must be present together")
@@ -96,9 +109,15 @@ func (evidence Evidence) Validate() error {
 	if evidence.PayloadRef == nil && evidence.UnavailableReason == "" {
 		return errors.New("missing payload requires unavailable_reason")
 	}
+	if evidence.PayloadRef != nil && evidence.UnavailableReason != "" {
+		return errors.New("available payload cannot also declare unavailable_reason")
+	}
 	if evidence.PayloadRef != nil {
 		if err := evidence.PayloadRef.Validate(); err != nil {
 			return fmt.Errorf("payload ref: %w", err)
+		}
+		if evidence.PayloadRef.Kind != "Payload" || evidence.PayloadRef.InstanceID != "" {
+			return errors.New("payload_ref must be a content-addressed Payload ref")
 		}
 		if *evidence.PayloadDigest != evidence.PayloadRef.ContentDigest {
 			return errors.New("payload digest does not match payload_ref")
@@ -109,7 +128,35 @@ func (evidence Evidence) Validate() error {
 			return errors.New("redaction records require rule, field class, and positive count")
 		}
 	}
+	for _, relation := range evidence.Relations {
+		if strings.TrimSpace(relation.Relation) == "" {
+			return errors.New("evidence relation name is required")
+		}
+		if err := relation.Target.Validate(); err != nil {
+			return fmt.Errorf("evidence relation target: %w", err)
+		}
+	}
 	return nil
+}
+
+func validEvidenceObservationPoint(layer CaptureLayer, mode InstrumentationMode, direction Direction) bool {
+	// A sanitized projection retains the source observation's mode/direction,
+	// so every otherwise valid pair is meaningful at this derived layer.
+	if layer == LayerSanitizedPersisted {
+		return true
+	}
+	switch layer {
+	case LayerUpstreamApplication:
+		return (mode == InstrumentationDirect || mode == InstrumentationFixture) &&
+			(direction == DirectionCoreToTarget || direction == DirectionTargetToCore)
+	case LayerProxyForwarded:
+		return mode == InstrumentationProxy &&
+			(direction == DirectionProxyToClient || direction == DirectionClientToProxy)
+	case LayerClientSDK:
+		return (mode == InstrumentationClient || mode == InstrumentationFixture) && direction == DirectionDriverToCore
+	default:
+		return false
+	}
 }
 
 type IRType string

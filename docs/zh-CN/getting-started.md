@@ -5,8 +5,8 @@
 本指南从源码 checkout 开始，依次完成授权 target 的配置、运行、证据保存和
 报告导出。当前还没有 tagged release 或已发布软件包，PASS 也不是厂商认证。
 
-如果只想走最短且不需要凭据的路径，请使用
-[60 秒快速开始](quick-start.md)。
+如果只想走最短且不需要凭据的路径，请使用一条命令的
+[快速开始](quick-start.md)。
 
 ## 前置条件
 
@@ -103,7 +103,8 @@ export EXAMPLE_API_TOKEN='replace-with-a-local-or-test-token'
 ./bin/doctor test example --plan-only --resolve --output ./example-plan.json
 ```
 
-`--resolve` 必须与 `--plan-only` 一起使用。只有目标路径不存在时才会创建
+`--resolve` 必须与 `--plan-only` 一起使用；它包含离线生成的内置
+`ResolvedRunPlan`，不会探测 target capability。只有目标路径不存在时才会创建
 输出文件。
 
 ## 执行并保存精确 run reference
@@ -167,7 +168,8 @@ NEW_RUN_ID='<较新的精确-run-id>'
 - Requirement Catalog 中的 260 条候选场景记录是 metadata，不是 260 个
   可执行测试。
 - 当前检查不能证明完整 SDK、Agent、模型、Provider 或部署兼容。
-- 报告不是认证、背书，也不保证精确被测版本和配置之外的行为。
+- 报告不是认证或背书，也不保证被测 endpoint、model、内置 pack/profile
+  digest、plan 与 evidence 之外的行为；它不会自动证明 CLI 的源码 commit。
 
 只测试你获准评估的 endpoint。不要把真实凭据、私有 trace 或未经脱敏的
 payload 放进 issue 和 artifact。

@@ -25,9 +25,9 @@ const (
 	intentSchemaID       = "urn:agentapi-doctor:schema:intent-plan:v1alpha1"
 	capabilitySchemaID   = "urn:agentapi-doctor:schema:capability-observation:v1alpha1"
 	resolvedSchemaID     = "urn:agentapi-doctor:schema:resolved-run-plan:v1alpha1"
-	evidenceSchemaID     = "urn:agentapi-doctor:schema:evidence:v1alpha1"
-	resultSchemaID       = "urn:agentapi-doctor:schema:result:v1alpha1"
-	reportSchemaID       = "urn:agentapi-doctor:schema:report-bundle:v1alpha1"
+	evidenceSchemaID     = "urn:agentapi-doctor:schema:evidence:v1alpha2"
+	resultSchemaID       = "urn:agentapi-doctor:schema:result:v1alpha2"
+	reportSchemaID       = "urn:agentapi-doctor:schema:report-bundle:v1alpha2"
 	driverFrameSchemaID  = "urn:agentapi-doctor:schema:driver-control-frame:v1alpha1"
 	driverHeaderSchemaID = "urn:agentapi-doctor:schema:driver-data-frame-header:v1alpha1"
 	observationSchemaID  = "urn:agentapi-doctor:schema:observation:v1"
@@ -93,6 +93,16 @@ func TestPublicSchemaAndGoValidationRejectInvalidContracts(t *testing.T) {
 	bundleRaw := marshalObject(t, bundle)
 	bundleRaw["support_lock_digest"] = "sha256:ABC"
 	assertSchemaRejects(t, compiled[reportSchemaID], bundleRaw)
+
+	skippedWithEvidence := publicschema.CaseResult{
+		ScenarioID: "skipped-with-evidence", PlanDisposition: publicschema.DispositionSkip,
+		ReasonCode: publicschema.ReasonBudgetExhausted, EvidenceRefs: []publicschema.ObjectRef{bundle.IntentPlanRef},
+		CandidateMember: true, ApplicableMember: true, AttemptAggregation: "none",
+	}
+	if err := skippedWithEvidence.Validate(); err == nil {
+		t.Fatal("Go validator accepted evidence on a skipped CaseResult")
+	}
+	assertSchemaRejects(t, compiled[resultSchemaID], marshalObject(t, skippedWithEvidence))
 
 	identityRaw := marshalObject(t, intent)
 	identityRaw["object_ref"].(map[string]any)["kind"] = "Evidence"
@@ -368,7 +378,7 @@ func capabilityFixture(t *testing.T, intent publicschema.IntentPlan) publicschem
 func resultFixtures(t *testing.T) (publicschema.Evidence, publicschema.AssertionResult, publicschema.Finding, publicschema.CaseResult, publicschema.ProfileResult) {
 	t.Helper()
 	evidenceID := fixtureID('6')
-	meta, err := publicschema.SealMeta("urn:agentapi-doctor:evidence:v1alpha1", "Evidence", evidenceID, fixtureProducer(), publicschema.NewUTCTime(time.Unix(3, 0)), struct {
+	meta, err := publicschema.SealMeta("urn:agentapi-doctor:evidence:v1alpha2", "Evidence", evidenceID, fixtureProducer(), publicschema.NewUTCTime(time.Unix(3, 0)), struct {
 		Value string `json:"value"`
 	}{"synthetic"})
 	if err != nil {

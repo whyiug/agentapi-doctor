@@ -26,9 +26,9 @@ entries:
     - id: urn:agentapi-doctor:schema:driver-manifest:v1
       path: schemas/support/driver-manifest.schema.json
       digest: sha256:dfba9517965fab71a1cfc8546696ee4700527c60e69af5ddfe00b223f47977bb
-    - id: urn:agentapi-doctor:schema:evidence:v1alpha1
+    - id: urn:agentapi-doctor:schema:evidence:v1alpha2
       path: schemas/evidence/evidence.schema.json
-      digest: sha256:0921ddd94b9b7d78041f5f68e9e5081d1e0dcaf4d0bd7541ea60a22cfddb7bbe
+      digest: sha256:3bae489bcc2d11504f12597e3f53eba353cf8548474861b3276406af6d6c9f1e
     - id: urn:agentapi-doctor:schema:external-suite-adapter:v1
       path: schemas/support/external-suite-adapter.schema.json
       digest: sha256:3e3be2d4fa67ea382750bb93fdf6418c33bf39dfb1ae3d324490a57aca29d21d
@@ -47,18 +47,18 @@ entries:
     - id: urn:agentapi-doctor:schema:release-components:v1
       path: schemas/support/release-components.schema.json
       digest: sha256:d3d1f873694eb45c15669ea58858ef85c5da66d31ee62aa290c026064b49a844
-    - id: urn:agentapi-doctor:schema:report-bundle:v1alpha1
+    - id: urn:agentapi-doctor:schema:report-bundle:v1alpha2
       path: schemas/report/report-bundle.schema.json
-      digest: sha256:5aad4a152d3ee3c36a993a8457a7b93225eddcdf5b79862602907564f1514cb9
+      digest: sha256:9fd2f0e4674f2bb527a73cfe3f5a1dd19efa1968b8d086f1a1e0266c7ed1060e
     - id: urn:agentapi-doctor:schema:requirement-catalog:v1
       path: schemas/pack/requirement-catalog.schema.json
       digest: sha256:ab661eb2f9c66f4d57056c028261b82aadf16d3b9a18c20f583395d1d254126f
     - id: urn:agentapi-doctor:schema:resolved-run-plan:v1alpha1
       path: schemas/plan/resolved-run-plan.schema.json
       digest: sha256:531eeb114a0102fd9e89b21d019da38652e4f25b568b78ed4ad862859e7ab67f
-    - id: urn:agentapi-doctor:schema:result:v1alpha1
+    - id: urn:agentapi-doctor:schema:result:v1alpha2
       path: schemas/result/result.schema.json
-      digest: sha256:cb30840ab0288486a98601186697a6a6c612729d1b80e268aa3340c41a648ee2
+      digest: sha256:9397bfbea8c35ee25b74dda1e8647fc9abebfa492ebbf44825c45a4a6204bb46
     - id: urn:agentapi-doctor:schema:runtime-metadata-adapter:v1
       path: schemas/support/runtime-metadata-adapter.schema.json
       digest: sha256:cf2540c1c33666a98ce37dc9c5242497e4f25bae0f17cc00a82df73cf62ecc4d

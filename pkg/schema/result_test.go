@@ -4,6 +4,7 @@ import "testing"
 
 func TestCaseResultTruthTable(t *testing.T) {
 	attempt := InstanceID("00000000-0000-7000-8000-000000000000")
+	evidence := ObjectRef{Kind: "Evidence", ContentDigest: NewDigest([]byte("evidence"))}
 	pass := VerdictPass
 	tests := []struct {
 		name    string
@@ -16,7 +17,7 @@ func TestCaseResultTruthTable(t *testing.T) {
 		},
 		{
 			name:  "errored has no verdict",
-			value: CaseResult{ScenarioID: "case.one", PlanDisposition: DispositionExecute, AttemptIDs: []InstanceID{attempt}, ExecutionStatus: ExecutionErrored, ReasonCode: ReasonHarnessError},
+			value: CaseResult{ScenarioID: "case.one", PlanDisposition: DispositionExecute, AttemptIDs: []InstanceID{attempt}, ExecutionStatus: ExecutionErrored, ReasonCode: ReasonHarnessError, EvidenceRefs: []ObjectRef{evidence}},
 		},
 		{
 			name:    "harness error cannot become target fail",
@@ -30,6 +31,16 @@ func TestCaseResultTruthTable(t *testing.T) {
 		{
 			name:    "skip cannot invent verdict",
 			value:   CaseResult{ScenarioID: "case.one", PlanDisposition: DispositionSkip, ReasonCode: ReasonBudgetExhausted, Verdict: &pass},
+			wantErr: true,
+		},
+		{
+			name:    "skip cannot invent evidence",
+			value:   CaseResult{ScenarioID: "case.one", PlanDisposition: DispositionSkip, ReasonCode: ReasonBudgetExhausted, EvidenceRefs: []ObjectRef{evidence}},
+			wantErr: true,
+		},
+		{
+			name:    "case rejects invalid evidence ref",
+			value:   CaseResult{ScenarioID: "case.one", PlanDisposition: DispositionExecute, AttemptIDs: []InstanceID{attempt}, ExecutionStatus: ExecutionErrored, ReasonCode: ReasonHarnessError, EvidenceRefs: []ObjectRef{{Kind: "Evidence"}}},
 			wantErr: true,
 		},
 	}

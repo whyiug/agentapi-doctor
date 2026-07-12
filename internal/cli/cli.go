@@ -73,6 +73,8 @@ func Run(ctx context.Context, args []string, dependencies Dependencies) int {
 		return runTarget(args[1:], dependencies)
 	case "test":
 		return runTest(ctx, args[1:], dependencies)
+	case "demo":
+		return runDemo(ctx, args[1:], dependencies)
 	case "run":
 		return runRun(args[1:], dependencies)
 	case "report":
@@ -292,5 +294,5 @@ func writeFailure(writer io.Writer, code int, reason, message string, data any) 
 }
 
 func usage() string {
-	return "usage: doctor <init|self-check|target|test|run|compare|baseline|report|completion|dev|version|help> ..."
+	return "usage: doctor <init|self-check|target|test|demo|run|compare|baseline|report|completion|dev|version|help> ..."
 }

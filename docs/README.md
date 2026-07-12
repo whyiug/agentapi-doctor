@@ -4,13 +4,14 @@
 
 AgentAPI Doctor is under active development. You can build and run the current
 source, but there is no tagged release, published package, or hosted service
-yet. Reports are reproducible observations tied to the tested version and
-configuration; they are not vendor certification.
+yet. Reports are reproducible observations tied to the endpoint, model,
+built-in pack/profile digests, plan, and evidence; they are not vendor
+certification and do not automatically attest the CLI source commit.
 
 ## Start here
 
-- [Quick Start](quick-start.md) — run a credential-free local check in about
-  60 seconds.
+- [Quick Start](quick-start.md) — install the current source snapshot, run the
+  one-command demo, or check an authorized endpoint without YAML.
 - [Installation](installation.md) — build from source or build local Docker
   images; understand what is not published yet.
 - [Getting Started](getting-started/README.md) — configure a target, plan a

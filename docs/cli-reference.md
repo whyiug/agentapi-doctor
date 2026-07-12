@@ -29,7 +29,9 @@ Errors use the same envelope on stderr. Exceptions are:
 - `doctor version` without `--json` prints one text line;
 - `doctor completion` prints a shell completion script; and
 - `doctor report` writes the selected report format directly to stdout unless
-  `--output` is used.
+  `--output` is used;
+- inline `doctor test` and `doctor demo` default to a terminal report, while
+  `--format json` selects the JSON envelope.
 
 Commands that create a config, plan, report, baseline, or scaffold refuse to
 overwrite an existing destination.
@@ -70,25 +72,49 @@ Show one target. Secret-reference details are redacted.
 
 ```text
 doctor test <target> [--config <path>] [--data-root <path>]
-  [--plan-only] [--resolve] [--output <path>]
+  [--plan-only] [--resolve] [--output <path>] [--format json|terminal]
+
+doctor test --base-url <url> --protocol <id> --model <id>
+  [--auth-env <name>] [--auth-header <name>] [--allow-plain-http]
+  [--data-root <path>] [--plan-only] [--resolve] [--output <path>]
+  [--format json|terminal]
 ```
 
-Without `--plan-only`, execute the four checks selected for the target
-protocol and persist the canonical run under `<data-root>/runs`. The default
-data root is `.agentapi`.
+The first form loads a named target from config. The second creates an inline
+target for one run and never creates or changes `.agentapi/config.yaml`.
+Without `--plan-only`, both forms execute at most four checks and persist the
+canonical run under `<data-root>/runs`; the default data root is `.agentapi`.
 
 Flags:
 
 | Flag | Behavior |
 | --- | --- |
 | `--config <path>` | Use an alternate config file. |
+| `--base-url <url>` | Select an inline target; requires `--protocol` and `--model`. |
+| `--protocol <id>` | Use `openai-chat`, `openai-responses`, or `anthropic-messages`. |
+| `--model <id>` | Model identifier placed in each bounded synthetic request. |
+| `--auth-env <name>` | Read the inline credential from this environment variable. |
+| `--auth-header <name>` | Send the credential in a custom header instead of Bearer authorization; requires `--auth-env`. |
+| `--allow-plain-http` | Explicitly allow an inline `http://` target; HTTPS is otherwise required. This does not override forbidden-address checks. |
 | `--data-root <path>` | Change the evidence and run-store root. |
 | `--plan-only` | Build a plan without target I/O, secret resolution, or run persistence. |
-| `--resolve` | Include the exact resolved plan; requires `--plan-only`. |
+| `--resolve` | Include the offline built-in `ResolvedRunPlan` snapshot; this does not probe target capabilities and requires `--plan-only`. |
 | `--output <path>` | Write canonical plan JSON or the canonical run report to a new file. |
+| `--format <json\|terminal>` | Select stdout/stderr presentation; configured targets default to JSON and inline targets default to terminal. |
 
 The normal run is the command that can contact the configured target. Use it
 only with explicit authorization.
+
+### `doctor demo`
+
+```text
+doctor demo [--data-root <path>] [--output <path>]
+  [--format terminal|json]
+```
+
+Run the built-in `openai-responses` fixture in-process on a random loopback
+port. It needs no credential or config, contacts no external endpoint, stops
+its listener automatically, and defaults to the terminal report.
 
 ## Inspect and compare runs
 
@@ -99,11 +125,14 @@ Use exact run IDs in CI and durable evidence.
 
 ```text
 doctor run inspect <run-ref> [--store <path>] [--allow-latest]
+  [--include-plan]
 ```
 
-Load the canonical stored bundle and its digest. The default store is
-`.agentapi/runs`. `--allow-latest` defaults to true; pass
-`--allow-latest=false` to require an exact ID.
+Load the canonical stored bundle, its digest, and whether a persisted plan is
+available. The default store is `.agentapi/runs`. `--allow-latest` defaults to
+true; pass `--allow-latest=false` to require an exact ID. `--include-plan`
+includes the validated persisted plan; legacy records without one fail
+clearly when that flag is requested.
 
 ### `doctor compare <left-run-ref> <right-run-ref>`
 

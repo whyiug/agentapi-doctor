@@ -42,9 +42,13 @@ func routeTarget(target config.Target) (targetRoute, error) {
 	default:
 		return targetRoute{}, fmt.Errorf("unsupported target protocol %q", target.Protocol)
 	}
+	// A non-root base path is a complete API prefix. This matches common
+	// OpenAI-compatible deployments whose version prefix is not /v1 (for
+	// example /api/v3) and avoids silently inserting a path segment into a
+	// gateway route. An origin-only URL retains the convenient /v1 default.
 	prefix := basePath
-	if pathpkg.Base(prefix) != "v1" {
-		prefix = pathpkg.Join(prefix, "v1")
+	if prefix == "/" {
+		prefix = "/v1"
 	}
 	endpoint := pathpkg.Join(prefix, suffix)
 	if !strings.HasPrefix(endpoint, "/") || pathpkg.Clean(endpoint) != endpoint || strings.Contains(endpoint, "\\") {

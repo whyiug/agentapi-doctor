@@ -24,8 +24,9 @@ const (
 type NetworkMode string
 
 const (
-	// NetworkLocalTarget permits private/loopback destinations for a user's
-	// explicitly configured local test endpoint.
+	// NetworkLocalTarget runs on the user's machine and permits the addresses
+	// of one explicitly configured, exact-origin target. The target itself may
+	// be loopback, private-network, or public; "local" describes the runner.
 	NetworkLocalTarget NetworkMode = "local_target"
 	// NetworkPublicRunner rejects non-public, link-local, multicast, and
 	// unspecified addresses. It is intended for project-operated runners.
@@ -41,6 +42,10 @@ const (
 
 type Resolver interface {
 	LookupNetIP(context.Context, string, string) ([]netip.Addr, error)
+}
+
+type contextDialer interface {
+	DialContext(context.Context, string, string) (net.Conn, error)
 }
 
 type Policy struct {
@@ -112,6 +117,17 @@ var publicRunnerSpecialUsePrefixes = []netip.Prefix{
 	netip.MustParsePrefix("2620:4f:8000::/48"),
 	netip.MustParsePrefix("3fff::/20"),
 	netip.MustParsePrefix("5f00::/16"),
+}
+
+// alwaysBlockedDestinations are metadata-service addresses that must never be
+// contacted by any runner mode. The link-local address is listed explicitly
+// even though the broader link-local rule below also rejects it: keeping the
+// complete metadata denylist visible makes accidental policy regressions
+// easier to review.
+var alwaysBlockedDestinations = map[netip.Addr]struct{}{
+	netip.MustParseAddr("169.254.169.254"): {},
+	netip.MustParseAddr("100.100.100.200"): {},
+	netip.MustParseAddr("fd00:ec2::254"):   {},
 }
 
 func New(policy Policy) (*Client, error) {
@@ -285,26 +301,38 @@ func canonicalHost(value *url.URL) string {
 	return net.JoinHostPort(host, port)
 }
 
-func originDialer(origin *url.URL, mode NetworkMode, resolver Resolver, dialer *net.Dialer) func(context.Context, string, string) (net.Conn, error) {
+func originDialer(origin *url.URL, mode NetworkMode, resolver Resolver, dialer contextDialer) func(context.Context, string, string) (net.Conn, error) {
 	authorized := canonicalHost(origin)
 	return func(ctx context.Context, network, address string) (net.Conn, error) {
 		host, port, err := net.SplitHostPort(address)
 		if err != nil || !strings.EqualFold(net.JoinHostPort(host, port), authorized) {
 			return nil, ErrOriginViolation
 		}
-		addresses, err := resolver.LookupNetIP(ctx, "ip", host)
-		if err != nil {
-			return nil, fmt.Errorf("resolve authorized host: %w", err)
+		addresses := []netip.Addr(nil)
+		if literal, parseErr := netip.ParseAddr(host); parseErr == nil {
+			// Never pass an IP literal through DNS. Besides avoiding needless
+			// resolver behavior, this guarantees that a forbidden literal cannot
+			// be remapped to a different address before policy evaluation.
+			addresses = []netip.Addr{literal}
+		} else {
+			addresses, err = resolver.LookupNetIP(ctx, "ip", host)
+			if err != nil {
+				return nil, fmt.Errorf("resolve authorized host: %w", err)
+			}
 		}
 		if len(addresses) == 0 {
 			return nil, errors.New("authorized host resolved to no addresses")
 		}
+		// Validate the complete answer set before trying any address. A DNS
+		// response that mixes an allowed address with a forbidden one fails
+		// closed and cannot make policy depend on answer order.
+		for _, address := range addresses {
+			if isAlwaysBlocked(address) || mode == NetworkPublicRunner && !isPublic(address) {
+				return nil, ErrBlockedAddress
+			}
+		}
 		var lastErr error
 		for _, address := range addresses {
-			if !address.IsValid() || mode == NetworkPublicRunner && !isPublic(address) {
-				lastErr = ErrBlockedAddress
-				continue
-			}
 			connection, err := dialer.DialContext(ctx, network, net.JoinHostPort(address.String(), port))
 			if err == nil {
 				return connection, nil
@@ -318,9 +346,26 @@ func originDialer(origin *url.URL, mode NetworkMode, resolver Resolver, dialer *
 	}
 }
 
+func isAlwaysBlocked(address netip.Addr) bool {
+	address = address.Unmap()
+	if !address.IsValid() {
+		return true
+	}
+	if address.Is6() {
+		// Zones identify an interface, not a different destination. They must
+		// not make a listed IPv6 metadata address compare differently.
+		address = address.WithZone("")
+	}
+	if address.IsUnspecified() || address.IsMulticast() || address.IsLinkLocalUnicast() || address.IsLinkLocalMulticast() {
+		return true
+	}
+	_, blocked := alwaysBlockedDestinations[address]
+	return blocked
+}
+
 func isPublic(address netip.Addr) bool {
 	address = address.Unmap()
-	if !address.IsValid() || !address.IsGlobalUnicast() || address.IsPrivate() || address.IsLoopback() || address.IsLinkLocalUnicast() || address.IsLinkLocalMulticast() || address.IsMulticast() || address.IsUnspecified() {
+	if isAlwaysBlocked(address) || !address.IsGlobalUnicast() || address.IsPrivate() || address.IsLoopback() {
 		return false
 	}
 	for _, prefix := range publicRunnerSpecialUsePrefixes {

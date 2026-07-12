@@ -15,31 +15,49 @@ func TestPublishedCLISpecMatchesImplementedCommands(t *testing.T) {
 		t.Fatal(err)
 	}
 	var contract struct {
-		Commands []struct {
-			Path []string `yaml:"path"`
+		ExitPrecedence []int `yaml:"exitPrecedence"`
+		Commands       []struct {
+			Path  []string `yaml:"path"`
+			Flags []struct {
+				Name string `yaml:"name"`
+			} `yaml:"flags"`
 		} `yaml:"commands"`
 	}
 	if err := yaml.Unmarshal(raw, &contract); err != nil {
 		t.Fatal(err)
 	}
+	wantExitPrecedence := []int{130, 2, 5, 3, 4, 6, 1, 0}
+	if !slices.Equal(contract.ExitPrecedence, wantExitPrecedence) {
+		t.Fatalf("published exit precedence drifted: got %v, want %v", contract.ExitPrecedence, wantExitPrecedence)
+	}
 	got := make([]string, 0, len(contract.Commands))
+	runInspectFlags := []string{}
 	for _, command := range contract.Commands {
 		if len(command.Path) == 0 {
 			t.Fatal("CLI spec contains an empty command path")
 		}
-		got = append(got, strings.Join(command.Path, " "))
+		path := strings.Join(command.Path, " ")
+		got = append(got, path)
+		if path == "run inspect" {
+			for _, flag := range command.Flags {
+				runInspectFlags = append(runInspectFlags, flag.Name)
+			}
+		}
 	}
 	want := []string{
 		"baseline accept", "baseline compare", "baseline inspect", "baseline list",
-		"compare", "completion", "dev scaffold", "init", "report", "run inspect",
+		"compare", "completion", "demo", "dev scaffold", "init", "report", "run inspect",
 		"self-check", "target add", "target inspect", "target list", "test", "version",
 	}
 	slices.Sort(got)
 	if !slices.Equal(got, want) {
 		t.Fatalf("published CLI commands drifted from dispatch:\n got: %v\nwant: %v", got, want)
 	}
+	if !slices.Contains(runInspectFlags, "include-plan") {
+		t.Fatalf("published run inspect flags omit include-plan: %v", runInspectFlags)
+	}
 	for shell, script := range completionScripts {
-		for _, root := range []string{"init", "self-check", "target", "test", "run", "compare", "baseline", "report", "dev", "completion", "version"} {
+		for _, root := range []string{"init", "self-check", "target", "test", "demo", "run", "compare", "baseline", "report", "dev", "completion", "version"} {
 			if !strings.Contains(script, root) {
 				t.Errorf("%s completion omits %s", shell, root)
 			}

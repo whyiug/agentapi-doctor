@@ -24,6 +24,11 @@ import (
 
 type IDSource func() (schema.InstanceID, error)
 
+// A response body is already byte-bounded, but a valid SSE stream can encode
+// an extreme number of tiny logical events. Limit per-event persistence so a
+// target cannot turn that byte allowance into unbounded CAS inode creation.
+const maxPersistedSSEEvents = 512
+
 type Config struct {
 	Registry            Registry
 	Transport           *transport.Client
@@ -170,19 +175,19 @@ func (runner *Runner) Run(ctx context.Context, invocation executor.Invocation) (
 	response, err := runner.transport.Do(ctx, scenario.Method, scenario.Path, scenario.Headers, scenario.Body)
 	if err != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
-			return executor.Outcome{}, runError(executor.ErrorHarness, ctxErr, usage, true)
+			return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, ctxErr, usage, true, evidence)
 		}
 		class := executor.ErrorDriver
 		if errors.Is(err, transport.ErrBodyLimit) {
 			class = executor.ErrorHarness
 		}
-		return executor.Outcome{}, runError(class, fmt.Errorf("raw HTTP transport: %w", err), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(class, fmt.Errorf("raw HTTP transport: %w", err), usage, true, evidence)
 	}
 	usage.ResponseBytes = int64(len(response.Body))
 
 	responseMetadata, err := marshalResponseMetadata(response)
 	if err != nil {
-		return executor.Outcome{}, runError(executor.ErrorHarness, fmt.Errorf("encode response metadata: %w", err), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("encode response metadata: %w", err), usage, true, evidence)
 	}
 	metadataEvidence, err := capture.Record(ctx, recorder.Observation{
 		Sequence:            2,
@@ -195,47 +200,48 @@ func (runner *Runner) Run(ctx context.Context, invocation executor.Invocation) (
 		Format:              recorder.PayloadJSON,
 	})
 	if err != nil {
-		return executor.Outcome{}, runError(executor.ErrorHarness, fmt.Errorf("record response metadata: %w", err), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("record response metadata: %w", err), usage, true, evidence)
 	}
 	evidence = append(evidence, metadataEvidence)
 
 	if int64(len(response.Body)) > scenario.Budget.ResponseBytes {
 		usage.ArtifactBytes, _ = runner.artifactBytes(ctx, evidence)
-		return executor.Outcome{}, runError(executor.ErrorHarness, errors.New("response body exceeds the registered scenario budget"), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, errors.New("response body exceeds the registered scenario budget"), usage, true, evidence)
 	}
 	if len(response.Body) > 0 {
 		bodyEvidence, recordErr := runner.recordResponseBody(ctx, capture, scenario, response.Body, started)
-		if recordErr != nil {
-			return executor.Outcome{}, runError(executor.ErrorHarness, fmt.Errorf("record response body: %w", recordErr), usage, true)
-		}
 		evidence = append(evidence, bodyEvidence...)
+		if recordErr != nil {
+			usage.ArtifactBytes, _ = runner.artifactBytes(ctx, evidence)
+			return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("record response body: %w", recordErr), usage, true, evidence)
+		}
 	}
 	usage.ArtifactBytes, err = runner.artifactBytes(ctx, evidence)
 	if err != nil {
-		return executor.Outcome{}, runError(executor.ErrorHarness, fmt.Errorf("measure evidence artifacts: %w", err), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("measure evidence artifacts: %w", err), usage, true, evidence)
 	}
 
 	if class, classified := classifyHTTPStatus(response.StatusCode); classified {
-		return executor.Outcome{}, runError(class, fmt.Errorf("HTTP status %d", response.StatusCode), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(class, fmt.Errorf("HTTP status %d", response.StatusCode), usage, true, evidence)
 	}
 
 	refs := evidenceRefs(evidence)
 	evaluation, err := evaluate(scenario, response.StatusCode, response.Header, response.Body, refs)
 	if err != nil {
-		return executor.Outcome{}, runError(executor.ErrorHarness, fmt.Errorf("evaluate response: %w", err), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("evaluate response: %w", err), usage, true, evidence)
 	}
 	if err := sanitizeOutcome(runner.redactor, &evaluation.Outcome); err != nil {
-		return executor.Outcome{}, runError(executor.ErrorHarness, fmt.Errorf("sanitize oracle outcome: %w", err), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("sanitize oracle outcome: %w", err), usage, true, evidence)
 	}
 	usage.InputTokens = evaluation.Usage.Input
 	usage.OutputTokens = evaluation.Usage.Output
 	if evaluation.Outcome.ReasonCode == schema.ReasonHarnessError {
-		return executor.Outcome{}, runError(executor.ErrorHarness, errors.New("oracle reported a harness precondition failure"), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, errors.New("oracle reported a harness precondition failure"), usage, true, evidence)
 	}
 
 	assertionID, err := runner.newID()
 	if err != nil {
-		return executor.Outcome{}, runError(executor.ErrorHarness, fmt.Errorf("create assertion result ID: %w", err), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("create assertion result ID: %w", err), usage, true, evidence)
 	}
 	assertion := schema.AssertionResult{
 		AssertionResultID: assertionID,
@@ -252,14 +258,14 @@ func (runner *Runner) Run(ctx context.Context, invocation executor.Invocation) (
 		EvaluatorDigest:   scenario.Assertion.EvaluatorDigest,
 	}
 	if err := assertion.Validate(); err != nil {
-		return executor.Outcome{}, runError(executor.ErrorHarness, fmt.Errorf("validate assertion result: %w", err), usage, true)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("validate assertion result: %w", err), usage, true, evidence)
 	}
 
 	findings := []schema.Finding{}
 	if evaluation.Outcome.TargetFailure {
 		finding, findingErr := runner.finding(scenario, assertion, evaluation.Outcome)
 		if findingErr != nil {
-			return executor.Outcome{}, runError(executor.ErrorHarness, fmt.Errorf("construct finding: %w", findingErr), usage, true)
+			return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("construct finding: %w", findingErr), usage, true, evidence)
 		}
 		findings = append(findings, finding)
 	}
@@ -305,19 +311,25 @@ func sanitizeOutcome(redactorInstance *redaction.Redactor, outcome *oracle.Outco
 
 func (runner *Runner) recordResponseBody(ctx context.Context, capture *recorder.Recorder, scenario Scenario, body []byte, started time.Time) ([]schema.Evidence, error) {
 	if !scenario.Streaming {
-		format := recorder.PayloadText
-		if json.Valid(body) {
-			format = recorder.PayloadJSON
+		payload := body
+		kind := "http_response_body"
+		if !json.Valid(body) {
+			var err error
+			payload, err = marshalOmittedContent("non_json_http_response_body", len(body))
+			if err != nil {
+				return nil, err
+			}
+			kind = "http_response_body_omitted"
 		}
 		evidence, err := capture.Record(ctx, recorder.Observation{
 			Sequence:            3,
 			CaptureLayer:        schema.LayerUpstreamApplication,
 			InstrumentationMode: schema.InstrumentationDirect,
 			Direction:           schema.DirectionTargetToCore,
-			Kind:                "http_response_body",
+			Kind:                kind,
 			MonotonicOffsetNS:   elapsedNS(started),
-			Payload:             body,
-			Format:              format,
+			Payload:             payload,
+			Format:              recorder.PayloadJSON,
 		})
 		if err != nil {
 			return nil, err
@@ -327,15 +339,25 @@ func (runner *Runner) recordResponseBody(ctx context.Context, capture *recorder.
 
 	assembler := recorder.NewSSEAssembler(max(len(body)+1, 1024))
 	events, err := assembler.Feed(recorder.ReadChunk{Sequence: 1, ByteOffset: 0, Data: body})
-	if err != nil || len(events) == 0 {
-		return recordRawStream(ctx, capture, body, started)
+	if err != nil {
+		return recordSSEWireSummary(ctx, capture, started, "sse_invalid_wire", "invalid_sse_wire", len(body), 0, recorder.StreamTail{})
+	}
+	tail := assembler.Finish()
+	if len(events) == 0 {
+		return recordSSEWireSummary(ctx, capture, started, "sse_invalid_wire", "no_complete_sse_events", len(body), 0, tail)
+	}
+	if len(events) > maxPersistedSSEEvents {
+		// Evaluation still receives the complete byte-bounded in-memory body.
+		// Persist one typed JSON projection so nested sensitive fields still pass
+		// through field-aware JSON redaction without per-event CAS amplification.
+		return recordSSEEventLimitFallback(ctx, capture, events, len(body), started)
 	}
 	result := make([]schema.Evidence, 0, len(events)+1)
 	sequence := uint64(3)
 	for _, event := range events {
-		payload, format, encodeErr := marshalSSEObservation(event)
+		payload, kind, encodeErr := marshalSSEObservation(event)
 		if encodeErr != nil {
-			return nil, encodeErr
+			return result, encodeErr
 		}
 		offset := event.EventOffset
 		evidence, recordErr := capture.Record(ctx, recorder.Observation{
@@ -343,50 +365,60 @@ func (runner *Runner) recordResponseBody(ctx context.Context, capture *recorder.
 			CaptureLayer:        schema.LayerUpstreamApplication,
 			InstrumentationMode: schema.InstrumentationDirect,
 			Direction:           schema.DirectionTargetToCore,
-			Kind:                "sse_logical_event",
+			Kind:                kind,
 			MonotonicOffsetNS:   elapsedNS(started),
 			EventOffset:         &offset,
 			Payload:             payload,
-			Format:              format,
+			Format:              recorder.PayloadJSON,
 		})
 		if recordErr != nil {
-			return nil, recordErr
+			return result, recordErr
 		}
 		result = append(result, evidence)
 		sequence++
 	}
-	tail := assembler.Finish()
 	if tail.BufferedBytes != 0 || tail.PendingFieldCount != 0 {
-		// Persist the bounded incomplete wire as text so the target framing
-		// failure remains reproducible. Text redaction still runs before CAS.
-		evidence, recordErr := capture.Record(ctx, recorder.Observation{
-			Sequence:            sequence,
-			CaptureLayer:        schema.LayerUpstreamApplication,
-			InstrumentationMode: schema.InstrumentationDirect,
-			Direction:           schema.DirectionTargetToCore,
-			Kind:                "sse_incomplete_wire",
-			MonotonicOffsetNS:   elapsedNS(started),
-			Payload:             body,
-			Format:              recorder.PayloadText,
-		})
+		partial, recordErr := recordSSEWireSummaryAtSequence(ctx, capture, sequence, started, "sse_incomplete_wire", "incomplete_sse_tail", len(body), len(events), tail)
 		if recordErr != nil {
-			return nil, recordErr
+			return result, recordErr
 		}
-		result = append(result, evidence)
+		result = append(result, partial...)
 	}
 	return result, nil
 }
 
-func recordRawStream(ctx context.Context, capture *recorder.Recorder, body []byte, started time.Time) ([]schema.Evidence, error) {
+func recordSSEWireSummary(ctx context.Context, capture *recorder.Recorder, started time.Time, kind, reason string, wireBytes, completeEvents int, tail recorder.StreamTail) ([]schema.Evidence, error) {
+	return recordSSEWireSummaryAtSequence(ctx, capture, 3, started, kind, reason, wireBytes, completeEvents, tail)
+}
+
+func recordSSEWireSummaryAtSequence(ctx context.Context, capture *recorder.Recorder, sequence uint64, started time.Time, kind, reason string, wireBytes, completeEvents int, tail recorder.StreamTail) ([]schema.Evidence, error) {
+	payload, err := schema.CanonicalMarshal(struct {
+		Representation string `json:"representation"`
+		OmittedReason  string `json:"omitted_reason"`
+		WireBytes      int    `json:"wire_bytes"`
+		CompleteEvents int    `json:"complete_event_count"`
+		PendingBytes   int    `json:"pending_bytes,omitempty"`
+		PendingFields  int    `json:"pending_field_count,omitempty"`
+	}{
+		Representation: "sse_wire_summary_v1",
+		OmittedReason:  reason,
+		WireBytes:      wireBytes,
+		CompleteEvents: completeEvents,
+		PendingBytes:   tail.BufferedBytes,
+		PendingFields:  tail.PendingFieldCount,
+	})
+	if err != nil {
+		return nil, err
+	}
 	evidence, err := capture.Record(ctx, recorder.Observation{
-		Sequence:            3,
+		Sequence:            sequence,
 		CaptureLayer:        schema.LayerUpstreamApplication,
 		InstrumentationMode: schema.InstrumentationDirect,
 		Direction:           schema.DirectionTargetToCore,
-		Kind:                "sse_invalid_wire",
+		Kind:                kind,
 		MonotonicOffsetNS:   elapsedNS(started),
-		Payload:             body,
-		Format:              recorder.PayloadText,
+		Payload:             payload,
+		Format:              recorder.PayloadJSON,
 	})
 	if err != nil {
 		return nil, err
@@ -394,21 +426,93 @@ func recordRawStream(ctx context.Context, capture *recorder.Recorder, body []byt
 	return []schema.Evidence{evidence}, nil
 }
 
-func marshalSSEObservation(event recorder.SSELogicalEvent) ([]byte, recorder.PayloadFormat, error) {
-	if event.Data != "[DONE]" && !json.Valid([]byte(event.Data)) {
-		return []byte(event.Data), recorder.PayloadText, nil
+func recordSSEEventLimitFallback(ctx context.Context, capture *recorder.Recorder, events []recorder.SSELogicalEvent, wireBytes int, started time.Time) ([]schema.Evidence, error) {
+	payload, err := marshalSSEEventLimitFallback(events, wireBytes)
+	if err != nil {
+		return nil, err
+	}
+	evidence, err := capture.Record(ctx, recorder.Observation{
+		Sequence:            3,
+		CaptureLayer:        schema.LayerUpstreamApplication,
+		InstrumentationMode: schema.InstrumentationDirect,
+		Direction:           schema.DirectionTargetToCore,
+		Kind:                "sse_event_limit_fallback",
+		MonotonicOffsetNS:   elapsedNS(started),
+		Payload:             payload,
+		Format:              recorder.PayloadJSON,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return []schema.Evidence{evidence}, nil
+}
+
+func marshalSSEEventLimitFallback(events []recorder.SSELogicalEvent, wireBytes int) ([]byte, error) {
+	orderedJSONData := make([]json.RawMessage, 0, len(events))
+	omittedCount := 0
+	omittedBytes := 0
+	doneCount := 0
+	for _, event := range events {
+		switch {
+		case event.Data == "[DONE]":
+			doneCount++
+		case json.Valid([]byte(event.Data)):
+			orderedJSONData = append(orderedJSONData, json.RawMessage(event.Data))
+		default:
+			omittedCount++
+			omittedBytes += len(event.Data)
+		}
+	}
+	projection := struct {
+		Representation  string            `json:"representation"`
+		WireBytes       int               `json:"wire_bytes"`
+		CompleteEvents  int               `json:"complete_event_count"`
+		JSONEvents      int               `json:"json_event_count"`
+		DoneEvents      int               `json:"done_event_count,omitempty"`
+		NonJSONOmitted  int               `json:"non_json_data_omitted,omitempty"`
+		NonJSONBytes    int               `json:"non_json_data_bytes,omitempty"`
+		OrderedJSONData []json.RawMessage `json:"ordered_json_data"`
+	}{
+		Representation:  "bounded_sse_json_projection_v1",
+		WireBytes:       wireBytes,
+		CompleteEvents:  len(events),
+		JSONEvents:      len(orderedJSONData),
+		DoneEvents:      doneCount,
+		NonJSONOmitted:  omittedCount,
+		NonJSONBytes:    omittedBytes,
+		OrderedJSONData: orderedJSONData,
+	}
+	return schema.CanonicalMarshal(projection)
+}
+
+func marshalSSEObservation(event recorder.SSELogicalEvent) ([]byte, string, error) {
+	if event.Data == "[DONE]" {
+		payload, err := schema.CanonicalMarshal(struct {
+			TerminalMarker string `json:"terminal_marker"`
+		}{TerminalMarker: "[DONE]"})
+		return payload, "sse_logical_event", err
+	}
+	if !json.Valid([]byte(event.Data)) {
+		payload, err := marshalOmittedContent("non_json_sse_data", len(event.Data))
+		return payload, "sse_non_json_data_omitted", err
 	}
 	type observation struct {
-		Event string `json:"event,omitempty"`
-		Data  any    `json:"data"`
-		ID    string `json:"id,omitempty"`
+		Data json.RawMessage `json:"data"`
 	}
-	value := observation{Event: event.Event, Data: event.Data, ID: event.ID}
-	if event.Data != "[DONE]" {
-		value.Data = json.RawMessage(event.Data)
-	}
-	payload, err := json.Marshal(value)
-	return payload, recorder.PayloadJSON, err
+	payload, err := schema.CanonicalMarshal(observation{Data: json.RawMessage(event.Data)})
+	return payload, "sse_logical_event", err
+}
+
+func marshalOmittedContent(reason string, byteCount int) ([]byte, error) {
+	return schema.CanonicalMarshal(struct {
+		Representation string `json:"representation"`
+		OmittedReason  string `json:"omitted_reason"`
+		ByteCount      int    `json:"byte_count"`
+	}{
+		Representation: "opaque_content_omitted_v1",
+		OmittedReason:  reason,
+		ByteCount:      byteCount,
+	})
 }
 
 func (runner *Runner) Finalize(_ context.Context, plan schema.FinalizerPlan) (budget.Usage, error) {
@@ -467,6 +571,10 @@ func runError(class executor.ErrorClass, err error, usage budget.Usage, known bo
 	return &executor.RunError{Class: class, Err: err, Usage: usage, UsageKnown: known}
 }
 
+func runErrorWithEvidence(class executor.ErrorClass, err error, usage budget.Usage, known bool, evidence []schema.Evidence) error {
+	return &executor.RunError{Class: class, Err: err, Usage: usage, UsageKnown: known, EvidenceRefs: evidenceRefs(evidence)}
+}
+
 func elapsedNS(started time.Time) int64 {
 	value := time.Since(started).Nanoseconds()
 	if value < 0 {
@@ -497,6 +605,11 @@ func (runner *Runner) artifactBytes(ctx context.Context, evidence []schema.Evide
 		for index := range payload {
 			payload[index] = 0
 		}
+		envelope, err := schema.CanonicalMarshal(item)
+		if err != nil {
+			return 0, err
+		}
+		total += int64(len(envelope))
 	}
 	return total, nil
 }

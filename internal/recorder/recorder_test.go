@@ -3,6 +3,8 @@ package recorder
 import (
 	"bytes"
 	"context"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -20,7 +22,8 @@ func TestRecordRedactsBeforeCASCommit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	store, err := cas.Open(filepath.Join(t.TempDir(), "cas"), 1<<20)
+	storeRoot := filepath.Join(t.TempDir(), "cas")
+	store, err := cas.Open(storeRoot, 1<<20)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +49,17 @@ func TestRecordRedactsBeforeCASCommit(t *testing.T) {
 	if len(evidence.Redactions) == 0 {
 		t.Fatal("expected redaction records")
 	}
-	persisted, err := store.Get(context.Background(), *evidence.PayloadDigest)
+	persistedEvidence, err := store.GetEvidence(context.Background(), evidence.ObjectRef)
+	if err != nil {
+		t.Fatalf("report-style Evidence ref did not resolve: %v", err)
+	}
+	if !reflect.DeepEqual(persistedEvidence, evidence) {
+		t.Fatalf("persisted Evidence differs from returned envelope:\n%#v\n%#v", persistedEvidence, evidence)
+	}
+	if persistedEvidence.PayloadRef == nil || persistedEvidence.PayloadDigest == nil {
+		t.Fatal("persisted Evidence omitted its payload edge")
+	}
+	persisted, err := store.Get(context.Background(), persistedEvidence.PayloadRef.ContentDigest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,6 +68,27 @@ func TestRecordRedactsBeforeCASCommit(t *testing.T) {
 	}
 	if !bytes.Contains(persisted, []byte(redaction.Replacement)) {
 		t.Fatalf("redaction marker missing: %s", persisted)
+	}
+	if *persistedEvidence.PayloadDigest != persistedEvidence.PayloadRef.ContentDigest || schema.NewDigest(persisted) != *persistedEvidence.PayloadDigest {
+		t.Fatal("Evidence -> Payload digest edge is not closed")
+	}
+	if err := filepath.WalkDir(storeRoot, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if !entry.Type().IsRegular() {
+			return nil
+		}
+		raw, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		if bytes.Contains(raw, canary) || bytes.Contains(raw, []byte("synthetic-secret-value")) {
+			t.Fatalf("secret reached Evidence storage at %q", path)
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
 	}
 }
 

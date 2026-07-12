@@ -26,14 +26,14 @@ func runCompletion(args []string, dependencies Dependencies) int {
 }
 
 var completionScripts = map[string]string{
-	"bash": `_doctor_complete(){ local cur="${COMP_WORDS[COMP_CWORD]}"; COMPREPLY=( $(compgen -W 'init self-check target test run compare baseline report dev completion version' -- "$cur") ); }; complete -F _doctor_complete doctor
+	"bash": `_doctor_complete(){ local cur="${COMP_WORDS[COMP_CWORD]}"; COMPREPLY=( $(compgen -W 'init self-check target test demo run compare baseline report dev completion version' -- "$cur") ); }; complete -F _doctor_complete doctor
 `,
 	"zsh": `#compdef doctor
-_arguments '1:command:(init self-check target test run compare baseline report dev completion version)'
+_arguments '1:command:(init self-check target test demo run compare baseline report dev completion version)'
 `,
-	"fish": `complete -c doctor -f -a 'init self-check target test run compare baseline report dev completion version'
+	"fish": `complete -c doctor -f -a 'init self-check target test demo run compare baseline report dev completion version'
 `,
-	"powershell": `Register-ArgumentCompleter -Native -CommandName doctor -ScriptBlock { param($wordToComplete) 'init','self-check','target','test','run','compare','baseline','report','dev','completion','version' | Where-Object { $_ -like "$wordToComplete*" } }
+	"powershell": `Register-ArgumentCompleter -Native -CommandName doctor -ScriptBlock { param($wordToComplete) 'init','self-check','target','test','demo','run','compare','baseline','report','dev','completion','version' | Where-Object { $_ -like "$wordToComplete*" } }
 `,
 }
 

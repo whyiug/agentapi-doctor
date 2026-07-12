@@ -7,10 +7,11 @@ see the [CLI reference](../cli-reference.md); for a first run, use the
 ## Runnable components
 
 - `cmd/doctor` and `internal/cli` — initialization, target/config management,
-  offline planning, local execution, run inspection, comparison, baselines,
-  reporting, completions, and development scaffolding.
-- `internal/productrun` and `internal/rawdriver` — exact-origin local execution
-  for `openai-chat`, `openai-responses`, and `anthropic-messages`.
+  offline planning, client-side execution, run inspection, comparison,
+  baselines, reporting, completions, and development scaffolding.
+- `internal/productrun` and `internal/rawdriver` — execution against one exact
+  configured origin for `openai-chat`, `openai-responses`, and
+  `anthropic-messages`.
 - `reference/server` and `reference/mutant-server` — deterministic synthetic
   protocol fixtures and 12 executable targeted mutation modes.
 - `internal/config`, `internal/planner`, `internal/budget`, and
@@ -34,20 +35,24 @@ make docker-check   # optional; requires Docker
 
 ## CLI execution and reports
 
-The local execution command is:
+The CLI runs locally, while its configured exact origin may be a local,
+private-network, or remote authorized endpoint:
 
 ```text
-doctor test <target> [--config <path>] [--data-root <path>] [--plan-only] [--resolve] [--output <path>]
+doctor demo [--data-root <path>] [--output <path>] [--format terminal|json]
+doctor test <target> [--config <path>] [--data-root <path>] [--plan-only] [--resolve] [--output <path>] [--format json|terminal]
+doctor test --base-url <url> --protocol <id> --model <id> [--auth-env <name>] [--auth-header <name>] [--allow-plain-http]
 ```
 
 `--plan-only` performs no target network I/O. `--resolve` is valid only with
-`--plan-only`; built-in scenarios resolve their exact artifacts offline. A
-normal run stores its report below `<data-root>/runs` (`.agentapi/runs` by
-default).
+`--plan-only`; it includes the offline built-in `ResolvedRunPlan` and does not
+probe target capabilities. A normal run stores its report below
+`<data-root>/runs` (`.agentapi/runs` by default).
 
-Stored reports can be rendered with:
+Stored runs can be inspected or rendered with:
 
 ```text
+doctor run inspect <run-ref> [--store <path>] [--allow-latest] [--include-plan]
 doctor report <terminal|json|junit|sarif|markdown|html> <run-ref> [--output <path>] [--store <path>] [--allow-latest]
 ```
 
@@ -77,7 +82,7 @@ release explicitly declares a stable compatibility floor.
 [`specs/catalog-statistics.json`](../../specs/catalog-statistics.json) records
 260 metadata scenarios across seven packs. Those reference and targeted-mutant
 records must not be confused with the 12 executable targeted mutation modes or
-the four selected checks per protocol in the current local runner.
+the four selected checks per protocol in the current client-side runner.
 
 ## Registry and release tooling
 

@@ -52,6 +52,23 @@ func TestEveryRendererAcceptsOneTruthModel(t *testing.T) {
 	}
 }
 
+func TestTerminalExplainsInconclusiveCase(t *testing.T) {
+	bundle := validBundle()
+	inconclusive := schema.VerdictInconclusive
+	bundle.Outcome = schema.ProfileInconclusive
+	bundle.Dimensions["protocol"] = schema.DimensionInconclusive
+	bundle.Cases[0].Verdict = &inconclusive
+	bundle.Cases[0].ReasonCode = schema.ReasonUnsupportedCapability
+	bundle.PrimaryExitCode = 4
+	data, err := Terminal(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(data, []byte("INCONCLUSIVE")) || !bytes.Contains(data, []byte(schema.ReasonUnsupportedCapability)) {
+		t.Fatalf("terminal output hid the inconclusive reason:\n%s", data)
+	}
+}
+
 func TestHTMLAndJUnitEscapeProviderControlledText(t *testing.T) {
 	bundle := validBundle()
 	bundle.Cases[0].ScenarioID = `evil<script>alert(1)</script>&"`
@@ -96,6 +113,22 @@ func TestJSONIsCanonical(t *testing.T) {
 	}
 	if !bytes.Equal(data, canonical) {
 		t.Fatalf("not canonical\n%s\n%s", data, canonical)
+	}
+}
+
+func TestDecodeRetainsReadOnlyLegacyBundleSupport(t *testing.T) {
+	bundle := validBundle()
+	bundle.SchemaVersion = legacySchemaVersion
+	raw, err := schema.CanonicalMarshal(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := Decode(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decoded.SchemaVersion != legacySchemaVersion || decoded.RunID != bundle.RunID {
+		t.Fatalf("legacy bundle changed during decode: %#v", decoded)
 	}
 }
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:agentapi-doctor:schema:evidence:v1alpha1",
+  "$id": "urn:agentapi-doctor:schema:evidence:v1alpha2",
   "title": "AgentAPI Doctor provisional sanitized Evidence",
   "description": "One capture-layer evidence record. Cross-field payload digest equality and envelope identity are additionally enforced by pkg/schema.Evidence.Validate.",
   "type": "object",
@@ -10,7 +10,7 @@
     "direction", "evidence_kind", "monotonic_offset_ns", "redactions"
   ],
   "properties": {
-    "schema_version": {"const": "urn:agentapi-doctor:evidence:v1alpha1"},
+    "schema_version": {"const": "urn:agentapi-doctor:evidence:v1alpha2"},
     "kind": {"const": "Evidence"},
     "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
     "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
@@ -28,17 +28,46 @@
     "direction": {"enum": ["core_to_target", "target_to_core", "proxy_to_client", "client_to_proxy", "driver_to_core"]},
     "evidence_kind": {"type": "string", "minLength": 1},
     "monotonic_offset_ns": {"type": "integer", "minimum": 0},
-    "byte_offset": {"type": "integer"},
-    "event_offset": {"type": "integer"},
-    "payload_ref": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"},
+    "byte_offset": {"type": "integer", "minimum": 0},
+    "event_offset": {"type": "integer", "minimum": 0},
+    "payload_ref": {"$ref": "#/$defs/payloadRef"},
     "payload_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
     "unavailable_reason": {"type": "string", "minLength": 1},
     "redactions": {"type": ["array", "null"], "items": {"$ref": "#/$defs/redaction"}},
     "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}}
   },
   "oneOf": [
-    {"required": ["payload_ref", "payload_digest"]},
+    {"required": ["payload_ref", "payload_digest"], "not": {"required": ["unavailable_reason"]}},
     {"required": ["unavailable_reason"], "not": {"anyOf": [{"required": ["payload_ref"]}, {"required": ["payload_digest"]}]}}
+  ],
+  "allOf": [
+    {
+      "if": {"properties": {"capture_layer": {"const": "upstream_application_observation"}}, "required": ["capture_layer"]},
+      "then": {
+        "properties": {
+          "instrumentation_mode": {"enum": ["direct_transport", "fixture_replay"]},
+          "direction": {"enum": ["core_to_target", "target_to_core"]}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"capture_layer": {"const": "proxy_forwarded_observation"}}, "required": ["capture_layer"]},
+      "then": {
+        "properties": {
+          "instrumentation_mode": {"const": "recording_proxy"},
+          "direction": {"enum": ["proxy_to_client", "client_to_proxy"]}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"capture_layer": {"const": "client_sdk_observation"}}, "required": ["capture_layer"]},
+      "then": {
+        "properties": {
+          "instrumentation_mode": {"enum": ["client_native", "fixture_replay"]},
+          "direction": {"const": "driver_to_core"}
+        }
+      }
+    }
   ],
   "additionalProperties": false,
   "$defs": {
@@ -48,6 +77,15 @@
       "properties": {
         "kind": {"const": "Evidence"},
         "instance_id": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/uuidv7"},
+        "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "payloadRef": {
+      "type": "object",
+      "required": ["kind", "content_digest"],
+      "properties": {
+        "kind": {"const": "Payload"},
         "content_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"}
       },
       "additionalProperties": false
@@ -66,7 +104,7 @@
       "type": "object",
       "required": ["relation", "target"],
       "properties": {
-        "relation": {"type": "string"},
+        "relation": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
         "target": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/objectRef"}
       },
       "additionalProperties": false

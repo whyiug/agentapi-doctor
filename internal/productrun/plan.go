@@ -28,10 +28,11 @@ type PlanRequest struct {
 // PlannedRun is the offline result consumed by Execute. Target contains only
 // the secret reference from config, never its resolved value.
 type PlannedRun struct {
-	TargetName string                 `json:"target_name"`
-	Target     config.Target          `json:"target"`
-	Intent     schema.IntentPlan      `json:"intent_plan"`
-	Resolved   schema.ResolvedRunPlan `json:"resolved_run_plan"`
+	TargetName            string                 `json:"target_name"`
+	Target                config.Target          `json:"target"`
+	ExecutionConfigDigest schema.Digest          `json:"execution_config_digest"`
+	Intent                schema.IntentPlan      `json:"intent_plan"`
+	Resolved              schema.ResolvedRunPlan `json:"resolved_run_plan"`
 }
 
 // Build creates both plans without probing, dialing, resolving credentials,
@@ -96,10 +97,26 @@ func Build(request PlanRequest) (PlannedRun, error) {
 	return buildExact(request.TargetName, request.Target, request.Budget, request.Producer, request.Author, intentID, resolvedID, schema.NewUTCTime(instant))
 }
 
-// PlanJSON validates the full exact binding and returns canonical JSON for
-// plan-only CLI output. It contains the unresolved secret reference, never a
-// resolved credential value.
+// PlanJSON validates the full exact binding and returns the canonical,
+// persistence-safe plan snapshot used by plan-only output and run records.
+// The snapshot preserves the immutable IntentPlan and ResolvedRunPlan plus
+// the public endpoint fields needed to understand the run, but deliberately
+// omits secret references and free-form target metadata.
 func PlanJSON(planned PlannedRun) ([]byte, error) {
+	if _, _, err := validatePlanned(planned); err != nil {
+		return nil, err
+	}
+	snapshot := newPersistedPlan(planned)
+	if err := snapshot.Validate(); err != nil {
+		return nil, fmt.Errorf("validate persisted plan snapshot: %w", err)
+	}
+	return schema.CanonicalMarshal(snapshot)
+}
+
+// frozenPlanJSON is an in-memory serialization used only to detach execution
+// from caller-owned maps and pointers before network I/O. Unlike PlanJSON it
+// contains the unresolved secret reference, so callers must never persist it.
+func frozenPlanJSON(planned PlannedRun) ([]byte, error) {
 	if _, _, err := validatePlanned(planned); err != nil {
 		return nil, err
 	}
@@ -121,7 +138,17 @@ func buildExact(targetName string, target config.Target, budget schema.BudgetPol
 	if err != nil {
 		return PlannedRun{}, err
 	}
-	configDigest, err := schema.CanonicalDigest(struct {
+	// The plan envelopes are persisted and user-visible. Bind them only to a
+	// deliberately safe projection so a low-entropy credential reference or
+	// private metadata value cannot be recovered by offline digest guessing.
+	configDigest, err := persistedConfigDigest(targetName, persistedTarget(target))
+	if err != nil {
+		return PlannedRun{}, err
+	}
+	// Execution still needs an exact binding to every input. This digest is
+	// confined to frozenPlanJSON, which is used only in memory and is never
+	// written to a run record or shown by plan-only output.
+	executionConfigDigest, err := schema.CanonicalDigest(struct {
 		TargetName string        `json:"target_name"`
 		Target     config.Target `json:"target"`
 	}{targetName, target})
@@ -179,7 +206,10 @@ func buildExact(targetName string, target config.Target, budget schema.BudgetPol
 	if err != nil {
 		return PlannedRun{}, fmt.Errorf("build ResolvedRunPlan: %w", err)
 	}
-	return PlannedRun{TargetName: targetName, Target: cloneTarget(target), Intent: intent, Resolved: resolved}, nil
+	return PlannedRun{
+		TargetName: targetName, Target: cloneTarget(target),
+		ExecutionConfigDigest: executionConfigDigest, Intent: intent, Resolved: resolved,
+	}, nil
 }
 
 // DefaultBudget is a hard, local candidate budget derived from the number of
@@ -193,7 +223,7 @@ func DefaultBudget(scenarioCount int) schema.BudgetPolicy {
 		Hard: schema.HardBudget{
 			MaxRequests: count, MaxRequestBytes: count * (64 << 10),
 			MaxResponseBytes: count * (512 << 10), MaxArtifactBytes: count * (9 << 20),
-			MaxProcesses: 1, MaxDuration: schema.NewDuration(30 * time.Second),
+			MaxProcesses: 1, MaxDuration: schema.NewDuration(time.Minute),
 		},
 		Reservation: schema.TokenBudget{},
 		Cleanup: schema.HardBudget{
@@ -212,6 +242,9 @@ func validatePlanned(input PlannedRun) (artifacts, targetRoute, error) {
 	}
 	if input.Resolved.IntentPlanRef != input.Intent.ObjectRef {
 		return artifacts{}, targetRoute{}, errors.New("resolved plan is bound to a different IntentPlan")
+	}
+	if err := input.ExecutionConfigDigest.Validate(); err != nil {
+		return artifacts{}, targetRoute{}, fmt.Errorf("execution config digest: %w", err)
 	}
 	expected, err := buildExact(
 		input.TargetName, input.Target, input.Intent.Budget, input.Intent.Producer,
@@ -237,7 +270,7 @@ func validatePlanned(input PlannedRun) (artifacts, targetRoute, error) {
 	if err != nil {
 		return artifacts{}, targetRoute{}, err
 	}
-	if !bytes.Equal(actualIntent, expectedIntent) || !bytes.Equal(actualResolved, expectedResolved) {
+	if input.ExecutionConfigDigest != expected.ExecutionConfigDigest || !bytes.Equal(actualIntent, expectedIntent) || !bytes.Equal(actualResolved, expectedResolved) {
 		return artifacts{}, targetRoute{}, errors.New("planned run differs from the exact built-in resolution")
 	}
 	route, err := routeTarget(input.Target)
