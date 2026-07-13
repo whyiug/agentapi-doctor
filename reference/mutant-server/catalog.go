@@ -26,6 +26,7 @@ const (
 	UnclosedReasoningBlock         ID = "unclosed-reasoning-block"
 	UsageInconsistent              ID = "usage-inconsistent"
 	TruncatedUTF8                  ID = "truncated-utf8"
+	NullCompletedOutput            ID = "null-completed-output"
 )
 
 type Entry struct {
@@ -47,6 +48,7 @@ var catalog = []Entry{
 	{UnclosedReasoningBlock, "a reasoning or thinking block remains open at terminal", []referenceserver.Protocol{referenceserver.ProtocolOpenAIResponses, referenceserver.ProtocolAnthropic}},
 	{UsageInconsistent, "usage components disagree with their total or cumulative value", allProtocols()},
 	{TruncatedUTF8, "an SSE data field ends inside a UTF-8 code point", allProtocols()},
+	{NullCompletedOutput, "a Responses terminal envelope sets the pinned SDK's modeled output array to null", []referenceserver.Protocol{referenceserver.ProtocolOpenAIResponses}},
 }
 
 func allProtocols() []referenceserver.Protocol {

@@ -37,9 +37,30 @@ func applyMutation(id ID, exchange *referenceserver.Exchange) error {
 		return inconsistentUsage(exchange)
 	case TruncatedUTF8:
 		return truncatedUTF8(exchange)
+	case NullCompletedOutput:
+		return nullCompletedOutput(exchange)
 	default:
 		return fmt.Errorf("unknown mutation ID %q", id)
 	}
+}
+
+func nullCompletedOutput(exchange *referenceserver.Exchange) error {
+	if exchange.Protocol != referenceserver.ProtocolOpenAIResponses || !exchange.Streaming {
+		return notApplicable("responses streaming scenario is required")
+	}
+	for _, event := range exchange.Events {
+		data, ok := event.Data.(map[string]any)
+		if !ok || data["type"] != "response.completed" {
+			continue
+		}
+		response, ok := data["response"].(map[string]any)
+		if !ok {
+			return errors.New("completed response envelope was not found")
+		}
+		response["output"] = nil
+		return nil
+	}
+	return errors.New("response.completed event was not found")
 }
 
 func notApplicable(reason string) error {

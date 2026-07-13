@@ -8,8 +8,45 @@ CLI/Core versions will follow
 
 ## [Unreleased]
 
-No changes have been recorded since the v0.1.0-rc.1 release candidate was
+No changes have been recorded since the v0.1.0-rc.2 release candidate was
 prepared.
+
+## [0.1.0-rc.2] - 2026-07-13
+
+### Added
+
+- `doctor reproduce openai-python-responses`, a Linux amd64 loopback
+  reproducer that correlates raw SSE with OpenAI Python SDK 2.38.0 observations
+  under CPython 3.12.12 and exports a deterministic maintainer-ready ZIP.
+- Frozen reference, missing-terminal, duplicate-terminal, and null-terminal-
+  output cases with independently authored synthetic inputs and exact SDK tag,
+  wheel, dependency-lock, and license provenance.
+- An Ubuntu Product CI job that creates a hash-locked wheelhouse, installs the
+  SDK without an index, and repeats all four real-SDK cases twice before the
+  aggregate gate can pass.
+- The release workflow independently repeats that locked real-SDK gate on the
+  exact tag before it can build or publish archives.
+- A reproducible case study explaining what a status/event-name smoke misses,
+  what the pinned SDK observes, and how maintainers can rerun the evidence.
+
+### Changed
+
+- The synthetic reference server now exposes 13 targeted mutation modes and
+  includes stable required Responses envelope fields used by the real SDK.
+- Project messaging now distinguishes the one frozen real-client observation
+  from arbitrary endpoint, general SDK, Agent, and vendor compatibility.
+
+### Security
+
+- The SDK helper accepts only an exact IPv4 loopback base URL, disables ambient
+  proxy use and redirects, uses a synthetic token, bounds events and output,
+  sanitizes exception text, and runs with an isolated environment.
+- The SDK helper verifies CPython/platform and the exact installed dependency
+  metadata; bundles preserve observed mismatches, executable/build/source
+  identity, and canonical input digests without claiming installed-file hashes.
+- Unmatched versions, wire semantics, fixture identity, or SDK observations
+  remain `UNKNOWN`; a client exception alone is never treated as endpoint
+  causality.
 
 ## [0.1.0-rc.1] - 2026-07-13
 

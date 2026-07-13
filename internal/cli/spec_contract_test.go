@@ -46,7 +46,7 @@ func TestPublishedCLISpecMatchesImplementedCommands(t *testing.T) {
 	}
 	want := []string{
 		"baseline accept", "baseline compare", "baseline inspect", "baseline list",
-		"compare", "completion", "demo", "dev scaffold", "init", "report", "run inspect",
+		"compare", "completion", "demo", "dev scaffold", "init", "report", "reproduce", "run inspect",
 		"self-check", "target add", "target inspect", "target list", "test", "version",
 	}
 	slices.Sort(got)
@@ -57,12 +57,12 @@ func TestPublishedCLISpecMatchesImplementedCommands(t *testing.T) {
 		t.Fatalf("published run inspect flags omit include-plan: %v", runInspectFlags)
 	}
 	for shell, script := range completionScripts {
-		for _, root := range []string{"init", "self-check", "target", "test", "demo", "run", "compare", "baseline", "report", "dev", "completion", "version"} {
+		for _, root := range []string{"init", "self-check", "target", "test", "demo", "reproduce", "run", "compare", "baseline", "report", "dev", "completion", "version"} {
 			if !strings.Contains(script, root) {
 				t.Errorf("%s completion omits %s", shell, root)
 			}
 		}
-		for _, future := range []string{"pack", "profile", "replay", "minimize", "repro", "publish", "registry", "matrix", "migrate", "phase"} {
+		for _, future := range []string{"pack", "profile", "replay", "minimize", "publish", "registry", "matrix", "migrate", "phase"} {
 			if strings.Contains(script, future) {
 				t.Errorf("%s completion advertises unimplemented command %s", shell, future)
 			}

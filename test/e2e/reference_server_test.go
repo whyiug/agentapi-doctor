@@ -292,6 +292,7 @@ func TestMutationCatalogAndSinglePrimaryComposition(t *testing.T) {
 		mutantserver.UnclosedReasoningBlock,
 		mutantserver.UsageInconsistent,
 		mutantserver.TruncatedUTF8,
+		mutantserver.NullCompletedOutput,
 	}
 	catalog := mutantserver.Catalog()
 	if len(catalog) != len(want) {
@@ -338,6 +339,7 @@ func TestEveryMutantChangesItsTargetStructure(t *testing.T) {
 				t.Fatal("truncated-utf8 mutant remained valid UTF-8")
 			}
 		}},
+		{mutantserver.NullCompletedOutput, caseByName(t, "responses-text-sse"), contains(`"output":null`)},
 	}
 	for _, test := range tests {
 		t.Run(string(test.id), func(t *testing.T) {

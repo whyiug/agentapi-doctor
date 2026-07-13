@@ -17,7 +17,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "install.sh"
-VERSION = "0.1.0-rc.1"
+VERSION = "0.1.0-rc.2"
 
 
 class InstallScriptTests(unittest.TestCase):
@@ -30,7 +30,7 @@ class InstallScriptTests(unittest.TestCase):
         self.assertTrue(installed)
         self.assertTrue(executable)
         self.assertIn(f"Installed AgentAPI Doctor {VERSION}", completed.stdout)
-        self.assertIn("doctor 0.1.0-rc.1", completed.stdout)
+        self.assertIn(f"doctor {VERSION}", completed.stdout)
 
     def test_rejects_checksum_mismatch_without_installing(self) -> None:
         completed, installed, _, _ = self._run_installer(valid_checksum=False)
@@ -82,7 +82,7 @@ class InstallScriptTests(unittest.TestCase):
                 f"agentapi-doctor_{VERSION}_{operating_system}_{architecture}.tar.gz"
             )
             archive = release / asset
-            binary = b"#!/bin/sh\nprintf 'doctor 0.1.0-rc.1 (test, built test)\\n'\n"
+            binary = f"#!/bin/sh\nprintf 'doctor {VERSION} (test, built test)\\n'\n".encode()
             info = tarfile.TarInfo("doctor")
             info.mode = 0o755
             info.size = len(binary)

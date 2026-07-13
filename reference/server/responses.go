@@ -58,6 +58,7 @@ func responsesResponse(model string, scenario Scenario, toolName string) map[str
 	return map[string]any{
 		"id": "resp_ref_0001", "object": "response", "created_at": 1700000000,
 		"status": "completed", "model": model, "output": output,
+		"parallel_tool_calls": false, "tool_choice": "auto", "tools": []any{},
 		"usage": map[string]any{"input_tokens": 4, "output_tokens": 2, "total_tokens": 6},
 	}
 }
@@ -77,7 +78,11 @@ func responsesStream(model string, scenario Scenario, toolName string) []SSEEven
 		fields["sequence_number"] = sequence
 		return SSEEvent{Event: eventType, Data: fields}
 	}
-	responseBase := map[string]any{"id": "resp_ref_0001", "object": "response", "status": "in_progress", "model": model}
+	responseBase := map[string]any{
+		"id": "resp_ref_0001", "object": "response", "created_at": 1700000000,
+		"status": "in_progress", "model": model, "output": []any{},
+		"parallel_tool_calls": false, "tool_choice": "auto", "tools": []any{},
+	}
 	events := []SSEEvent{event("response.created", map[string]any{"response": responseBase})}
 	if scenario == ScenarioText {
 		item := map[string]any{"id": "item_msg_ref_0001", "type": "message", "status": "in_progress", "role": "assistant", "content": []any{}}

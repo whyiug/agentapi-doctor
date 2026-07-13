@@ -175,7 +175,7 @@ output behavior, and exit codes.
   current runner and fixture together.
 - A normal target run selects four built-in raw-wire checks for the configured
   protocol.
-- The reference server contains 12 executable targeted modes.
+- The reference server contains 13 executable targeted modes.
 - The Requirement Catalog's 260 candidate scenario records are metadata, not
   260 executable tests.
 - Current checks do not prove complete SDK, agent, model, provider, or

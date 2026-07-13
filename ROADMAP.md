@@ -16,16 +16,23 @@ architecture completeness. The detailed research and stop conditions are in
 This RC does not claim real SDK/Agent compatibility or automatic root-cause
 attribution.
 
-## Next: one real-client case
+## v0.1.0-rc.2: one real-client case
 
-The only active product expansion is a pinned OpenAI Python SDK / Responses
-streaming profile covering terminal-event and strict-envelope failures. It must
-produce both raw-wire and SDK observations plus a maintainer-ready redacted
+The second release candidate adds one pinned OpenAI Python SDK / Responses
+streaming slice covering terminal-event and strict-envelope failures. It
+produces both raw-wire and SDK observations plus a maintainer-ready redacted
 reproduction bundle.
 
-Success means one public failure family is deterministic on a clean runner and
-an external maintainer or integrator finds the bundle easier to reproduce than
-hand-assembled logs.
+The slice is Linux amd64 only, uses CPython 3.12.12 and OpenAI Python 2.38.0,
+and runs against independently authored loopback fixtures. It is a reproducible
+case, not general endpoint or SDK support.
+
+## Next: prove external reuse
+
+The active product question is now whether an external maintainer or integrator
+finds the bundle easier to reproduce than hand-assembled logs. The project will
+collect real, consented reuse evidence before selecting a second client profile
+or expanding distribution infrastructure.
 
 ## Conditional backlog
 

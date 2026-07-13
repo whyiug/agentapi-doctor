@@ -5,7 +5,7 @@ product boundaries; they are not hidden compatibility claims.
 
 ## Execution and compatibility
 
-- `v0.1.0-rc.1` is a release candidate, not a stable compatibility contract.
+- `v0.1.0-rc.2` is a release candidate, not a stable compatibility contract.
   The supported distribution is the `doctor` CLI archive for Linux, macOS, or
   Windows. Package-manager channels are not yet published.
 - Client-side execution can target an explicitly authorized local,
@@ -19,10 +19,12 @@ product boundaries; they are not hidden compatibility claims.
 - The four checks run sequentially under one 60-second deadline. A deadline
   produces a persisted partial, inconclusive report (exit 4), not a target
   incompatibility or a user-interruption exit.
-- Real SDK/client drivers and complete agent loops are not yet supported. The
-  checked-in driver, profile, and runtime manifests are development inputs.
+- The source tree implements one Linux amd64, CPython 3.12.12, OpenAI Python
+  2.38.0 Responses streaming reproducer against four loopback synthetic
+  fixtures. It is not a driver for arbitrary endpoints, a general SDK support
+  claim, or a complete Agent loop.
 - The Requirement Catalog contains 260 metadata scenarios. These are not 260
-  executable conformance tests; the reference server currently exposes 12
+  executable conformance tests; the reference server currently exposes 13
   executable targeted mutation modes.
 - Catalog interpretations marked `candidate` / `pending_review` have not
   completed independent protocol-source review.
@@ -30,6 +32,14 @@ product boundaries; they are not hidden compatibility claims.
   behavior outside the exact endpoint, model, built-in pack/profile digests,
   plan, and evidence tested. A run does not automatically attest its CLI
   source commit.
+- A real-SDK reproduction marked `confirmed` means its frozen local wire and
+  SDK observations match the checked-in oracle. Its bundle records the Doctor
+  build/source identity, Doctor and Python executable digests, installed
+  distribution metadata, and canonical input digests. Wheel hashes are
+  enforced when constructing the environment, not by rehashing every installed
+  package file. A client exception alone is insufficient for endpoint
+  attribution and produces `unknown` when Doctor cannot validate the
+  controlled wire path.
 - Local run snapshots omit secret references and free-form target metadata,
   but retain the endpoint URL and model needed to interpret a run. Protect the
   `.agentapi/` directory as private local state.

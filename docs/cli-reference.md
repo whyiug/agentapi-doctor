@@ -10,8 +10,8 @@ later release with documented migration notes. The machine-readable contract is
 ## General behavior
 
 Run `doctor help` for quick paths and the command list, or
-`doctor help test|demo|report` for focused examples. There are no global flags;
-place each command's flags in the positions shown below.
+`doctor help test|demo|report|reproduce` for focused examples. There are no
+global flags; place each command's flags in the positions shown below.
 
 Most commands emit a JSON envelope:
 
@@ -116,6 +116,33 @@ doctor demo [--data-root <path>] [--output <path>]
 Run the built-in `openai-responses` fixture in-process on a random loopback
 port. It needs no credential or config, contacts no external endpoint, stops
 its listener automatically, and defaults to the terminal report.
+
+### `doctor reproduce openai-python-responses`
+
+```text
+doctor reproduce openai-python-responses
+  --python <python-3.12.12>
+  --fixture <reference|missing-terminal-event|duplicate-terminal-event|null-completed-output>
+  --bundle <new.zip> [--format terminal|json]
+```
+
+Run one frozen OpenAI Python SDK 2.38.0 Responses streaming case and write a
+maintainer-ready evidence ZIP. The command is Linux amd64 only, starts a random
+`127.0.0.1` fixture, sends one request with a synthetic token, never reads an
+API key, and never contacts a provider. The supplied Python environment must
+report CPython 3.12.12 on Linux x86_64 and the exact 16 locked distribution
+names and versions. Wheel hashes are enforced while constructing the
+environment; runtime attestation records installed metadata and the Python
+executable digest, but does not rehash every installed package file.
+
+The result correlates captured raw SSE with the SDK observation. A matching
+reference or targeted mutant returns 0 and reports `confirmed`; an environment,
+wire, fixture-identity, or SDK-observation mismatch writes an `unknown` bundle
+and returns 4. The bundle path must not already exist.
+
+See the [real SDK case](cases/openai-python-responses-null-output.md) for the
+offline wheelhouse install, expected output, evidence files, and interpretation
+boundary.
 
 ## Inspect and compare runs
 

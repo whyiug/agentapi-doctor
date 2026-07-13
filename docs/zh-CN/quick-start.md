@@ -11,7 +11,7 @@ Linux 或 macOS：
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.1/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.2/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
@@ -20,15 +20,15 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fSLO \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.1/install.sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.2/install.sh
 less install.sh
 sh install.sh
 ```
 
 Windows 用户可以从
-[v0.1.0-rc.1](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.1)
-下载 `agentapi-doctor_0.1.0-rc.1_windows_amd64.zip` 或
-`agentapi-doctor_0.1.0-rc.1_windows_arm64.zip`。精确 PowerShell checksum 与解压
+[v0.1.0-rc.2](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.2)
+下载 `agentapi-doctor_0.1.0-rc.2_windows_amd64.zip` 或
+`agentapi-doctor_0.1.0-rc.2_windows_arm64.zip`。精确 PowerShell checksum 与解压
 步骤见[安装文档（英文）](../installation.md)。
 
 ## 2. 运行无 Key Demo
@@ -115,6 +115,7 @@ Output-token 字段只是向 Provider 提出的请求，不是客户端强制成
 4 个检查；它不是完整 SDK/Agent 兼容或厂商认证。
 
 后续：[CLI 参考（英文）](../cli-reference.md) ·
+[真实 SDK 案例（英文）](../cases/openai-python-responses-null-output.md) ·
 [安装（英文）](../installation.md) ·
 [故障排查（英文）](../troubleshooting.md) ·
 [已知限制（英文）](../known-limitations/README.md)

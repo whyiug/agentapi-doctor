@@ -165,7 +165,7 @@ NEW_RUN_ID='<较新的精确-run-id>'
 
 - 本地 fixture 是合成且确定性的；它的 PASS 只验证当前 runner 与 fixture。
 - 一次普通 target run 会根据配置协议选择 4 个内置 raw-wire 检查。
-- Reference server 当前有 12 个可执行定向模式。
+- Reference server 当前有 13 个可执行定向模式。
 - Requirement Catalog 中的 260 条候选场景记录是 metadata，不是 260 个
   可执行测试。
 - 当前检查不能证明完整 SDK、Agent、模型、Provider 或部署兼容。
