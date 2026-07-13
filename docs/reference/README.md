@@ -13,7 +13,7 @@ see the [CLI reference](../cli-reference.md); for a first run, use the
   configured origin for `openai-chat`, `openai-responses`, and
   `anthropic-messages`.
 - `reference/server` and `reference/mutant-server` — deterministic synthetic
-  protocol fixtures and 12 executable targeted mutation modes.
+  protocol fixtures and 13 executable targeted mutation modes.
 - `internal/config`, `internal/planner`, `internal/budget`, and
   `internal/executor` — typed configuration, IntentPlan/ResolvedRunPlan, hard
   budgets, and execution contracts.
@@ -81,7 +81,7 @@ release explicitly declares a stable compatibility floor.
 
 [`specs/catalog-statistics.json`](../../specs/catalog-statistics.json) records
 260 metadata scenarios across seven packs. Those reference and targeted-mutant
-records must not be confused with the 12 executable targeted mutation modes or
+records must not be confused with the 13 executable targeted mutation modes or
 the four selected checks per protocol in the current client-side runner.
 
 ## Registry and release tooling

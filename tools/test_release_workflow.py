@@ -82,6 +82,19 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertNotIn("id: registry", configuration)
         self.assertNotIn("id: reference-server", configuration)
 
+    def test_release_repeats_the_hash_locked_real_sdk_gate(self) -> None:
+        workflow = self.workflow()
+        for required in (
+            "python-version: '3.12.12'",
+            "requirements-linux-x86_64-py312.lock",
+            "--require-hashes",
+            "--no-index",
+            "TestRealPinnedSDK",
+            "-count=2",
+        ):
+            self.assertIn(required, workflow)
+        self.assertIn("Reproduce every pinned real-SDK case twice", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -67,6 +67,14 @@ commands:
       - {name: data-root, type: path, required: false}
       - {name: output, type: path, required: false}
       - {name: format, type: string, enum: [terminal, json], default: terminal}
+  - path: [reproduce]
+    operands:
+      - {name: profile, required: true, enum: [openai-python-responses]}
+    flags:
+      - {name: python, type: path, required: true}
+      - {name: fixture, type: string, enum: [reference, missing-terminal-event, duplicate-terminal-event, null-completed-output], default: missing-terminal-event}
+      - {name: bundle, type: path, required: true}
+      - {name: format, type: string, enum: [terminal, json], default: terminal}
   - path: [run, inspect]
     operands:
       - {name: run-ref, required: true}

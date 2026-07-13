@@ -4,10 +4,17 @@ Client compatibility is version-specific. A result names the exact SDK or
 agent, version, runtime, driver artifact digest, profile digest, protocol pack,
 and support-lock matrix cell.
 
-The planned Tier 1 matrix includes raw transport plus selected Python/Node SDK
-and real agent/client profiles. A mock that resembles a client does not prove
-that the real client works. Candidate dependency versions may run in nightly
-jobs but do not silently replace release-gated previous/current cells.
+The source tree now has one deliberately narrow real-client baseline: OpenAI
+Python 2.38.0 on CPython 3.12.12 runs a high-level Responses stream against
+four deterministic loopback fixtures. Doctor correlates the application-layer
+SSE and SDK observation in a checksummed bundle. See the
+[reproducible null-output case](../cases/openai-python-responses-null-output.md).
+
+This baseline does not publish a support matrix and does not test an arbitrary
+endpoint. A mock that resembles a client does not prove that the real client
+works, while one real pinned client does not prove that other versions work.
+Candidate dependency versions may run in nightly jobs but do not silently
+replace release-gated previous/current cells.
 
 Before claiming support, each driver/profile needs:
 

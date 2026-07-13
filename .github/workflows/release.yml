@@ -8,7 +8,7 @@ on:
       version:
         description: Exact dry-run version without a v prefix.
         required: true
-        default: 0.1.0-rc.1
+        default: 0.1.0-rc.2
         type: string
 
 permissions:
@@ -68,9 +68,36 @@ jobs:
             "$version" "$tag" "$notes" >> "$GITHUB_ENV"
           printf 'commit=%s\ntag=%s\nversion=%s\n' \
             "$GITHUB_SHA" "$tag" "$version" >> "$GITHUB_OUTPUT"
+      - name: Install CPython 3.12.12 for the pinned SDK release gate
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.12.12'
+          architecture: x64
+          check-latest: false
+      - name: Reproduce every pinned real-SDK case twice
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: '1'
+          PIP_NO_INPUT: '1'
+        run: |
+          python -m unittest runners/python/openai-responses/test_runner.py
+          python -m pip download \
+            --require-hashes \
+            --only-binary=:all: \
+            --dest "$RUNNER_TEMP/openai-wheelhouse" \
+            --requirement runners/python/openai-responses/requirements-linux-x86_64-py312.lock
+          python -m venv "$RUNNER_TEMP/openai-sdk-venv"
+          "$RUNNER_TEMP/openai-sdk-venv/bin/python" -m pip install \
+            --no-index \
+            --require-hashes \
+            --only-binary=:all: \
+            --find-links "$RUNNER_TEMP/openai-wheelhouse" \
+            --requirement runners/python/openai-responses/requirements-linux-x86_64-py312.lock
+          "$RUNNER_TEMP/openai-sdk-venv/bin/python" -m pip check
+          AGENTAPI_DOCTOR_OPENAI_PYTHON="$RUNNER_TEMP/openai-sdk-venv/bin/python" \
+            go test ./internal/openaisdkcase -run '^TestRealPinnedSDK$' -count=2 -timeout=2m
       - name: Run Doctor and release-specific checks
         run: |
-          go test ./internal/cli ./internal/productrun ./internal/report ./internal/transport
+          go test ./internal/cli ./internal/openaisdkcase ./internal/productrun ./internal/report ./internal/transport
           python3 -m unittest discover -s tools -p 'test_release_*.py'
           git diff --check
       - name: Build six native Doctor archives without publishing

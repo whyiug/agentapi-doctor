@@ -24,6 +24,8 @@ are not vendor certification.
   network, run-store, and Docker failures.
 - [Known limitations](known-limitations/README.md) — current coverage and
   publication boundaries.
+- [Real OpenAI Python SDK case](cases/openai-python-responses-null-output.md) —
+  reproduce why a valid-looking terminal event can still fail a pinned client.
 
 ## Understand the results
 
@@ -33,11 +35,12 @@ are not vendor certification.
   - [Profiles and packs](concepts/profiles-and-packs.md)
 - [Protocol families](protocols/README.md)
 - [Clients](clients/README.md)
+- [Reproducible cases](cases/openai-python-responses-null-output.md)
 - [Reference](reference/README.md) — executable surfaces, schemas, catalog
   counts, Registry, and distribution sources.
 
 The Requirement Catalog contains 260 candidate metadata scenario records.
-The local reference server currently exposes 12 executable targeted modes,
+The local reference server currently exposes 13 executable targeted modes,
 and a normal target run selects 4 checks for that target's protocol.
 
 ## Operate and integrate

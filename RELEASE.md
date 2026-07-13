@@ -1,6 +1,6 @@
 # Release Policy
 
-The first binary channel is `v0.1.0-rc.1`. Until that exact non-draft entry is
+The current binary channel is `v0.1.0-rc.2`. Until that exact non-draft entry is
 visible on GitHub Releases with the complete allowlisted asset set, use the
 developer source path in [Installation](docs/installation.md#source-install-for-contributors).
 
@@ -37,8 +37,8 @@ version.
 The tag-triggered workflow then:
 
 - verifies the tag, SemVer, release notes, and ancestry from `main`;
-- reruns Doctor CLI and release-tool regression tests while relying on the
-  protected-main checks for unrelated development candidates;
+- reconstructs the hash-locked Python environment, repeats the four pinned
+  real-SDK cases twice, and reruns Doctor CLI and release-tool regression tests;
 - builds Linux, macOS, and Windows archives for `amd64` and `arm64`;
 - produces SHA-256 checksums, one SPDX JSON SBOM, GitHub build provenance, and
   a Sigstore bundle over the checksum manifest;

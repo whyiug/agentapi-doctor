@@ -2,7 +2,7 @@
 
 ## Publication status
 
-The first supported binary channel is `v0.1.0-rc.1`. Treat it as published only
+The current supported binary channel is `v0.1.0-rc.2`. Treat it as published only
 when the exact tag has a non-draft entry on the project's
 [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases) page with
 the complete asset set below. If that entry is absent, use the developer source
@@ -63,7 +63,7 @@ Set explicit values only after the release page exists. Use `tar.gz` for Linux
 and macOS and `zip` for Windows.
 
 ```bash
-VERSION='0.1.0-rc.1'
+VERSION='0.1.0-rc.2'
 TARGET_OS='linux'
 TARGET_ARCH='amd64'
 EXTENSION='tar.gz'

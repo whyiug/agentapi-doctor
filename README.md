@@ -15,6 +15,7 @@ redacted report you can reproduce, compare, and share.
 
 [Quick Start](docs/quick-start.md) ·
 [What it checks](#what-doctor-checks) ·
+[Real SDK case](docs/cases/openai-python-responses-null-output.md) ·
 [Offline report source](docs/examples/missing-terminal-event-report.html) ·
 [简体中文](README.zh-CN.md)
 
@@ -26,18 +27,18 @@ redacted report you can reproduce, compare, and share.
 
 ## From download to an answer
 
-Linux and macOS can install the exact `v0.1.0-rc.1` release without Go:
+Linux and macOS can install the exact `v0.1.0-rc.2` release without Go:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.1/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.2/install.sh | sh
 $HOME/.local/bin/doctor demo
 ```
 
 The pinned installer verifies the release archive against `checksums.txt`
 before extraction. If you prefer to inspect it first, download
 [`install.sh`](install.sh), then run `sh install.sh`. Windows users can download
-the verified ZIP from [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.1);
+the verified ZIP from [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.2);
 the [Installation guide](docs/installation.md) includes checksum steps for every
 platform.
 
@@ -114,8 +115,36 @@ PASS  terminal status
 Download the [offline failure report](docs/examples/missing-terminal-event-report.html)
 and open it locally, or reproduce it with the documented
 [Synthetic Fixture](docs/getting-started/synthetic-fixtures.md).
-This is a real, deterministic wire/lifecycle observation. It is not yet a real
-SDK run or automatic root-cause attribution.
+This example is a real, deterministic wire/lifecycle observation. It is not by
+itself a real SDK run or automatic root-cause attribution.
+
+## Why a real SDK changes the answer
+
+A status-only smoke test can accept `200 OK` and `text/event-stream` without
+ever asking whether the terminal object is usable. The source tree now includes
+one deliberately narrow counterexample using the real, pinned OpenAI Python SDK:
+
+| Observation of the same synthetic stream | Result |
+| --- | --- |
+| HTTP/SSE smoke | `200 OK`; a `response.completed` event arrived |
+| Raw terminal object | `output` is `null`, not the array modeled by the pinned SDK |
+| OpenAI Python SDK 2.38.0 | rejects the stream during event iteration |
+| Doctor bundle | correlates `wire.sse` with the sanitized SDK observation and exact dependency lock |
+
+Reproduce it on Linux amd64 with CPython 3.12.12:
+
+```sh
+doctor reproduce openai-python-responses \
+  --python .venv/bin/python \
+  --fixture null-completed-output \
+  --bundle ./openai-python-null-output.zip
+```
+
+This command uses a random loopback fixture and a synthetic token; it never
+contacts a provider or reads an API key. See the
+[reproducible case study](docs/cases/openai-python-responses-null-output.md) for
+the hash-locked install and exact evidence boundary. The case proves one frozen
+SDK behavior, not compatibility or incompatibility of any vendor endpoint.
 
 ## Where it fits
 
@@ -124,7 +153,8 @@ SDK run or automatic root-cause attribution.
 | Check whether one key or endpoint responds | `curl` or a browser checker |
 | Explore models and prompts | A web playground |
 | Repeatedly inspect lifecycle behavior and keep diffable evidence | **AgentAPI Doctor** |
-| Prove compatibility with one SDK or Agent | Run that real client; Doctor's first pinned SDK profile is in progress |
+| Reproduce one known Responses/SDK failure | Use Doctor's pinned OpenAI Python case and evidence bundle |
+| Prove an arbitrary SDK or Agent compatible | Run that exact client against the authorized endpoint; Doctor does not claim this coverage |
 
 Doctor is not a model-quality benchmark, provider ranking, relay checker, or
 vendor certification service. The current catalog also contains candidate
@@ -154,9 +184,9 @@ breaks later. Examples include [Open WebUI #21768](https://github.com/open-webui
 [Codex #24973](https://github.com/openai/codex/issues/24973).
 
 The research, competitor comparison, intentionally reduced roadmap, and stop
-conditions are recorded in the [July 13 execution plan](0713-plan.md). The next
-product slice is deliberately narrow: one pinned OpenAI Python SDK / Responses
-case before any Registry, public matrix, or hosted UI expansion.
+conditions are recorded in the [July 13 execution plan](0713-plan.md). The first
+pinned OpenAI Python SDK / Responses case is now reproducible; external reuse,
+not Registry, public matrix, or hosted UI expansion, is the next proof point.
 
 ## Documentation and community
 
@@ -165,6 +195,7 @@ case before any Registry, public matrix, or hosted UI expansion.
 [CLI reference](docs/cli-reference.md) ·
 [Troubleshooting](docs/troubleshooting.md) ·
 [Known limitations](docs/known-limitations/README.md) ·
+[Real SDK case](docs/cases/openai-python-responses-null-output.md) ·
 [Roadmap](ROADMAP.md) ·
 [All docs](docs/README.md)
 

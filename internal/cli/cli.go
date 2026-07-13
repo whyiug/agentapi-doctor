@@ -75,6 +75,8 @@ func Run(ctx context.Context, args []string, dependencies Dependencies) int {
 		return runTest(ctx, args[1:], dependencies)
 	case "demo":
 		return runDemo(ctx, args[1:], dependencies)
+	case "reproduce":
+		return runReproduce(ctx, args[1:], dependencies)
 	case "run":
 		return runRun(args[1:], dependencies)
 	case "report":
@@ -307,6 +309,10 @@ Quick paths:
   doctor report markdown latest --output doctor-report.md
                                                Export the latest saved result
 
+Pinned client case:
+  doctor reproduce openai-python-responses --help
+                                               Correlate raw SSE with a real SDK
+
 Core commands:
   demo       Try AgentAPI Doctor without credentials or network access
   test       Check a configured or inline endpoint
@@ -314,8 +320,9 @@ Core commands:
   run        Inspect a saved run
   target     Manage saved target configuration
 
-Other commands: init, self-check, compare, baseline, completion, dev, version
-Use "doctor help test", "doctor help demo", or "doctor help report" for examples.`
+Other commands: reproduce, init, self-check, compare, baseline, completion, dev, version
+Use "doctor help test", "doctor help demo", "doctor help report", or
+"doctor help reproduce" for examples.`
 }
 
 func runHelp(args []string, dependencies Dependencies) int {
@@ -323,7 +330,7 @@ func runHelp(args []string, dependencies Dependencies) int {
 		return writeHelp(dependencies.Stdout, usage())
 	}
 	if len(args) != 1 {
-		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor help [test|demo|report]")
+		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor help [test|demo|report|reproduce]")
 	}
 	switch args[0] {
 	case "test":
@@ -332,8 +339,10 @@ func runHelp(args []string, dependencies Dependencies) int {
 		return writeHelp(dependencies.Stdout, demoHelp)
 	case "report":
 		return writeHelp(dependencies.Stdout, reportHelp)
+	case "reproduce":
+		return writeHelp(dependencies.Stdout, reproduceHelp)
 	default:
-		return writeError(dependencies.Stderr, ExitInput, "unknown_help_topic", fmt.Sprintf("unknown help topic %q; available topics: test, demo, report", args[0]))
+		return writeError(dependencies.Stderr, ExitInput, "unknown_help_topic", fmt.Sprintf("unknown help topic %q; available topics: test, demo, report, reproduce", args[0]))
 	}
 }
 

@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "runtime": {
+    "implementation": "CPython",
+    "version": "3.12.12",
+    "platform": "linux_x86_64"
+  },
+  "sdk": {
+    "distribution": "openai",
+    "version": "2.38.0",
+    "tag": "v2.38.0",
+    "tag_commit": "e75766769547601a25ed83b666c4d0fd046881f0",
+    "wheel": {
+      "filename": "openai-2.38.0-py3-none-any.whl",
+      "sha256": "ec6661c57b2dcc47414a767e6e3335c7ed3d19c9696999283a3c82e95c756a3c"
+    }
+  },
+  "cases": [
+    {
+      "id": "reference",
+      "mutation": null,
+      "protocol": "openai-responses-streaming",
+      "expected_observation": {
+        "terminal_events": 1,
+        "final_status": "completed",
+        "final_output_count": 1,
+        "exception_phase": null,
+        "exception_class": null
+      }
+    },
+    {
+      "id": "missing-terminal-event",
+      "mutation": "missing-terminal-event",
+      "protocol": "openai-responses-streaming",
+      "expected_observation": {
+        "terminal_events": 0,
+        "final_status": null,
+        "final_output_count": null,
+        "exception_phase": "final_response",
+        "exception_class": "RuntimeError"
+      }
+    },
+    {
+      "id": "duplicate-terminal-event",
+      "mutation": "duplicate-terminal-event",
+      "protocol": "openai-responses-streaming",
+      "expected_observation": {
+        "terminal_events": 2,
+        "final_status": "completed",
+        "final_output_count": 1,
+        "exception_phase": null,
+        "exception_class": null
+      }
+    },
+    {
+      "id": "null-completed-output",
+      "mutation": "null-completed-output",
+      "protocol": "openai-responses-streaming",
+      "expected_observation": {
+        "terminal_events": 0,
+        "final_status": null,
+        "final_output_count": null,
+        "exception_phase": "event_iteration",
+        "exception_class": "TypeError"
+      }
+    }
+  ],
+  "provenance": {
+    "repository": "https://github.com/openai/openai-python",
+    "tag": "https://github.com/openai/openai-python/tree/v2.38.0",
+    "package": "https://pypi.org/project/openai/2.38.0/",
+    "license": "Apache-2.0",
+    "license_file": "https://github.com/openai/openai-python/blob/v2.38.0/LICENSE"
+  },
+  "synthetic_fixture": {
+    "independently_authored": true,
+    "statement": "All requests and response mutations are deterministic project-authored fixtures; no production payload or third-party test was copied."
+  }
+}

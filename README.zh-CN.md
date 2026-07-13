@@ -15,6 +15,7 @@ endpoint 是否真的符合 client 依赖的行为，并生成可复现、可比
 
 [快速开始](docs/zh-CN/quick-start.md) ·
 [检查内容](#doctor-检查什么) ·
+[真实 SDK 案例](docs/cases/openai-python-responses-null-output.md) ·
 [离线报告源码](docs/examples/missing-terminal-event-report.html) ·
 [English](README.md)
 
@@ -26,18 +27,18 @@ endpoint 是否真的符合 client 依赖的行为，并生成可复现、可比
 
 ## 从下载到得到答案
 
-Linux 和 macOS 无需 Go，即可安装固定的 `v0.1.0-rc.1`：
+Linux 和 macOS 无需 Go，即可安装固定的 `v0.1.0-rc.2`：
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.1/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.2/install.sh | sh
 $HOME/.local/bin/doctor demo
 ```
 
 固定版本 installer 会先用 `checksums.txt` 校验 release archive，再执行解压。
 如果希望先审阅脚本，请下载 [`install.sh`](install.sh)，然后运行
 `sh install.sh`。Windows 用户可以从
-[GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.1)
+[GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.2)
 下载经过校验的 ZIP；[安装文档](docs/installation.md)提供所有平台的 checksum
 步骤。
 
@@ -110,8 +111,35 @@ PASS  terminal status
 
 可以下载[离线失败报告](docs/examples/missing-terminal-event-report.html)并在本地打开，
 也可以按 [Synthetic Fixture](docs/getting-started/synthetic-fixtures.md) 文档复现。
-这是真实、确定性的 wire/lifecycle observation，但还不是一个真实 SDK run，也
-不是自动根因归因。
+这个例子是真实、确定性的 wire/lifecycle observation，但它本身不是一个真实
+SDK run，也不是自动根因归因。
+
+## 为什么真实 SDK 会改变答案
+
+只看状态的 smoke test 可能看到 `200 OK` 和 `text/event-stream` 就认为成功，却
+没有验证 terminal object 能否被真实 client 使用。当前源码加入了一个刻意收窄、
+使用固定版本 OpenAI Python SDK 的反例：
+
+| 对同一条合成协议流的观察 | 结果 |
+| --- | --- |
+| HTTP/SSE smoke | `200 OK`，并且收到了 `response.completed` |
+| Raw terminal object | `output` 是 `null`，而不是固定版本 SDK 所建模的 array |
+| OpenAI Python SDK 2.38.0 | 在 event iteration 阶段拒绝该 stream |
+| Doctor bundle | 把 `wire.sse`、脱敏 SDK observation 和精确依赖锁关联起来 |
+
+在 Linux amd64 与 CPython 3.12.12 上复现：
+
+```sh
+doctor reproduce openai-python-responses \
+  --python .venv/bin/python \
+  --fixture null-completed-output \
+  --bundle ./openai-python-null-output.zip
+```
+
+该命令只使用随机 loopback fixture 和合成 token，不联系 Provider，也不读取 API
+key。Hash-locked 安装方式和精确证据边界见
+[可复跑案例（英文）](docs/cases/openai-python-responses-null-output.md)。该案例只证明
+一个冻结版本 SDK 的行为，不代表任何厂商 endpoint 兼容或不兼容。
 
 ## 它适合放在哪里
 
@@ -120,7 +148,8 @@ PASS  terminal status
 | 检查一个 key 或 endpoint 是否响应 | `curl` 或 browser checker |
 | 交互式探索 model 和 prompt | Web playground |
 | 重复检查生命周期并保留可比较证据 | **AgentAPI Doctor** |
-| 证明某个 SDK 或 Agent 完整兼容 | 先运行真实 client；Doctor 的首个固定版本 SDK profile 正在实现 |
+| 复现一个已知的 Responses/SDK failure | 使用 Doctor 固定版本 OpenAI Python 案例和 evidence bundle |
+| 证明任意 SDK 或 Agent 完整兼容 | 必须让那个精确 client 运行在获授权 endpoint 上；Doctor 不声称已有此覆盖 |
 
 Doctor 不是模型质量 benchmark、Provider 排名、relay 真伪检查或厂商认证服务。
 当前 catalog 还包含不可执行的 candidate metadata；精确边界见
@@ -146,9 +175,8 @@ Responses event、proxy 或 client state machine 在后续失败。例如
 [Codex #24973](https://github.com/openai/codex/issues/24973)。
 
 [7 月 13 日精简执行计划](0713-plan.md)记录了社区调研、竞品对比、收缩后的
-roadmap 和停止条件。下一条产品纵切被刻意限制为一个 OpenAI Python SDK /
-Responses 固定版本案例；在它证明价值之前，不扩公共 Registry、matrix 或
-hosted UI。
+roadmap 和停止条件。首个 OpenAI Python SDK / Responses 固定版本案例现在已经
+可以复跑；下一项证明是外部复用，而不是扩公共 Registry、matrix 或 hosted UI。
 
 ## 文档与社区
 
@@ -157,6 +185,7 @@ hosted UI。
 [CLI 参考](docs/cli-reference.md) ·
 [故障排查](docs/troubleshooting.md) ·
 [已知限制](docs/known-limitations/README.md) ·
+[真实 SDK 案例（英文）](docs/cases/openai-python-responses-null-output.md) ·
 [Roadmap](ROADMAP.md) ·
 [全部文档](docs/README.md)
 

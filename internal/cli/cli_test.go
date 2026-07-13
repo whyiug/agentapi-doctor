@@ -121,9 +121,11 @@ func TestQuickPathHelpIsSuccessfulAndSideEffectFree(t *testing.T) {
 		{name: "test topic", args: []string{"help", "test"}, contains: []string{"Check one authorized endpoint", "--base-url", "--auth-env"}},
 		{name: "demo topic", args: []string{"help", "demo"}, contains: []string{"four compatibility checks", "no API key"}},
 		{name: "report topic", args: []string{"help", "report"}, contains: []string{"Export a saved run", "markdown latest"}},
+		{name: "reproduce topic", args: []string{"help", "reproduce"}, contains: []string{"pinned real-SDK", "never reads an API key"}},
 		{name: "test flag", args: []string{"test", "--help"}, contains: []string{"Check one authorized endpoint", "--plan-only"}},
 		{name: "demo flag", args: []string{"demo", "--help"}, contains: []string{"four compatibility checks", "doctor demo"}},
 		{name: "report flag", args: []string{"report", "--help"}, contains: []string{"Formats: terminal", "doctor-report.md"}},
+		{name: "reproduce flag", args: []string{"reproduce", "--help"}, contains: []string{"OpenAI Python SDK 2.38.0", "maintainer-ready bundle"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
