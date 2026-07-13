@@ -428,12 +428,16 @@ func estimateFor(scenario Scenario) budget.Usage {
 	// The envelope allowance is derived, not a hand-entered result metric. It
 	// covers bounded request/response metadata plus both persisted bodies.
 	const envelopeAllowance = int64(64 << 10)
-	return budget.Usage{
+	estimate := budget.Usage{
 		Requests:      1,
 		RequestBytes:  int64(len(scenario.Body)),
 		ResponseBytes: scenario.Budget.ResponseBytes,
 		ArtifactBytes: int64(len(scenario.Body)) + 16*scenario.Budget.ResponseBytes + envelopeAllowance,
 	}
+	if _, limit, requested := requestedOutputLimit(scenario); requested {
+		estimate.OutputTokens = limit
+	}
+	return estimate
 }
 
 func cloneScenario(source Scenario) Scenario {

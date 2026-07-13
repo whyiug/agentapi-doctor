@@ -28,6 +28,9 @@ type RunError struct {
 	Err        error
 	Usage      budget.Usage
 	UsageKnown bool
+	// UnknownUsage keeps absent provider token accounting distinct from an
+	// observed zero. Only input_tokens and output_tokens are accepted.
+	UnknownUsage []string
 	// EvidenceRefs preserves observations already committed before a
 	// non-verdict terminal condition such as authentication or transport
 	// failure. The executor validates and carries them into the attempt/case.
@@ -66,6 +69,7 @@ type Outcome struct {
 	AssertionResults []schema.AssertionResult
 	Findings         []schema.Finding
 	Usage            budget.Usage
+	UnknownUsage     []string
 }
 
 type Runner interface {
@@ -180,6 +184,7 @@ func Execute(ctx context.Context, plan schema.ResolvedRunPlan, expectedDigest sc
 	result.ResidualLeases = finalize(cleanupContext, plan.Finalizers, config.Runners, ledger)
 	cancelCleanup()
 	result.Budget = ledger.Snapshot()
+	result.Budget.Unknown = aggregateUnknownUsage(result.Attempts)
 	result.FinishedAt = schema.NewUTCTime(config.Now())
 	return result, executionErr
 }
@@ -250,27 +255,42 @@ func runScenario(ctx context.Context, runID schema.InstanceID, plan schema.Resol
 		}
 		outcome, runErr := runner.Run(ctx, Invocation{RunID: runID, InvocationID: invocationID, AttemptID: attemptID, PlanDigest: plan.ContentDigest, Scenario: decision, AttemptNumber: number})
 		if runErr != nil {
-			actual := estimate
+			actual := budget.Usage{}
+			accounted := estimate
+			usageKnown := false
 			var typed *RunError
 			attemptEvidenceRefs := []schema.ObjectRef{}
+			unknownUsage := []string{"input_tokens", "output_tokens"}
 			if errors.As(runErr, &typed) {
+				usageKnown = typed.UsageKnown
 				if typed.UsageKnown {
 					actual = typed.Usage
 				}
+				if err := validateUnknownUsage(typed.UnknownUsage); err != nil {
+					runErr = &RunError{Class: ErrorHarness, Err: fmt.Errorf("runner returned invalid unknown usage: %w", err), Usage: actual, UsageKnown: typed.UsageKnown}
+				} else {
+					unknownUsage = append([]string(nil), typed.UnknownUsage...)
+					if !typed.UsageKnown {
+						unknownUsage = []string{"input_tokens", "output_tokens"}
+					}
+				}
 				if err := validateEvidenceRefs(typed.EvidenceRefs); err != nil {
-					runErr = &RunError{Class: ErrorHarness, Err: fmt.Errorf("runner returned invalid error evidence: %w", err), Usage: actual, UsageKnown: typed.UsageKnown}
+					runErr = &RunError{Class: ErrorHarness, Err: fmt.Errorf("runner returned invalid error evidence: %w", err), Usage: actual, UsageKnown: typed.UsageKnown, UnknownUsage: unknownUsage}
 				} else {
 					attemptEvidenceRefs = append([]schema.ObjectRef(nil), typed.EvidenceRefs...)
 					caseEvidenceRefs = appendUniqueEvidenceRefs(caseEvidenceRefs, typed.EvidenceRefs...)
 				}
 			}
-			_ = reservation.Commit(actual)
+			if usageKnown {
+				accounted = accountedUsage(actual, estimate, unknownUsage)
+			}
+			_ = reservation.Commit(accounted)
 			reason, class := reasonForError(ctx, runErr)
 			status := schema.ExecutionErrored
 			if errors.Is(ctx.Err(), context.Canceled) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
 				status = schema.ExecutionCancelled
 			}
-			attempts = append(attempts, schema.Attempt{AttemptID: attemptID, InvocationID: invocationID, ExecutionStatus: status, ReasonCode: reason, EvidenceRefs: attemptEvidenceRefs, Driver: decision.Driver, ConsumedBudget: consumption(actual)})
+			attempts = append(attempts, schema.Attempt{AttemptID: attemptID, InvocationID: invocationID, ExecutionStatus: status, ReasonCode: reason, EvidenceRefs: attemptEvidenceRefs, Driver: decision.Driver, ConsumedBudget: consumption(actual, unknownUsage)})
 			if class == ErrorTransient && number < maxAttempts {
 				continue
 			}
@@ -279,7 +299,7 @@ func runScenario(ctx context.Context, runID schema.InstanceID, plan schema.Resol
 			return result, attempts
 		}
 		if validationErr := validateOutcome(outcome); validationErr != nil {
-			_ = reservation.Commit(outcome.Usage)
+			_ = reservation.Commit(estimate)
 			attemptEvidenceRefs := []schema.ObjectRef{}
 			if validateEvidenceRefs(outcome.EvidenceRefs) == nil {
 				attemptEvidenceRefs = append([]schema.ObjectRef(nil), outcome.EvidenceRefs...)
@@ -287,14 +307,15 @@ func runScenario(ctx context.Context, runID schema.InstanceID, plan schema.Resol
 			}
 			attempt := erroredAttempt(invocationID, attemptID, decision.Driver, schema.ReasonHarnessError)
 			attempt.EvidenceRefs = attemptEvidenceRefs
+			attempt.ConsumedBudget = consumption(budget.Usage{}, []string{"input_tokens", "output_tokens"})
 			attempts = append(attempts, attempt)
 			result := caseForAttempts(decision, attemptIDs, schema.ExecutionErrored, nil, schema.ReasonHarnessError, nil, nil)
 			result.EvidenceRefs = append([]schema.ObjectRef(nil), caseEvidenceRefs...)
 			return result, attempts
 		}
 		caseEvidenceRefs = appendUniqueEvidenceRefs(caseEvidenceRefs, outcome.EvidenceRefs...)
-		commitErr := reservation.Commit(outcome.Usage)
-		attempt := schema.Attempt{AttemptID: attemptID, InvocationID: invocationID, ExecutionStatus: schema.ExecutionCompleted, ReasonCode: outcome.ReasonCode, EvidenceRefs: append([]schema.ObjectRef(nil), outcome.EvidenceRefs...), Driver: decision.Driver, ConsumedBudget: consumption(outcome.Usage)}
+		commitErr := reservation.Commit(accountedUsage(outcome.Usage, estimate, outcome.UnknownUsage))
+		attempt := schema.Attempt{AttemptID: attemptID, InvocationID: invocationID, ExecutionStatus: schema.ExecutionCompleted, ReasonCode: outcome.ReasonCode, EvidenceRefs: append([]schema.ObjectRef(nil), outcome.EvidenceRefs...), Driver: decision.Driver, ConsumedBudget: consumption(outcome.Usage, outcome.UnknownUsage)}
 		attempts = append(attempts, attempt)
 		if commitErr != nil {
 			result := caseForAttempts(decision, attemptIDs, schema.ExecutionCompleted, &outcome.Verdict, schema.ReasonBudgetExhausted, outcome.AssertionResults, outcome.Findings)
@@ -372,10 +393,54 @@ func contextReason(err error) schema.ReasonCode {
 	}
 	return schema.ReasonCancelledByUser
 }
-func consumption(usage budget.Usage) schema.BudgetConsumption {
-	return schema.BudgetConsumption{Requests: usage.Requests, RequestBytes: usage.RequestBytes, ResponseBytes: usage.ResponseBytes, ArtifactBytes: usage.ArtifactBytes, InputTokens: pointerIfKnown(usage.InputTokens), OutputTokens: pointerIfKnown(usage.OutputTokens)}
+func consumption(usage budget.Usage, unknown []string) schema.BudgetConsumption {
+	result := schema.BudgetConsumption{
+		Requests: usage.Requests, RequestBytes: usage.RequestBytes,
+		ResponseBytes: usage.ResponseBytes, ArtifactBytes: usage.ArtifactBytes,
+		Unknown: append([]string(nil), unknown...),
+	}
+	if !containsString(unknown, "input_tokens") {
+		result.InputTokens = pointerIfKnown(usage.InputTokens)
+	}
+	if !containsString(unknown, "output_tokens") {
+		result.OutputTokens = pointerIfKnown(usage.OutputTokens)
+	}
+	return result
 }
 func pointerIfKnown(value int64) *int64 { result := value; return &result }
+
+func accountedUsage(observed, estimate budget.Usage, unknown []string) budget.Usage {
+	result := observed
+	if containsString(unknown, "input_tokens") {
+		result.InputTokens = estimate.InputTokens
+	}
+	if containsString(unknown, "output_tokens") {
+		result.OutputTokens = estimate.OutputTokens
+	}
+	return result
+}
+
+func aggregateUnknownUsage(attempts []schema.Attempt) []string {
+	result := make([]string, 0, 2)
+	for _, field := range []string{"input_tokens", "output_tokens"} {
+		for _, attempt := range attempts {
+			if containsString(attempt.ConsumedBudget.Unknown, field) {
+				result = append(result, field)
+				break
+			}
+		}
+	}
+	return result
+}
+
+func containsString(values []string, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
+}
 
 func validateOutcome(outcome Outcome) error {
 	if outcome.Verdict != schema.VerdictPass && outcome.Verdict != schema.VerdictFail && outcome.Verdict != schema.VerdictWarn && outcome.Verdict != schema.VerdictInconclusive {
@@ -391,6 +456,20 @@ func validateOutcome(outcome Outcome) error {
 		if err := assertion.Validate(); err != nil {
 			return err
 		}
+	}
+	return validateUnknownUsage(outcome.UnknownUsage)
+}
+
+func validateUnknownUsage(unknown []string) error {
+	seenUnknownUsage := make(map[string]struct{}, len(unknown))
+	for _, field := range unknown {
+		if field != "input_tokens" && field != "output_tokens" {
+			return fmt.Errorf("invalid unknown usage field %q", field)
+		}
+		if _, duplicate := seenUnknownUsage[field]; duplicate {
+			return fmt.Errorf("duplicate unknown usage field %q", field)
+		}
+		seenUnknownUsage[field] = struct{}{}
 	}
 	return nil
 }

@@ -27,18 +27,18 @@ redacted report you can reproduce, compare, and share.
 
 ## From download to an answer
 
-Linux and macOS can install the exact `v0.1.0-rc.2` release without Go:
+Linux and macOS can install the exact `v0.1.0-rc.3` release without Go:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.2/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh | sh
 $HOME/.local/bin/doctor demo
 ```
 
 The pinned installer verifies the release archive against `checksums.txt`
 before extraction. If you prefer to inspect it first, download
 [`install.sh`](install.sh), then run `sh install.sh`. Windows users can download
-the verified ZIP from [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.2);
+the verified ZIP from [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.3);
 the [Installation guide](docs/installation.md) includes checksum steps for every
 platform.
 
@@ -170,8 +170,10 @@ metadata that is not executable coverage; see [Known Limitations](docs/known-lim
   Review evidence before sharing it.
 - The provider still receives the bounded synthetic prompts and may retain them
   under its own policy.
-- A provider may reject or ignore the requested 64-token output field, so it is
-  not an enforced cost ceiling.
+- Structural checks request 64 output tokens. The Chat/Responses terminal-status
+  check requests 512 so default-thinking models can reach a natural terminal
+  more often. A provider may reject or ignore either field, so these are not
+  enforced cost ceilings.
 
 Only test systems you are explicitly authorized to assess.
 

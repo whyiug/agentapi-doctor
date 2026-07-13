@@ -1,6 +1,6 @@
 # Release Policy
 
-The current binary channel is `v0.1.0-rc.2`. Until that exact non-draft entry is
+The current binary channel is `v0.1.0-rc.3`. Until that exact non-draft entry is
 visible on GitHub Releases with the complete allowlisted asset set, use the
 developer source path in [Installation](docs/installation.md#source-install-for-contributors).
 

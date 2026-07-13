@@ -12,7 +12,7 @@ On Linux or macOS:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.2/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
@@ -21,14 +21,14 @@ against that release's `checksums.txt` before extraction. To inspect it first:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fSLO \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.2/install.sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh
 less install.sh
 sh install.sh
 ```
 
-Windows users can download `agentapi-doctor_0.1.0-rc.2_windows_amd64.zip` or
-`agentapi-doctor_0.1.0-rc.2_windows_arm64.zip` from
-[v0.1.0-rc.2](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.2).
+Windows users can download `agentapi-doctor_0.1.0-rc.3_windows_amd64.zip` or
+`agentapi-doctor_0.1.0-rc.3_windows_arm64.zip` from
+[v0.1.0-rc.3](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.3).
 See [Installation](installation.md) for exact PowerShell checksum and extraction
 steps.
 
@@ -110,13 +110,17 @@ Each endpoint run:
 
 - sends at most **4 requests**;
 - uses one **60-second deadline**;
-- asks for no more than **64 output tokens per request**; and
+- requests **64 output tokens** for structural checks and **512** for the
+  OpenAI Chat/Responses terminal-status check; and
 - stores evidence and the run record beneath `.agentapi/`.
 
-The output-token field is a provider request, not a client-enforced cost ceiling;
-a provider can reject or ignore it. PASS is bound to the exact endpoint, model,
-versioned artifacts, and four executed checks. It is not complete SDK/Agent
-compatibility or vendor certification.
+The requested maximum is 704 output tokens for one four-request Chat or
+Responses run and 256 for Anthropic Messages. The output-token field is a
+provider request, not a client-enforced cost ceiling; a provider can reject or
+ignore it. A reported token-limit terminal remains INCONCLUSIVE, and reported
+reasoning-token usage is diagnostic only. PASS is bound to the exact endpoint,
+model, versioned artifacts, and four executed checks. It is not complete
+SDK/Agent compatibility or vendor certification.
 
 Next: [CLI reference](cli-reference.md) ·
 [Real SDK case](cases/openai-python-responses-null-output.md) ·

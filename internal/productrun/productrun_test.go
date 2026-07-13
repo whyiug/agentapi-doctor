@@ -180,30 +180,147 @@ func TestRouteTargetSafelyHandlesRootAndCompleteAPIPrefixes(t *testing.T) {
 	}
 }
 
-func TestRequestBodiesBoundProviderOutput(t *testing.T) {
+func TestRequestBodiesUseVersionedScenarioOutputBudgets(t *testing.T) {
+	if builtinVersion != "0.1.0-candidate.3" {
+		t.Fatalf("built-in artifact version = %q, want candidate.3", builtinVersion)
+	}
 	if got := DefaultBudget(4).Hard.MaxDuration.Duration(); got != time.Minute {
 		t.Fatalf("default remote-capable run deadline = %s, want 1m", got)
 	}
 	tests := []struct {
-		protocol string
-		field    string
+		protocol, path, field string
+		want                  []int64
+		wantTotal             int64
 	}{
-		{protocol: "openai-chat", field: "max_completion_tokens"},
-		{protocol: "openai-responses", field: "max_output_tokens"},
-		{protocol: "anthropic-messages", field: "max_tokens"},
+		{protocol: "openai-chat", path: "/v1/chat/completions", field: "max_completion_tokens", want: []int64{512, 64, 64, 64}, wantTotal: 704},
+		{protocol: "openai-responses", path: "/v1/responses", field: "max_output_tokens", want: []int64{64, 64, 64, 512}, wantTotal: 704},
+		{protocol: "anthropic-messages", path: "/v1/messages", field: "max_tokens", want: []int64{64, 64, 64, 64}, wantTotal: 256},
 	}
 	for _, test := range tests {
 		t.Run(test.protocol, func(t *testing.T) {
-			body, err := requestBody(test.protocol, "fixture-model", false)
+			derived, err := deriveArtifacts(test.protocol, "fixture-model", test.path)
 			if err != nil {
 				t.Fatal(err)
 			}
-			var decoded map[string]any
-			if err := json.Unmarshal(body, &decoded); err != nil {
+			if len(derived.materials) != len(test.want) {
+				t.Fatalf("material count = %d, want %d", len(derived.materials), len(test.want))
+			}
+			for index, material := range derived.materials {
+				var decoded map[string]any
+				if err := json.Unmarshal(material.Body, &decoded); err != nil {
+					t.Fatal(err)
+				}
+				got, ok := decoded[test.field].(float64)
+				if !ok || int64(got) != test.want[index] || material.Descriptor.RequestedOutputTokens != test.want[index] {
+					t.Fatalf("%s budget = body:%#v descriptor:%d, want %d", material.Descriptor.ID, decoded[test.field], material.Descriptor.RequestedOutputTokens, test.want[index])
+				}
+				if _, injected := decoded["thinking"]; injected {
+					t.Fatalf("%s injected a provider-specific thinking override", material.Descriptor.ID)
+				}
+			}
+			budget := defaultBudgetFor(derived.materials)
+			if budget.Reservation.MaxInputTokens != 0 || budget.Reservation.MaxOutputTokens != test.wantTotal {
+				t.Fatalf("default token reservation = %#v, want output %d", budget.Reservation, test.wantTotal)
+			}
+			for _, artifact := range []schema.ArtifactPin{derived.driver, derived.oracle, derived.resolver, derived.pack, derived.profile} {
+				if artifact.Version != builtinVersion {
+					t.Fatalf("%s version = %q, want %q", artifact.Name, artifact.Version, builtinVersion)
+				}
+			}
+			planned := mustPlan(t, config.Target{
+				BaseURL: "http://127.0.0.1:1/v1", Protocol: test.protocol, Model: "fixture-model",
+			}, schema.BudgetPolicy{})
+			wantReservation := schema.TokenBudget{MaxOutputTokens: test.wantTotal}
+			if planned.Intent.Budget.Reservation != wantReservation || planned.Resolved.Budget.Reservation != wantReservation {
+				t.Fatalf("built plan reservations = intent:%#v resolved:%#v, want %#v", planned.Intent.Budget.Reservation, planned.Resolved.Budget.Reservation, wantReservation)
+			}
+		})
+	}
+	explicit := DefaultBudget(4)
+	explicit.Reservation.MaxOutputTokens = 17
+	planned := mustPlan(t, config.Target{BaseURL: "http://127.0.0.1:1/v1", Protocol: "openai-chat", Model: "fixture-model"}, explicit)
+	if planned.Intent.Budget.Reservation.MaxOutputTokens != 17 || planned.Resolved.Budget.Reservation.MaxOutputTokens != 17 {
+		t.Fatalf("explicit reservation was replaced: %#v / %#v", planned.Intent.Budget.Reservation, planned.Resolved.Budget.Reservation)
+	}
+	if _, err := requestBody("openai-chat", "fixture-model", false, 0); err == nil {
+		t.Fatal("request body accepted a nonpositive output budget")
+	}
+}
+
+func TestTerminalStatusEstimateUsesRequestedOutputCap(t *testing.T) {
+	tests := []struct {
+		protocol, path, scenarioID string
+	}{
+		{"openai-chat", "/v1/chat/completions", "openai-chat-002-terminal-status"},
+		{"openai-responses", "/v1/responses", "openai-responses-http-039-terminal-status"},
+	}
+	for _, test := range tests {
+		t.Run(test.protocol, func(t *testing.T) {
+			derived, err := deriveArtifacts(test.protocol, "fixture-model", test.path)
+			if err != nil {
 				t.Fatal(err)
 			}
-			if got, ok := decoded[test.field].(float64); !ok || got != outputTokenLimit {
-				t.Fatalf("%s = %#v, want %d", test.field, decoded[test.field], outputTokenLimit)
+			scenarios := materializeScenarios(derived, schema.NewDigest([]byte("terminal-estimate-plan")), nil)
+			registry, err := rawdriver.NewMemoryRegistry(scenarios...)
+			if err != nil {
+				t.Fatal(err)
+			}
+			index := slices.IndexFunc(scenarios, func(scenario rawdriver.Scenario) bool { return scenario.ID == test.scenarioID })
+			if index < 0 {
+				t.Fatalf("terminal scenario %q missing", test.scenarioID)
+			}
+			scenario := scenarios[index]
+			estimate, err := registry.Estimate(schema.ScenarioDecision{ScenarioID: scenario.ID, Disposition: schema.DispositionExecute, Driver: scenario.Driver})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if estimate.OutputTokens != terminalTokenCap {
+				t.Fatalf("terminal estimate = %d, want %d", estimate.OutputTokens, terminalTokenCap)
+			}
+		})
+	}
+}
+
+func TestRequestedOutputBudgetBindsPackProfileAndBaselineIdentity(t *testing.T) {
+	before, err := deriveArtifacts("openai-chat", "fixture-model", "/v1/chat/completions")
+	if err != nil {
+		t.Fatal(err)
+	}
+	original := slices.Clone(descriptors["openai-chat"])
+	mutated := slices.Clone(original)
+	index := slices.IndexFunc(mutated, func(descriptor ScenarioDescriptor) bool {
+		return descriptor.ID == "openai-chat-002-terminal-status"
+	})
+	if index < 0 {
+		t.Fatal("terminal descriptor missing")
+	}
+	mutated[index].RequestedOutputTokens++
+	descriptors["openai-chat"] = mutated
+	defer func() { descriptors["openai-chat"] = original }()
+	after, err := deriveArtifacts("openai-chat", "fixture-model", "/v1/chat/completions")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if before.pack.Digest == after.pack.Digest || before.profile.Digest == after.profile.Digest {
+		t.Fatalf("requested token mutation did not propagate: pack %s/%s profile %s/%s", before.pack.Digest, after.pack.Digest, before.profile.Digest, after.profile.Digest)
+	}
+	if before.driver.Digest != after.driver.Digest || before.oracle.Digest != after.oracle.Digest || before.evaluator != after.evaluator || before.support != after.support {
+		t.Fatal("requested token mutation changed an unrelated identity")
+	}
+	baseline := report.Baseline{
+		Name: "current", ProfileDigest: before.profile.Digest, PackDigest: before.pack.Digest,
+		SupportLockDigest: before.support, DenominatorDigest: schema.NewDigest([]byte("denominator")),
+		Cases: map[string]report.CaseState{},
+	}
+	for name, mutate := range map[string]func(*report.Baseline){
+		"pack":    func(value *report.Baseline) { value.PackDigest = after.pack.Digest },
+		"profile": func(value *report.Baseline) { value.ProfileDigest = after.profile.Digest },
+	} {
+		t.Run(name, func(t *testing.T) {
+			current := baseline
+			mutate(&current)
+			if _, err := report.Compare(baseline, current); !errors.Is(err, report.ErrIncomparable) {
+				t.Fatalf("changed %s identity remained comparable: %v", name, err)
 			}
 		})
 	}
@@ -438,6 +555,31 @@ func TestExecuteEnforcesHardRequestBudgetBeforeNetwork(t *testing.T) {
 	}
 }
 
+func TestExecuteEnforcesOutputTokenReservationBeforeNetwork(t *testing.T) {
+	reference, err := referenceserver.New(referenceserver.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	paths := &pathRecorder{next: reference}
+	server := httptest.NewServer(paths)
+	defer server.Close()
+	limited := DefaultBudget(4)
+	limited.Reservation.MaxOutputTokens = structuralTokenCap - 1
+	planned := mustPlan(t, config.Target{BaseURL: server.URL, Protocol: "openai-chat", Model: "fixture-model"}, limited)
+	execution, err := Execute(context.Background(), ExecuteRequest{Planned: planned, DataRoot: filepath.Join(t.TempDir(), "data")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := len(paths.snapshot()); got != 0 || execution.ExecutorResult.Budget.Consumed.Requests != 0 {
+		t.Fatalf("token reservation allowed network/ledger requests = %d/%d", got, execution.ExecutorResult.Budget.Consumed.Requests)
+	}
+	for _, item := range execution.Report.Cases {
+		if item.ExecutionStatus != schema.ExecutionSkipped || item.ReasonCode != schema.ReasonBudgetExhausted || item.Verdict != nil {
+			t.Fatalf("case exceeded token reservation: %#v", item)
+		}
+	}
+}
+
 func TestExecuteCancellationPersistsPartialReportWithoutDialing(t *testing.T) {
 	planned := mustPlan(t, config.Target{
 		BaseURL: "http://127.0.0.1:1/v1", Protocol: "openai-responses", Model: "fixture-model",
@@ -574,13 +716,14 @@ func TestAggregateUsesDocumentedExitPrecedence(t *testing.T) {
 		return schema.CaseResult{ScenarioID: id, PlanDisposition: schema.DispositionExecute, ExecutionStatus: schema.ExecutionErrored}
 	}
 	tests := []struct {
-		name          string
-		cases         []schema.CaseResult
-		classes       map[string]executor.ErrorClass
-		executionErr  error
-		wantOutcome   schema.ProfileOutcome
-		wantDimension schema.DimensionOutcome
-		wantExit      int
+		name            string
+		cases           []schema.CaseResult
+		classes         map[string]executor.ErrorClass
+		executionErr    error
+		budgetExhausted bool
+		wantOutcome     schema.ProfileOutcome
+		wantDimension   schema.DimensionOutcome
+		wantExit        int
 	}{
 		{
 			name:    "caller cancellation outranks permission infrastructure and failure",
@@ -615,6 +758,10 @@ func TestAggregateUsesDocumentedExitPrecedence(t *testing.T) {
 			wantOutcome: schema.ProfileDegraded, wantDimension: schema.DimensionDegraded, wantExit: 0,
 		},
 		{
+			name: "exhausted snapshot makes completed pass incomplete", cases: []schema.CaseResult{completed("pass", schema.VerdictPass)}, budgetExhausted: true,
+			wantOutcome: schema.ProfileInconclusive, wantDimension: schema.DimensionInconclusive, wantExit: 4,
+		},
+		{
 			name:        "all pass",
 			cases:       []schema.CaseResult{completed("pass", schema.VerdictPass)},
 			wantOutcome: schema.ProfileCompatible, wantDimension: schema.DimensionPass, wantExit: 0,
@@ -622,7 +769,7 @@ func TestAggregateUsesDocumentedExitPrecedence(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			outcome, dimension, exitCode := aggregate(test.cases, test.classes, test.executionErr)
+			outcome, dimension, exitCode := aggregate(test.cases, test.classes, test.executionErr, test.budgetExhausted)
 			if outcome != test.wantOutcome || dimension != test.wantDimension || exitCode != test.wantExit {
 				t.Fatalf("aggregate = %s/%s/%d, want %s/%s/%d", outcome, dimension, exitCode, test.wantOutcome, test.wantDimension, test.wantExit)
 			}
@@ -835,6 +982,69 @@ func TestExecuteRedactsReflectedCredentialBeforeAssertionAndFingerprint(t *testi
 	}
 }
 
+func TestExecuteLastScenarioRunBudgetExhaustionCannotPassRun(t *testing.T) {
+	reference, err := referenceserver.New(referenceserver.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var requestMu sync.Mutex
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		requestMu.Lock()
+		requestCount++
+		current := requestCount
+		requestMu.Unlock()
+
+		recorded := httptest.NewRecorder()
+		reference.ServeHTTP(recorded, request)
+		if current == 4 && recorded.Code == http.StatusOK {
+			var value map[string]any
+			if decodeErr := json.Unmarshal(recorded.Body.Bytes(), &value); decodeErr != nil {
+				t.Errorf("decode final response: %v", decodeErr)
+				return
+			}
+			usage, ok := value["usage"].(map[string]any)
+			if !ok {
+				t.Error("final response omitted usage")
+				return
+			}
+			output := int64(terminalTokenCap + 3*structuralTokenCap + 1)
+			usage["output_tokens"] = output
+			usage["total_tokens"] = output + 4
+			rewriteJSON(recorded, value)
+		}
+		for name, values := range recorded.Header() {
+			for _, value := range values {
+				writer.Header().Add(name, value)
+			}
+		}
+		writer.Header().Del("Content-Length")
+		writer.WriteHeader(recorded.Code)
+		_, _ = writer.Write(recorded.Body.Bytes())
+	}))
+	defer server.Close()
+
+	planned := mustPlan(t, config.Target{BaseURL: server.URL, Protocol: "openai-responses", Model: "fixture-model"}, schema.BudgetPolicy{})
+	execution, err := Execute(context.Background(), ExecuteRequest{Planned: planned, DataRoot: filepath.Join(t.TempDir(), "data")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if execution.Report.Outcome != schema.ProfileInconclusive || execution.Report.PrimaryExitCode != 4 || !execution.ExecutorResult.Budget.Exhausted {
+		t.Fatalf("overshoot aggregate = %#v / %#v", execution.Report, execution.ExecutorResult.Budget)
+	}
+	last, ok := findCase(execution.Report.Cases, "openai-responses-http-039-terminal-status")
+	if !ok || last.ExecutionStatus != schema.ExecutionCompleted || last.Verdict == nil || *last.Verdict != schema.VerdictPass || last.ReasonCode != schema.ReasonBudgetExhausted {
+		t.Fatalf("last overshooting case = %#v", last)
+	}
+	if !hasCondition(execution.Report.Conditions, "run_budget_exhausted") {
+		t.Fatalf("overshoot report omitted durable condition: %#v", execution.Report.Conditions)
+	}
+	decoded, err := report.Decode(execution.ReportJSON)
+	if err != nil || !hasCondition(decoded.Conditions, "run_budget_exhausted") {
+		t.Fatalf("persisted overshoot condition = %#v, %v", decoded.Conditions, err)
+	}
+}
+
 func TestExecuteSeparatesTargetFailureFromTransportAndAuthenticationErrors(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -848,6 +1058,7 @@ func TestExecuteSeparatesTargetFailureFromTransportAndAuthenticationErrors(t *te
 		wantReason   schema.ReasonCode
 		wantVerdict  *schema.Verdict
 		wantFindings bool
+		wantUnknown  bool
 	}{
 		{
 			name: "ordinary target rejection", status: http.StatusBadRequest, contentType: "application/json",
@@ -858,28 +1069,28 @@ func TestExecuteSeparatesTargetFailureFromTransportAndAuthenticationErrors(t *te
 			name: "Chat provider output-limit field unsupported", protocol: "openai-chat", status: http.StatusBadRequest, contentType: "application/json",
 			body:        []byte(`{"error":{"message":"Unsupported parameter: 'max_completion_tokens'.","param":"max_completion_tokens","code":"unsupported_parameter"}}`),
 			wantOutcome: schema.ProfileInconclusive, wantExit: 4, wantStatus: schema.ExecutionCompleted,
-			wantReason: schema.ReasonUnsupportedCapability, wantVerdict: verdictPointer(schema.VerdictInconclusive),
+			wantReason: schema.ReasonUnsupportedCapability, wantVerdict: verdictPointer(schema.VerdictInconclusive), wantUnknown: true,
 		},
 		{
 			name: "Responses provider output-limit field unsupported", protocol: "openai-responses", status: http.StatusBadRequest, contentType: "application/json",
 			body:        []byte(`{"error":{"message":"Unknown parameter: max_output_tokens","param":"max_output_tokens","code":"unknown_parameter"}}`),
 			wantOutcome: schema.ProfileInconclusive, wantExit: 4, wantStatus: schema.ExecutionCompleted,
-			wantReason: schema.ReasonUnsupportedCapability, wantVerdict: verdictPointer(schema.VerdictInconclusive),
+			wantReason: schema.ReasonUnsupportedCapability, wantVerdict: verdictPointer(schema.VerdictInconclusive), wantUnknown: true,
 		},
 		{
 			name: "authentication", status: http.StatusUnauthorized, contentType: "application/json",
 			body: []byte(`{"error":{"code":"synthetic"}}`), wantOutcome: schema.ProfileInconclusive, wantExit: 5,
-			wantStatus: schema.ExecutionErrored, wantReason: schema.ReasonAuthenticationFailed,
+			wantStatus: schema.ExecutionErrored, wantReason: schema.ReasonAuthenticationFailed, wantUnknown: true,
 		},
 		{
 			name: "permission", status: http.StatusForbidden, contentType: "application/json",
 			body: []byte(`{"error":{"code":"synthetic"}}`), wantOutcome: schema.ProfileInconclusive, wantExit: 5,
-			wantStatus: schema.ExecutionErrored, wantReason: schema.ReasonPermissionDenied,
+			wantStatus: schema.ExecutionErrored, wantReason: schema.ReasonPermissionDenied, wantUnknown: true,
 		},
 		{
 			name: "transient", status: http.StatusTooManyRequests, contentType: "application/json",
 			body: []byte(`{"error":{"code":"synthetic"}}`), wantOutcome: schema.ProfileInconclusive, wantExit: 3,
-			wantStatus: schema.ExecutionErrored, wantReason: schema.ReasonTransientError,
+			wantStatus: schema.ExecutionErrored, wantReason: schema.ReasonTransientError, wantUnknown: true,
 		},
 	}
 	for _, test := range tests {
@@ -925,6 +1136,19 @@ func TestExecuteSeparatesTargetFailureFromTransportAndAuthenticationErrors(t *te
 					if err != nil || evidence.RunID != execution.Report.RunID {
 						t.Fatalf("case Evidence ref does not close over this run: ref=%#v evidence=%#v err=%v", ref, evidence, err)
 					}
+				}
+			}
+			if test.wantUnknown {
+				if !slices.Equal(execution.ExecutorResult.Budget.Unknown, []string{"input_tokens", "output_tokens"}) {
+					t.Fatalf("aggregate unknown usage = %#v", execution.ExecutorResult.Budget)
+				}
+				for _, attempt := range execution.ExecutorResult.Attempts {
+					if attempt.ConsumedBudget.InputTokens != nil || attempt.ConsumedBudget.OutputTokens != nil || !slices.Equal(attempt.ConsumedBudget.Unknown, []string{"input_tokens", "output_tokens"}) {
+						t.Fatalf("attempt usage was presented as observed zero: %#v", attempt.ConsumedBudget)
+					}
+				}
+				if !hasCondition(execution.Report.Conditions, "provider_usage_unknown") {
+					t.Fatalf("durable report omitted unknown usage: %#v", execution.Report.Conditions)
 				}
 			}
 		})
@@ -1123,6 +1347,10 @@ func findCase(cases []schema.CaseResult, id string) (schema.CaseResult, bool) {
 		}
 	}
 	return schema.CaseResult{}, false
+}
+
+func hasCondition(conditions []report.Condition, code string) bool {
+	return slices.ContainsFunc(conditions, func(condition report.Condition) bool { return condition.Code == code })
 }
 
 func verdictPointer(value schema.Verdict) *schema.Verdict { return &value }

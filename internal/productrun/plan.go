@@ -58,7 +58,7 @@ func Build(request PlanRequest) (PlannedRun, error) {
 		return PlannedRun{}, err
 	}
 	if request.Budget == (schema.BudgetPolicy{}) {
-		request.Budget = DefaultBudget(len(artifacts.materials))
+		request.Budget = defaultBudgetFor(artifacts.materials)
 	}
 	if err := request.Budget.Validate(); err != nil {
 		return PlannedRun{}, fmt.Errorf("budget: %w", err)
@@ -212,8 +212,9 @@ func buildExact(targetName string, target config.Target, budget schema.BudgetPol
 	}, nil
 }
 
-// DefaultBudget is a hard, local candidate budget derived from the number of
-// selected built-in scenarios and their immutable 512 KiB response ceiling.
+// DefaultBudget is a conservative hard budget for callers that only know the
+// scenario count. Product plans use defaultBudgetFor to reserve the exact sum
+// of their versioned per-scenario output caps.
 func DefaultBudget(scenarioCount int) schema.BudgetPolicy {
 	if scenarioCount < 1 {
 		scenarioCount = 1
@@ -225,12 +226,22 @@ func DefaultBudget(scenarioCount int) schema.BudgetPolicy {
 			MaxResponseBytes: count * (512 << 10), MaxArtifactBytes: count * (9 << 20),
 			MaxProcesses: 1, MaxDuration: schema.NewDuration(time.Minute),
 		},
-		Reservation: schema.TokenBudget{},
+		Reservation: schema.TokenBudget{MaxOutputTokens: count * terminalTokenCap},
 		Cleanup: schema.HardBudget{
 			MaxRequests: 1, MaxRequestBytes: 1, MaxResponseBytes: 1,
 			MaxArtifactBytes: 1, MaxProcesses: 1, MaxDuration: schema.NewDuration(time.Second),
 		},
 	}
+}
+
+func defaultBudgetFor(materials []scenarioMaterial) schema.BudgetPolicy {
+	policy := DefaultBudget(len(materials))
+	var requestedOutputTokens int64
+	for _, material := range materials {
+		requestedOutputTokens += material.Descriptor.RequestedOutputTokens
+	}
+	policy.Reservation.MaxOutputTokens = requestedOutputTokens
+	return policy
 }
 
 func validatePlanned(input PlannedRun) (artifacts, targetRoute, error) {

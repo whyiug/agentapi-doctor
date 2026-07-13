@@ -3,7 +3,7 @@
 [项目中文首页](../../README.zh-CN.md) | [English documentation](../README.md)
 
 AgentAPI Doctor 正在积极开发。当前 `doctor` CLI 已提供带 checksum 的
-`v0.1.0-rc.2` GitHub Release archive，但没有托管服务或已发布的包管理器渠道。
+`v0.1.0-rc.3` GitHub Release archive，但没有托管服务或已发布的包管理器渠道。
 报告是绑定到被测版本和配置的可复现观察，不是厂商认证。
 
 ## 从这里开始

@@ -16,8 +16,9 @@ import (
 )
 
 const (
-	builtinVersion     = "0.1.0-candidate.2"
-	outputTokenLimit   = 64
+	builtinVersion     = "0.1.0-candidate.3"
+	structuralTokenCap = 64
+	terminalTokenCap   = 512
 	catalogStatus      = "candidate"
 	catalogReviewState = "pending_review"
 )
@@ -35,6 +36,7 @@ type ScenarioDescriptor struct {
 	Streaming                 bool                `json:"streaming"`
 	Check                     rawdriver.CheckKind `json:"check"`
 	AllowedValues             []string            `json:"allowed_values,omitempty"`
+	RequestedOutputTokens     int64               `json:"requested_output_tokens"`
 }
 
 var descriptors = map[string][]ScenarioDescriptor{
@@ -42,66 +44,66 @@ var descriptors = map[string][]ScenarioDescriptor{
 		{
 			ID: "openai-chat-002-terminal-status", RequirementID: "OAI-CHAT-REQ-002",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: OpenAI Chat Completions HTTP/SSE maps documented terminal, truncated, refused, and filtered states distinctly.",
-			Protocol:                  rawdriver.ProtocolOpenAIChat, Check: rawdriver.CheckFinishReason, AllowedValues: []string{"stop"},
+			Protocol:                  rawdriver.ProtocolOpenAIChat, Check: rawdriver.CheckFinishReason, AllowedValues: []string{"stop"}, RequestedOutputTokens: terminalTokenCap,
 		},
 		{
 			ID: "openai-chat-015-post-terminal-data", RequirementID: "OAI-CHAT-REQ-015",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: OpenAI Chat Completions HTTP/SSE rejects semantic data emitted after the terminal marker.",
-			Protocol:                  rawdriver.ProtocolOpenAIChat, Streaming: true, Check: rawdriver.CheckNoPostTerminal,
+			Protocol:                  rawdriver.ProtocolOpenAIChat, Streaming: true, Check: rawdriver.CheckNoPostTerminal, RequestedOutputTokens: structuralTokenCap,
 		},
 		{
 			ID: "openai-chat-024-stream-media-type", RequirementID: "OAI-CHAT-REQ-024",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: OpenAI Chat Completions HTTP/SSE validates the documented streaming media type before event parsing.",
-			Protocol:                  rawdriver.ProtocolOpenAIChat, Streaming: true, Check: rawdriver.CheckStreamMediaType,
+			Protocol:                  rawdriver.ProtocolOpenAIChat, Streaming: true, Check: rawdriver.CheckStreamMediaType, RequestedOutputTokens: structuralTokenCap,
 		},
 		{
 			ID: "openai-chat-030-required-response-envelope", RequirementID: "OAI-CHAT-REQ-030",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: OpenAI Chat Completions HTTP/SSE requires the documented response envelope before evaluating model content.",
-			Protocol:                  rawdriver.ProtocolOpenAIChat, Check: rawdriver.CheckRequiredEnvelope,
+			Protocol:                  rawdriver.ProtocolOpenAIChat, Check: rawdriver.CheckRequiredEnvelope, RequestedOutputTokens: structuralTokenCap,
 		},
 	},
 	"openai-responses": {
 		{
 			ID: "openai-responses-http-008-stream-media-type", RequirementID: "OAI-RESP-REQ-008",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: OpenAI Responses HTTP/SSE validates the documented streaming media type before event parsing.",
-			Protocol:                  rawdriver.ProtocolOpenAIResponses, Streaming: true, Check: rawdriver.CheckStreamMediaType,
+			Protocol:                  rawdriver.ProtocolOpenAIResponses, Streaming: true, Check: rawdriver.CheckStreamMediaType, RequestedOutputTokens: structuralTokenCap,
 		},
 		{
 			ID: "openai-responses-http-014-required-response-envelope", RequirementID: "OAI-RESP-REQ-014",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: OpenAI Responses HTTP/SSE requires the documented response envelope before evaluating model content.",
-			Protocol:                  rawdriver.ProtocolOpenAIResponses, Check: rawdriver.CheckRequiredEnvelope,
+			Protocol:                  rawdriver.ProtocolOpenAIResponses, Check: rawdriver.CheckRequiredEnvelope, RequestedOutputTokens: structuralTokenCap,
 		},
 		{
 			ID: "openai-responses-http-030-terminal-exactly-once", RequirementID: "OAI-RESP-REQ-030",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: OpenAI Responses HTTP/SSE accepts exactly one documented terminal condition.",
-			Protocol:                  rawdriver.ProtocolOpenAIResponses, Streaming: true, Check: rawdriver.CheckTerminalEvent,
+			Protocol:                  rawdriver.ProtocolOpenAIResponses, Streaming: true, Check: rawdriver.CheckTerminalEvent, RequestedOutputTokens: structuralTokenCap,
 		},
 		{
 			ID: "openai-responses-http-039-terminal-status", RequirementID: "OAI-RESP-REQ-039",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: OpenAI Responses HTTP/SSE maps documented terminal, truncated, refused, and filtered states distinctly.",
-			Protocol:                  rawdriver.ProtocolOpenAIResponses, Check: rawdriver.CheckFinishReason, AllowedValues: []string{"completed"},
+			Protocol:                  rawdriver.ProtocolOpenAIResponses, Check: rawdriver.CheckFinishReason, AllowedValues: []string{"completed"}, RequestedOutputTokens: terminalTokenCap,
 		},
 	},
 	"anthropic-messages": {
 		{
 			ID: "anthropic-messages-008-post-terminal-data", RequirementID: "ANTH-MSG-REQ-008",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: Anthropic Messages HTTP/SSE rejects semantic data emitted after the terminal marker.",
-			Protocol:                  rawdriver.ProtocolAnthropic, Streaming: true, Check: rawdriver.CheckNoPostTerminal,
+			Protocol:                  rawdriver.ProtocolAnthropic, Streaming: true, Check: rawdriver.CheckNoPostTerminal, RequestedOutputTokens: structuralTokenCap,
 		},
 		{
 			ID: "anthropic-messages-017-stream-media-type", RequirementID: "ANTH-MSG-REQ-017",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: Anthropic Messages HTTP/SSE validates the documented streaming media type before event parsing.",
-			Protocol:                  rawdriver.ProtocolAnthropic, Streaming: true, Check: rawdriver.CheckStreamMediaType,
+			Protocol:                  rawdriver.ProtocolAnthropic, Streaming: true, Check: rawdriver.CheckStreamMediaType, RequestedOutputTokens: structuralTokenCap,
 		},
 		{
 			ID: "anthropic-messages-023-required-response-envelope", RequirementID: "ANTH-MSG-REQ-023",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: Anthropic Messages HTTP/SSE requires the documented response envelope before evaluating model content.",
-			Protocol:                  rawdriver.ProtocolAnthropic, Check: rawdriver.CheckRequiredEnvelope,
+			Protocol:                  rawdriver.ProtocolAnthropic, Check: rawdriver.CheckRequiredEnvelope, RequestedOutputTokens: structuralTokenCap,
 		},
 		{
 			ID: "anthropic-messages-039-terminal-exactly-once", RequirementID: "ANTH-MSG-REQ-039",
 			RequirementInterpretation: "Candidate interpretation pending independent source review: Anthropic Messages HTTP/SSE accepts exactly one documented terminal condition.",
-			Protocol:                  rawdriver.ProtocolAnthropic, Streaming: true, Check: rawdriver.CheckTerminalEvent,
+			Protocol:                  rawdriver.ProtocolAnthropic, Streaming: true, Check: rawdriver.CheckTerminalEvent, RequestedOutputTokens: structuralTokenCap,
 		},
 	},
 }
@@ -187,7 +189,7 @@ func deriveArtifacts(protocol, model, endpointPath string) (artifacts, error) {
 	}
 	materials := make([]scenarioMaterial, 0, len(entries))
 	for _, entry := range entries {
-		body, bodyErr := requestBody(protocol, model, entry.Streaming)
+		body, bodyErr := requestBody(protocol, model, entry.Streaming, entry.RequestedOutputTokens)
 		if bodyErr != nil {
 			return artifacts{}, bodyErr
 		}
@@ -277,25 +279,28 @@ func pin(kind, name, version string, material any) (schema.ArtifactPin, error) {
 	return result, nil
 }
 
-func requestBody(protocol, model string, streaming bool) (json.RawMessage, error) {
+func requestBody(protocol, model string, streaming bool, requestedOutputTokens int64) (json.RawMessage, error) {
 	if model == "" {
 		return nil, errors.New("target model is required")
+	}
+	if requestedOutputTokens <= 0 {
+		return nil, errors.New("requested output tokens must be positive")
 	}
 	var value any
 	switch protocol {
 	case "openai-chat":
 		value = map[string]any{
-			"model": model, "stream": streaming, "max_completion_tokens": outputTokenLimit,
+			"model": model, "stream": streaming, "max_completion_tokens": requestedOutputTokens,
 			"messages": []any{map[string]any{"role": "user", "content": "Return a concise synthetic response."}},
 		}
 	case "openai-responses":
 		value = map[string]any{
-			"model": model, "stream": streaming, "max_output_tokens": outputTokenLimit,
+			"model": model, "stream": streaming, "max_output_tokens": requestedOutputTokens,
 			"input": "Return a concise synthetic response.",
 		}
 	case "anthropic-messages":
 		value = map[string]any{
-			"model": model, "stream": streaming, "max_tokens": outputTokenLimit,
+			"model": model, "stream": streaming, "max_tokens": requestedOutputTokens,
 			"messages": []any{map[string]any{"role": "user", "content": "Return a concise synthetic response."}},
 		}
 	default:

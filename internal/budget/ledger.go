@@ -58,13 +58,16 @@ func (usage Usage) subtract(other Usage) Usage {
 }
 
 type Snapshot struct {
-	Consumed        Usage     `json:"consumed"`
-	Reserved        Usage     `json:"reserved"`
-	CleanupConsumed Usage     `json:"cleanup_consumed"`
-	Overshoot       Usage     `json:"overshoot"`
-	StartedAt       time.Time `json:"started_at"`
-	Deadline        time.Time `json:"deadline"`
-	Exhausted       bool      `json:"exhausted"`
+	Consumed        Usage `json:"consumed"`
+	Reserved        Usage `json:"reserved"`
+	CleanupConsumed Usage `json:"cleanup_consumed"`
+	Overshoot       Usage `json:"overshoot"`
+	// Unknown identifies token fields the runner did not observe. Consumed may
+	// include a conservative estimate where one exists; it is not provider usage.
+	Unknown   []string  `json:"unknown,omitempty"`
+	StartedAt time.Time `json:"started_at"`
+	Deadline  time.Time `json:"deadline"`
+	Exhausted bool      `json:"exhausted"`
 }
 
 type Ledger struct {

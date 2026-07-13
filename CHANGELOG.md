@@ -8,8 +8,45 @@ CLI/Core versions will follow
 
 ## [Unreleased]
 
-No changes have been recorded since the v0.1.0-rc.2 release candidate was
+No changes have been recorded since the v0.1.0-rc.3 release candidate was
 prepared.
+
+## [0.1.0-rc.3] - 2026-07-13
+
+### Changed
+
+- Replaced the global 64-token Quick Check request limit with digest-bound,
+  per-scenario budgets. OpenAI Chat and Responses terminal-status checks request
+  512 output tokens; the other ten structural/lifecycle checks remain at 64.
+- Added exact output-token reservation to default plans and raw-driver
+  estimates: 704 tokens for four-request Chat/Responses runs and 256 for
+  Anthropic Messages. The request fields remain provider-side limits rather
+  than client-enforced cost ceilings.
+- Advanced the built-in driver, evaluator, pack, profile, resolver, and producer
+  identities to `0.1.0-candidate.3`. Older run records remain readable, while
+  rc.2 baselines are intentionally incomparable and must be recaptured.
+
+### Fixed
+
+- Preserved provider-reported Chat/Responses reasoning-token details in
+  output-limit diagnostics without persisting reasoning content or treating
+  usage alone as a failure.
+- Reports now mark missing input/output token usage as unknown instead of
+  presenting an unobserved zero as measured consumption. The budget ledger
+  conservatively charges the requested output reservation while retaining that
+  unknown marker; input usage remains unknown because no provider-neutral input
+  estimate is available.
+- A completed response that pushes cumulative accounting beyond the approved
+  run budget now makes the aggregate INCONCLUSIVE with exit 4 and a durable
+  `run_budget_exhausted` condition, even when the final target assertion itself
+  passed.
+
+### Security
+
+- Kept the existing four-request, zero-retry, exact-origin execution boundary.
+  The larger terminal-status request is versioned and reserved before network
+  access; Doctor does not disable thinking, branch on model names, or retry
+  with a hidden higher limit.
 
 ## [0.1.0-rc.2] - 2026-07-13
 
