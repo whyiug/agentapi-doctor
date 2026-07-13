@@ -1,98 +1,74 @@
-# RFC-0002: Evidence and Result Schema
+# RFC-0002: Local Evidence and Result Contracts
 
-- **Status:** draft
-- **Review:** none recorded
+- **Status:** accepted
+- **Date:** 2026-07-13
+- **Decider:** @whyiug
+- **Review:** implemented behavior and release review
 
 ## Problem
 
-Evidence loses value when object identity can be rebound, normalized values
-hide raw input, registry metadata changes submitted facts, or result fields mix
-planning, execution, verdict, and attribution. A cross-platform system also
-needs byte-stable digests and readers that tolerate allowed additive fields.
+Evidence loses value when object identity can be rebound, derived values hide
+raw input, or result fields mix selection, execution, verdict, and attribution.
+Local artifacts also need explicit reader compatibility instead of an implied
+promise for every development schema in the repository.
 
-## Goals
+## Accepted v0.1.0 contract
 
-- content-address immutable public objects;
-- preserve raw-to-normalized traceability and known loss;
-- bind results to exact plans, producers, sources, and evaluators;
-- distinguish instance identity from content identity;
-- support additive evolution and explicit migration; and
-- make denominators and uncertainty machine-readable.
+### Identity
 
-## Proposed envelope
+Promoted digest-bound objects use a versioned kind and an explicit immutable
+projection. SHA-256 is calculated over RFC 8785 JCS UTF-8. Readers reject
+duplicate keys, invalid UTF-8, trailing values, invalid numbers, excessive
+nesting, schema errors, and digest mismatch before treating an object as valid.
 
-Immutable public objects use a versioned envelope containing `schema_version`,
-`kind`, optional instance ID, `content_digest`, a matching object reference,
-producer identity/digest, creation time, and namespaced extensions. Public JSON
-uses `snake_case`; authored resource YAML may use Kubernetes-style
-`apiVersion`/`kind`.
+Instance identity, content identity, producer identity, and convenience
+locations remain separate. Mutable aliases such as `latest` are not durable
+evidence references.
 
-Content digests use SHA-256 over an explicit immutable projection encoded with
-RFC 8785 JSON Canonicalization Scheme. Duplicate keys, invalid UTF-8,
-non-finite/ambiguous numbers, trailing values, and unbounded nesting are
-rejected before signing or hashing.
+### Evidence
 
-## Evidence model
+Persisted evidence records the run and attempt relation, ordered observation,
+capture layer, direction, media type, payload reference and digest, redaction
+records, and explicit unavailable reason. Only sanitized values may cross the
+persistence boundary.
 
-An evidence event identifies run, invocation, attempt, monotonic sequence,
-capture layer, instrumentation mode, direction, byte/event offset, payload
-reference/digest, redaction records, and relations. A missing payload has a
-machine reason; it is not an empty object.
+Raw evidence is not overwritten by a report, client observation, or derived
+interpretation. Experimental normalized IR may reference raw evidence, but its
+current package and schema are not a stable v0.1.0 third-party API.
 
-Normalized IR retains source protocol/type, provider-native JSON type,
-interaction/item/call links, raw evidence refs, normalization transform and
-version, loss markers, and unavailable fields. A transform cannot silently
-repair invalid input.
+### Results
 
-## Result model
+Run and case results keep selection disposition, execution status, assertion
+verdict, evidence references, and finding attribution separate. They preserve
+the executed denominator and exact built-in definition identities. Unknown,
+inconclusive, skipped, errored, cancelled, and budget-exhausted states remain
+explicit.
 
-- Attempt records execution and resource consumption.
-- Assertion results bind requirement, oracle/evaluator digest, expected and
-  observed values, evidence, determinism/statistics, verdict, and reason.
-- Findings add fault domain/family, calibrated confidence, alternatives,
-  fingerprint, remediation, and repro references.
-- Case results keep plan disposition, execution, verdict, assertions, and
-  findings separate.
-- Profile results publish candidate/applicable/executed denominator digests and
-  counts plus independent dimensions.
+### Reader compatibility
 
-Registry-derived trust, freshness, disputes, supersede, and tombstone fields
-are excluded from the submitted observation identity. Provenance references
-are verified separately and do not rewrite the observation's immutable facts.
+Only artifact kinds and versions listed in
+[`schemas/migration-floor.yaml`](../schemas/migration-floor.yaml) receive a
+stable read promise. Removing or reinterpreting their fields, weakening
+privacy defaults, changing a bound denominator, or making a declared artifact
+unreadable is breaking within the supported v0.1.x line.
 
-## Compatibility
+## Excluded contracts
 
-Unknown optional fields are preserved or safely ignored according to the
-schema contract. Removing/reinterpreting fields, reducing privacy defaults,
-changing denominators, or making old artifacts unreadable is breaking. A
-release declares its explicit pre-1.0 migration floor; no fictional previous
-major is invented.
+Registry trust, attestations, disputes, hosted observations, generic driver
+frames, authored pack schemas, support matrices, and public normalized-IR APIs
+remain experimental. Checked-in schemas for those areas are development
+contracts, not stable release promises.
 
 ## Security considerations
 
-Canonicalization does not establish semantic validity. Decoders still enforce
-size/depth/count limits, exact duplicate-key rejection, digest verification,
-extension namespace policy, and write-before-redact. Signatures bind exact
-subjects and authorized identities but are not correctness votes.
+Canonicalization does not establish semantic validity or signer authority.
+Readers still enforce size, depth, count, schema, digest, redaction, and path
+limits. Signatures, where present in release artifacts, bind exact bytes but do
+not certify endpoint behavior.
 
-## Alternatives considered
+## Validation basis
 
-- **Hash ordinary encoder output:** language/order dependent and ambiguous;
-  rejected.
-- **Store only normalized data:** prevents byte-level diagnosis and hides
-  transformation loss; rejected.
-- **Put mutable Registry status in observation ID:** changes fact identity when
-  administration changes; rejected.
-
-## Unresolved questions
-
-- final object list and immutable projection for each schema;
-- precision rules for statistical estimates and timestamps; and
-- extension preservation requirements across every reader language.
-
-## Acceptance evidence
-
-Cross-platform canonical vectors, digest sensitivity tests, duplicate-key and
-number mutants, additive-old-reader fixtures, migration fixtures, privacy
-review, and independent schema review are required. They are not supplied by
-this draft alone.
+Acceptance is based on the implemented strict decoder, canonicalization and
+digest tests, local evidence/run/report readers, explicit result states, and
+release review. Migration fixtures define the exact historical floor; no
+fictional pre-v0 contract is implied.

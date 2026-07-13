@@ -34,8 +34,7 @@ go build -trimpath -o ./bin/reference-server ./cmd/reference-server
 
 Windows users can build `./bin/doctor.exe` and
 `./bin/reference-server.exe` with the same package paths. See
-[Installation](../installation.md) for a PowerShell example and local Docker
-images.
+[Installation](../installation.md) for PowerShell release verification.
 
 ## Initialize the local project
 
@@ -47,6 +46,10 @@ images.
 Initialization creates `.agentapi/config.yaml` and refuses to overwrite it.
 The generated `local-reference` target points to
 `http://127.0.0.1:8090/v1` and uses `openai-responses`.
+
+Treat the entire `.agentapi/` directory as private local state. This source
+tree ignores it; add `.agentapi/` to the `.gitignore` of every downstream
+project before running Doctor there.
 
 Read [Configuration](../configuration.md) before editing the file or adding a
 credential.
@@ -63,8 +66,8 @@ Run the configured checks in another:
 
 ```sh
 ./bin/doctor test local-reference
-./bin/doctor run inspect latest
-./bin/doctor report terminal latest
+./bin/doctor run inspect latest --allow-latest
+./bin/doctor report terminal latest --allow-latest
 ```
 
 Stop only the reference-server process you started. A normal run stores
@@ -125,18 +128,18 @@ exact run ID for CI and durable evidence:
 
 ```sh
 RUN_ID='<exact-run-id-from-doctor-test>'
-./bin/doctor run inspect "$RUN_ID" --allow-latest=false
-./bin/doctor report json "$RUN_ID" --allow-latest=false --output ./doctor-report.json
+./bin/doctor run inspect "$RUN_ID"
+./bin/doctor report json "$RUN_ID" --output ./doctor-report.json
 ```
 
-`latest` is convenient for interactive local work but is intentionally a
-mutable pointer.
+`latest` is a mutable local convenience pointer and requires explicit
+`--allow-latest`.
 
 For a custom data root, pass its run store to later commands:
 
 ```sh
 ./bin/doctor test local-reference --data-root ./local-data
-./bin/doctor report terminal latest --store ./local-data/runs
+./bin/doctor report terminal latest --allow-latest --store ./local-data/runs
 ```
 
 ## Render reports and compare runs
@@ -145,17 +148,17 @@ Reports are available as `terminal`, `json`, `junit`, `sarif`, `markdown`,
 and `html`:
 
 ```sh
-./bin/doctor report junit latest --output ./doctor-junit.xml
-./bin/doctor report sarif latest --output ./doctor.sarif
-./bin/doctor report html latest --output ./doctor-report.html
+./bin/doctor report junit latest --allow-latest --output ./doctor-junit.xml
+./bin/doctor report sarif latest --allow-latest --output ./doctor.sarif
+./bin/doctor report html latest --allow-latest --output ./doctor-report.html
 ```
 
 Create and compare a named local baseline:
 
 ```sh
-./bin/doctor baseline accept latest --name local-known-good
+./bin/doctor baseline accept latest --allow-latest --name local-known-good
 ./bin/doctor baseline list
-./bin/doctor baseline compare latest --baseline local-known-good
+./bin/doctor baseline compare latest --allow-latest --baseline local-known-good
 ```
 
 You can also compare two exact runs from the default store:

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agentapi-doctor:schema:baseline:v1",
+  "title": "AgentAPI Doctor baseline",
+  "description": "A versioned snapshot used to compare runs with identical immutable test identities.",
+  "type": "object",
+  "required": [
+    "schema_version", "name", "profile_digest", "pack_digest",
+    "support_lock_digest", "denominator_digest", "cases"
+  ],
+  "properties": {
+    "schema_version": {"const": "urn:agentapi-doctor:baseline:v1"},
+    "name": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{0,63}$"},
+    "profile_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "pack_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "support_lock_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "denominator_digest": {"$ref": "urn:agentapi-doctor:schema:common:envelope:v1alpha1#/$defs/digest"},
+    "cases": {
+      "type": "object",
+      "propertyNames": {"pattern": ".*\\S.*"},
+      "additionalProperties": {"$ref": "#/$defs/caseState"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "caseState": {
+      "type": "object",
+      "required": ["plan_disposition"],
+      "properties": {
+        "plan_disposition": {"enum": ["execute", "skip", "not_applicable"]},
+        "execution_status": {"enum": ["planned", "running", "completed", "skipped", "cancelled", "errored"]},
+        "verdict": {"enum": ["pass", "fail", "warn", "inconclusive"]}
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {"required": ["verdict"]},
+          "then": {
+            "required": ["execution_status"],
+            "properties": {"execution_status": {"const": "completed"}}
+          }
+        }
+      ]
+    }
+  }
+}

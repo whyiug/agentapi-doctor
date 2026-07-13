@@ -1,33 +1,31 @@
-# Registry
+# Registry (Experimental)
 
-The repository currently provides a runnable, single-node SQLite **self-host
-candidate**: the `registry serve -database ...` command, Registry HTTP API,
-static Matrix, consistent SQLite backup command, Dockerfile target, and local
-Compose wiring can be exercised from source.
+Registry and Matrix code in this repository is a source-only development
+candidate. It is not part of the supported v0.1.0 Doctor product, and the
+project does not operate a hosted Registry, public runner, upload service,
+managed image, verifier, or compatibility matrix.
 
-It does **not** provide a hosted AgentAPI Doctor service, production support,
-a managed image, a public runner, or a hosted verifier. In particular, a
-durable upload commit ends with `501 hosted_verifier_unavailable`; it is not
-published or assigned a project trust label. The local Doctor remains
-independent of the Registry.
+Contributors can exercise the single-node SQLite command, HTTP API, static
+Matrix, backup command, Dockerfile target, and local Compose wiring against
+synthetic data. These interfaces may change without a v0.1.x compatibility or
+operations promise. A durable upload commit currently ends with
+`501 hosted_verifier_unavailable` and receives no project trust label.
 
-## Operator documentation
+The local Doctor CLI remains independent of Registry availability.
 
-- [Self-hosting candidate](self-hosting.md) — direct and Compose startup,
-  listener and token boundaries, persistence scope, and limitations.
-- [Backup and recovery](../operations/backup-and-recovery.md) — consistent
-  backup, offline restore, permissions, integrity checks, upgrade, and
-  rollback.
+## Development documentation
 
-## Design and policy context
+- [Self-hosting candidate](self-hosting.md)
+- [Trust and attestation design](trust-and-attestations.md)
+- [Dispute, supersede, and withdrawal design](disputes.md)
+- [Backup and recovery experiments](../operations/backup-and-recovery.md)
 
-- [Trust and attestations](trust-and-attestations.md)
-- [Disputes, supersede, and withdrawal](disputes.md)
-- [Registry terms](../../REGISTRY_TERMS.md)
-- [Privacy notice](../../PRIVACY.md)
-- [Acceptable use policy](../../ACCEPTABLE_USE.md)
+These documents describe candidate implementation and design boundaries, not
+service terms or production guidance. Anyone running the code is responsible
+for authorization, authentication, data handling, retention, incident
+response, and legal review in their own environment.
 
-The terms, privacy notice, and acceptable-use text remain drafts for a future
-hosted service; running the local candidate does not make them project-operated
-service terms. Operators are responsible for their own authorization, data
-handling, access controls, retention, and legal review.
+A future project-operated service would require a separate accepted RFC,
+effective terms and privacy documentation, independent security and legal
+review, recovery evidence, abuse controls, and an explicit release
+announcement. None is claimed here.

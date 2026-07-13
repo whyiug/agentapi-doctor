@@ -31,7 +31,7 @@ Configuration is strict:
 - the file must be UTF-8 YAML, at most 1 MiB, and contain exactly one document;
 - unknown fields are rejected;
 - the file must be a regular file, not a symbolic link; and
-- `apiVersion` must be `urn:agentapi-doctor:config:v1beta1`.
+- `apiVersion` must be `urn:agentapi-doctor:config:v1beta2`.
 
 ## Add a target with the CLI
 
@@ -66,7 +66,7 @@ Each currently selects four built-in raw-wire checks.
 ## Target fields
 
 ```yaml
-apiVersion: urn:agentapi-doctor:config:v1beta1
+apiVersion: urn:agentapi-doctor:config:v1beta2
 targets:
   local-service:
     baseURL: http://127.0.0.1:8000/v1
@@ -78,18 +78,6 @@ targets:
         ref: env://LOCAL_SERVICE_TOKEN
     metadata:
       runtime: local-development
-defaults:
-  profile: raw.responses
-  budget:
-    maxRequests: 20
-    maxDuration: 5m0s
-    maxInputTokens: 20000
-    maxOutputTokens: 5000
-  capture:
-    content: standard_fixture_only
-  retries:
-    transport: 1
-    semantic: 0
 ```
 
 ### `baseURL`
@@ -160,18 +148,18 @@ need at least 8 bytes so the runner can enforce its exact redaction-canary
 invariant. Secret values are never meant to be written into YAML, command-line
 arguments, reports, or fixtures.
 
-### Defaults
+### Migrate from v1beta1
 
-The v1beta1 schema requires `budget`, `capture`, and `retries` defaults and
-validates their types and ranges. The current built-in raw runner still derives
-a fixed four-scenario hard budget, `redacted_content` capture, and zero runtime
-retries; it does not yet use these YAML defaults as execution overrides.
-Treat them as versioned configuration fields, not effective tuning controls,
-until that limitation is removed.
+The release-candidate `v1beta1` format exposed `defaults` fields that the fixed
+Quick Check contract did not consume. Doctor now rejects that format instead
+of silently ignoring cost, retry, or capture settings. Delete the top-level
+`defaults` block and change `apiVersion` to
+`urn:agentapi-doctor:config:v1beta2`; all target definitions remain unchanged.
 
-Valid capture values are `metadata_only`, `standard_fixture_only`,
-`redacted_content`, and `full_local_encrypted`. Durations use canonical Go
-duration strings such as `30s` or `5m0s`.
+Quick Check always executes four selected requests, with zero retries,
+redaction before persistence, and digest-bound per-scenario output limits.
+Those limits are part of the built-in check identity, not user-configurable
+cost ceilings.
 
 ## Validate without running a target
 

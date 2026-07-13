@@ -2,6 +2,7 @@ name: agentapi-doctor-local
 
 services:
   registry:
+    profiles: [experimental]
     build:
       context: .
       target: registry
@@ -35,6 +36,7 @@ services:
     restart: "no"
 
   reference:
+    profiles: [experimental]
     build:
       context: .
       target: reference-server

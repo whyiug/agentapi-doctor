@@ -1,66 +1,46 @@
-# ADR-0003: Raw wire vs provider-neutral IR
+# ADR-0003: Raw wire evidence and derived observations
 
-- **Status:** proposed
-- **Deciders:** none recorded
-- **Review:** none recorded
+- **Status:** accepted
+- **Date:** 2026-07-13
+- **Decider:** @whyiug
+- **Review:** implemented behavior and release review
 
 ## Context
 
-Raw protocol observations are needed to diagnose framing, ordering,
-provider-native types, cancellation, and client parser failures. A
-provider-neutral internal representation is needed for reusable oracles and
-cross-protocol reports. Keeping only one view either makes every oracle
-protocol-specific or destroys source fidelity.
+Raw protocol observations are required to diagnose framing, ordering,
+provider-native types, cancellation, and client parser failures. A derived or
+client-observed view must not overwrite the evidence that produced it.
 
-The four observation planes and fault domains are proposed in
-[RFC-0001](../rfcs/0001-compatibility-layers.md); the linked evidence fields are
-proposed in [RFC-0002](../rfcs/0002-evidence-and-result-schema.md).
+## Decision
 
-## Proposed decision
+- Preserve bounded, sanitized capture-layer evidence with direction, sequence,
+  media type, digest, redaction records, and explicit unavailable reasons.
+- Store a pinned client observation separately from the raw evidence and link
+  the two by stable references.
+- Treat every normalization or interpretation as a typed, versioned derived
+  operation, never as repair of the original observation.
+- Preserve unknown and lossy states instead of inventing normalized values.
+- Keep wire, client, provider, and harness failures distinguishable.
+- Apply the sanitize-before-store boundary from
+  [ADR-0006](ADR-0006-secret-references-and-write-before-redact-prohibition.md)
+  before persistence.
 
-Maintain separate, digest-linked views:
+## Release boundary
 
-- capture-layer evidence records bounded observed bytes or events, offsets,
-  direction, layer, instrumentation, digest, redaction records, and explicit
-  unavailable reasons;
-- provider-neutral IR records provider-native type and value, normalized value,
-  interaction/item/call relations, source evidence references, transform ID
-  and version, loss markers, and unavailable fields; and
-- client observations record what the named SDK or agent accepted, rejected,
-  retried, reordered, or surfaced without overwriting either earlier view.
-
-Normalization is a typed, versioned transformation, never a repair. Unknown or
-lossy input stays unknown or lossy. An assertion over IR points to the capture
-evidence and transform that justify it. Wire, normalization, client, provider,
-and harness failures remain distinguishable.
-
-Only sanitized capture-layer content may enter a persistent evidence view; the
-write boundary is governed by
-[ADR-0006](ADR-0006-secret-references-and-write-before-redact-prohibition.md).
+The v0.1.0 Doctor supports raw Quick Check evidence and one pinned OpenAI
+Python SDK reproduction case. A general provider-neutral IR, reusable
+cross-protocol oracle API, and generic client-driver correlation contract are
+experimental and are not accepted public APIs.
 
 ## Consequences
 
-Evidence and reports carry more identifiers and relations, and transforms need
-versioning and recomputation support. In return, maintainers can determine
-whether an error arose at the wire, normalizer, client, provider, or harness
-boundary. A transform change can create a derived evaluation but cannot rewrite
-the original observation.
+Reports carry explicit evidence relations and can identify the layer where a
+failure was observed. Derived behavior can evolve without rewriting the
+original capture, but any promoted transform needs its own version and
+migration policy.
 
-## Alternatives
+## Validation basis
 
-- Raw-only evidence preserves fidelity but makes reusable semantic oracles and
-  comparisons impractical.
-- IR-only evidence hides framing, native types, ordering failures, and
-  transformation loss.
-- Repairing adapters can make reports look consistent but create false
-  conformance and destroy fault attribution.
-- Treating the client view as ground truth conflates client bugs with provider
-  behavior.
-
-## Validation before acceptance
-
-Exercise correlated capture, IR, and client fixtures; unknown and unavailable
-cases; native JSON type preservation; lossy-transform mutants; rechunking;
-client parser divergence; and secret canaries. Every claimed assertion needs a
-reference-pass and targeted-mutant-fail path with precise evidence links.
-Passing candidate fixtures do not constitute design acceptance.
+Acceptance is limited to the raw evidence and pinned-client paths exercised by
+the Doctor release. Experimental normalizer packages do not broaden this
+decision.

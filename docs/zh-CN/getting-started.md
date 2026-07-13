@@ -32,7 +32,7 @@ go build -trimpath -o ./bin/reference-server ./cmd/reference-server
 ```
 
 Windows 用户可以用相同 package path 构建 `./bin/doctor.exe` 和
-`./bin/reference-server.exe`。PowerShell 示例和本地 Docker 镜像说明见
+`./bin/reference-server.exe`。PowerShell release 校验步骤见
 [安装文档（英文）](../installation.md)。
 
 ## 初始化本地项目
@@ -45,6 +45,9 @@ Windows 用户可以用相同 package path 构建 `./bin/doctor.exe` 和
 初始化会创建 `.agentapi/config.yaml`，但不会覆盖已有文件。生成的
 `local-reference` target 指向 `http://127.0.0.1:8090/v1`，协议为
 `openai-responses`。
+
+请把整个 `.agentapi/` 目录视为私密本地状态。本源码仓库已忽略该目录；在其他
+项目中运行 Doctor 前，也要把 `.agentapi/` 加入该项目的 `.gitignore`。
 
 修改文件或添加凭据前，请先阅读[配置文档（英文）](../configuration.md)。
 
@@ -60,8 +63,8 @@ Windows 用户可以用相同 package path 构建 `./bin/doctor.exe` 和
 
 ```sh
 ./bin/doctor test local-reference
-./bin/doctor run inspect latest
-./bin/doctor report terminal latest
+./bin/doctor run inspect latest --allow-latest
+./bin/doctor report terminal latest --allow-latest
 ```
 
 只停止你自己启动的 reference-server 进程。普通运行会把规范记录保存在
@@ -118,17 +121,17 @@ JSON 结果包含 `data.run_id` 和主退出码。CI 和长期证据应使用精
 
 ```sh
 RUN_ID='<doctor-test-返回的精确-run-id>'
-./bin/doctor run inspect "$RUN_ID" --allow-latest=false
-./bin/doctor report json "$RUN_ID" --allow-latest=false --output ./doctor-report.json
+./bin/doctor run inspect "$RUN_ID"
+./bin/doctor report json "$RUN_ID" --output ./doctor-report.json
 ```
 
-`latest` 适合本地交互，但它是一个会变化的指针。
+`latest` 是一个会变化的本地便捷指针，必须显式传入 `--allow-latest`。
 
 如果使用自定义 data root，后续命令需要指定对应 store：
 
 ```sh
 ./bin/doctor test local-reference --data-root ./local-data
-./bin/doctor report terminal latest --store ./local-data/runs
+./bin/doctor report terminal latest --allow-latest --store ./local-data/runs
 ```
 
 ## 导出报告和比较运行
@@ -137,17 +140,17 @@ RUN_ID='<doctor-test-返回的精确-run-id>'
 `html`：
 
 ```sh
-./bin/doctor report junit latest --output ./doctor-junit.xml
-./bin/doctor report sarif latest --output ./doctor.sarif
-./bin/doctor report html latest --output ./doctor-report.html
+./bin/doctor report junit latest --allow-latest --output ./doctor-junit.xml
+./bin/doctor report sarif latest --allow-latest --output ./doctor.sarif
+./bin/doctor report html latest --allow-latest --output ./doctor-report.html
 ```
 
 创建并比较本地 baseline：
 
 ```sh
-./bin/doctor baseline accept latest --name local-known-good
+./bin/doctor baseline accept latest --allow-latest --name local-known-good
 ./bin/doctor baseline list
-./bin/doctor baseline compare latest --baseline local-known-good
+./bin/doctor baseline compare latest --allow-latest --baseline local-known-good
 ```
 
 也可以比较默认 store 中的两个精确 run：

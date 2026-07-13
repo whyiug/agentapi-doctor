@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -14,6 +15,8 @@ import (
 )
 
 const maxBaselineBytes int64 = 16 << 20
+
+var baselineFileNamePattern = regexp.MustCompile(`^[a-z][a-z0-9._-]{0,63}$`)
 
 func runBaseline(args []string, dependencies Dependencies) int {
 	if len(args) == 0 {
@@ -43,10 +46,11 @@ func baselineAccept(args []string, dependencies Dependencies) int {
 	name := flags.String("name", "", "baseline name")
 	storePath := flags.String("store", filepath.Join(dependencies.WorkingDir, ".agentapi", "runs"), "run store")
 	baselinePath := flags.String("baseline-dir", filepath.Join(dependencies.WorkingDir, ".agentapi", "baselines"), "baseline directory")
+	allowLatest := flags.Bool("allow-latest", false, "allow local latest pointer")
 	if err := flags.Parse(args[1:]); err != nil || flags.NArg() != 0 || *name == "" {
 		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor baseline accept <run-ref> --name <name>")
 	}
-	bundle, err := loadReport(reference, *storePath, true, dependencies)
+	bundle, err := loadReport(reference, *storePath, *allowLatest, dependencies)
 	if err != nil {
 		return writeError(dependencies.Stderr, ExitInput, "run_not_found", err.Error())
 	}
@@ -130,6 +134,7 @@ func baselineCompare(args []string, dependencies Dependencies) int {
 	name := flags.String("baseline", "", "baseline name")
 	storePath := flags.String("store", filepath.Join(dependencies.WorkingDir, ".agentapi", "runs"), "run store")
 	directory := flags.String("baseline-dir", filepath.Join(dependencies.WorkingDir, ".agentapi", "baselines"), "baseline directory")
+	allowLatest := flags.Bool("allow-latest", false, "allow local latest pointer")
 	if err := flags.Parse(args[1:]); err != nil || flags.NArg() != 0 || *name == "" {
 		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor baseline compare <run-ref> --baseline <name>")
 	}
@@ -137,7 +142,7 @@ func baselineCompare(args []string, dependencies Dependencies) int {
 	if err != nil {
 		return writeError(dependencies.Stderr, ExitInput, "baseline_not_found", err.Error())
 	}
-	bundle, err := loadReport(reference, *storePath, true, dependencies)
+	bundle, err := loadReport(reference, *storePath, *allowLatest, dependencies)
 	if err != nil {
 		return writeError(dependencies.Stderr, ExitInput, "run_not_found", err.Error())
 	}
@@ -149,14 +154,15 @@ func baselineCompare(args []string, dependencies Dependencies) int {
 }
 
 func runCompare(args []string, dependencies Dependencies) int {
-	if len(args) != 2 || args[0] == "" || args[1] == "" || strings.HasPrefix(args[0], "-") || strings.HasPrefix(args[1], "-") {
-		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor compare <run-ref> <run-ref>")
+	operands, allowLatest, err := extractAllowLatest(args)
+	if err != nil || len(operands) != 2 || operands[0] == "" || operands[1] == "" || strings.HasPrefix(operands[0], "-") || strings.HasPrefix(operands[1], "-") {
+		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor compare [--allow-latest] <run-ref> <run-ref>")
 	}
-	left, err := loadReport(args[0], filepath.Join(dependencies.WorkingDir, ".agentapi", "runs"), true, dependencies)
+	left, err := loadReport(operands[0], filepath.Join(dependencies.WorkingDir, ".agentapi", "runs"), allowLatest, dependencies)
 	if err != nil {
 		return writeError(dependencies.Stderr, ExitInput, "left_run_not_found", err.Error())
 	}
-	right, err := loadReport(args[1], filepath.Join(dependencies.WorkingDir, ".agentapi", "runs"), true, dependencies)
+	right, err := loadReport(operands[1], filepath.Join(dependencies.WorkingDir, ".agentapi", "runs"), allowLatest, dependencies)
 	if err != nil {
 		return writeError(dependencies.Stderr, ExitInput, "right_run_not_found", err.Error())
 	}
@@ -169,6 +175,22 @@ func runCompare(args []string, dependencies Dependencies) int {
 		return writeError(dependencies.Stderr, ExitInput, "right_run_not_comparable", err.Error())
 	}
 	return emitComparison(before, after, dependencies)
+}
+
+func extractAllowLatest(args []string) ([]string, bool, error) {
+	operands := make([]string, 0, len(args))
+	allowLatest := false
+	for _, argument := range args {
+		if argument != "--allow-latest" {
+			operands = append(operands, argument)
+			continue
+		}
+		if allowLatest {
+			return nil, false, errors.New("--allow-latest may be specified only once")
+		}
+		allowLatest = true
+	}
+	return operands, allowLatest, nil
 }
 
 func emitComparison(before, after report.Baseline, dependencies Dependencies) int {
@@ -197,7 +219,7 @@ func loadReport(reference, storePath string, allowLatest bool, dependencies Depe
 	return loaded.Bundle, nil
 }
 func baselineFile(working, directory, name string) (string, error) {
-	if !scaffoldName.MatchString(name) {
+	if !baselineFileNamePattern.MatchString(name) {
 		return "", errors.New("invalid baseline name")
 	}
 	candidate := absolutePath(working, directory)

@@ -1,62 +1,43 @@
 # ADR-0001: Core language and binary distribution
 
-- **Status:** proposed
-- **Deciders:** none recorded
-- **Review:** none recorded
+- **Status:** accepted
+- **Date:** 2026-07-13
+- **Decider:** @whyiug
+- **Review:** implemented behavior and release review
 
 ## Context
 
-The core needs deterministic cross-platform schemas, planning, evidence,
-budgets, replay, a local CLI, and a future Registry. It must be distributable
-on Linux, macOS, and Windows on `amd64` and `arm64`, while client drivers may
-need native Python, Node, or other ecosystem-specific runtimes. In-process
-language plugins would expand both the dependency graph and the trusted crash
-boundary.
+The local Doctor needs deterministic cross-platform schemas, run preparation,
+evidence handling, reporting, and a small installation surface. Loading
+language-specific SDKs or arbitrary extensions in process would expand the
+dependency and crash boundary.
 
-This proposal follows the driver boundary in
-[RFC-0004](../rfcs/0004-driver-isolation.md).
+## Decision
 
-## Proposed decision
-
-- Implement the core CLI, engine, schemas, recorder, redactor, local CAS, and
-  Registry service in Go.
-- Pin the selected Go language and toolchain in `go.mod` and CI after checking
-  a stable release. Do not use a floating `latest` toolchain.
-- Keep the Make entrypoint thin: it invokes versioned Go commands or checked-in
-  scripts so local and CI behavior can be compared.
+- Implement the supported Doctor CLI and its core runtime in Go.
+- Pin the Go language and toolchain in `go.mod` and CI.
 - Keep business logic independent of CLI parsing and injectable for tests.
-- Build self-contained binaries for the declared OS and architecture matrix.
-- Run ecosystem-specific SDK and client drivers out of process in locked
-  environments or immutable images.
-- Exclude Go in-process plugins, shared objects, and dynamically loaded
-  arbitrary extension code from the core contract.
+- Publish self-contained Doctor binaries for the declared Linux, macOS, and
+  Windows architecture matrix.
+- Exclude Go plugins, shared objects, and dynamically loaded arbitrary code
+  from the supported core.
+
+## Release boundary
+
+This decision covers only the `doctor` binary and libraries used inside that
+binary. The reference server, Registry, generic out-of-process driver ABI, and
+language-specific driver distribution remain experimental. Their presence in
+the repository does not make them supported binaries or public extension APIs.
 
 ## Consequences
 
-One core language simplifies the release train, deterministic builds, and
-bounded concurrency. It does not eliminate platform-specific filesystem,
-process, network, console, or sandbox behavior, so those remain explicit test
-dimensions.
+A single core language simplifies reproducible releases and local operation.
+Platform-specific filesystem, process, network, and console behavior still
+requires explicit tests. Future client integrations may need separate locked
+runtimes, but they require their own accepted contract and support matrix.
 
-Polyglot drivers preserve real-client behavior but add lockfiles, images,
-runtime support matrices, and supply-chain review. Release provenance and SBOMs
-must cover those artifacts, not only the Go binary.
+## Validation basis
 
-## Alternatives
-
-- A Python core improves proximity to Python SDKs but complicates
-  self-contained cross-platform distribution and dependency isolation.
-- A Node core helps JavaScript clients but does not solve other client
-  ecosystems or native distribution.
-- A polyglot in-process core offers flexibility at the cost of a larger trusted
-  dependency, ABI, and crash surface.
-- A service-only core avoids local binaries but violates local-first and
-  offline operation.
-
-## Validation before acceptance
-
-Run cross-platform package and clean-install tests, race and static analysis,
-binary size and startup measurements, offline/proxy behavior, and process
-isolation experiments. Reproducible release and provenance checks must cover
-every shipped runtime. Candidate code and passing local tests are inputs to
-review, not acceptance evidence.
+Acceptance is based on the implemented Doctor build and release path, pinned
+toolchain, cross-platform release configuration, and release review. It does
+not accept the deferred driver or Registry designs.

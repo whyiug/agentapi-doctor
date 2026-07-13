@@ -6,16 +6,18 @@ pull requests, discussions, logs, and test fixtures.
 
 ## Supported versions
 
-There is no stable release or hosted Registry today.
+`v0.1.0` is the first supported Doctor distribution. The project does not
+operate a hosted Registry or public runner.
 
 | Surface | Status |
 |---|---|
-| Default branch and unreleased development code | Evaluated for security fixes; no long-term support commitment |
-| Tagged stable releases | None published |
+| Latest `0.1.x` release | Best-effort security and critical defect fixes |
+| Older `0.1.x` releases and release candidates | Upgrade to the latest `0.1.x`; fixes are not backported by default |
+| Default branch and unreleased development code | Evaluated for the next release; not a supported distribution |
 | Hosted Registry or public runner | Not deployed |
 
-This table will be replaced with explicit version support windows when stable
-releases exist. It is not a response-time promise.
+This is a version window, not a response-time promise. Each later release may
+update it explicitly in its release notes.
 
 ## Report a vulnerability privately
 

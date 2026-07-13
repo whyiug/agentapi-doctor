@@ -8,8 +8,49 @@ CLI/Core versions will follow
 
 ## [Unreleased]
 
-No changes have been recorded since the v0.1.0-rc.3 release candidate was
-prepared.
+No changes have been recorded since v0.1.0 was prepared.
+
+## [0.1.0] - 2026-07-13
+
+### Added
+
+- Declared the first supported Doctor distribution and its pre-1.0 support and
+  migration boundaries.
+- Versioned new baselines as `urn:agentapi-doctor:baseline:v1` while retaining
+  strict read compatibility with the unversioned rc baseline shape.
+- Published JSON Schemas for baselines and the `v1alpha1` CLI result envelope.
+- Added release gates that verify all six archive binaries use Go 1.26.5,
+  validate the SBOM standard-library versions, and scan the final Linux amd64
+  binary with `govulncheck`.
+
+### Changed
+
+- Replaced broad `COMPATIBLE`/`INCOMPATIBLE` human labels with bounded checks
+  results and made candidate-interpretation conditions visible in terminal,
+  Markdown, and HTML reports.
+- Advanced configuration to `v1beta2` and removed the unused budget, capture,
+  and retry defaults instead of silently accepting ineffective controls.
+- Made mutable `latest` run references explicit opt-ins, completed help for all
+  supported commands, and removed the stale `doctor dev scaffold` surface.
+- Reduced the public repository to the supported Doctor product, moving
+  unimplemented Registry, Driver, pack, and hosted-service work out of the
+  stable promise and removing internal planning and speculative policy files.
+
+### Fixed
+
+- Built release artifacts with the security-patched Go 1.26.5 toolchain rather
+  than the vulnerable Go 1.26.0 version selected by the former workflow.
+- Added Go module/VCS build-info fallback for tagged `go install` binaries.
+- Aligned runtime target-name validation with the public configuration Schema,
+  corrected Windows Scoop candidate archives to ZIP, made Doctor the default
+  Docker target, and kept `make clean` from deleting `.agentapi` evidence.
+
+### Security
+
+- Preserved exact-origin, no-redirect, zero-retry, bounded-request execution;
+  clarified that provider output-limit fields are not billing ceilings.
+- Kept `.agentapi/` local and private by default and strengthened release
+  metadata checks against toolchain/SBOM drift.
 
 ## [0.1.0-rc.3] - 2026-07-13
 
@@ -183,3 +224,9 @@ prepared.
 This first release candidate does not claim external review, adoption, vendor
 certification, or long-term support. Its support and verification boundaries
 are recorded in `release-notes/v0.1.0-rc.1.md`.
+
+[Unreleased]: https://github.com/whyiug/agentapi-doctor/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/whyiug/agentapi-doctor/compare/v0.1.0-rc.3...v0.1.0
+[0.1.0-rc.3]: https://github.com/whyiug/agentapi-doctor/compare/v0.1.0-rc.2...v0.1.0-rc.3
+[0.1.0-rc.2]: https://github.com/whyiug/agentapi-doctor/compare/v0.1.0-rc.1...v0.1.0-rc.2
+[0.1.0-rc.1]: https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.1

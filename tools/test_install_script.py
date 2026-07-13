@@ -17,7 +17,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "install.sh"
-VERSION = "0.1.0-rc.3"
+VERSION = "0.1.0"
 
 
 class InstallScriptTests(unittest.TestCase):
@@ -31,6 +31,12 @@ class InstallScriptTests(unittest.TestCase):
         self.assertTrue(executable)
         self.assertIn(f"Installed AgentAPI Doctor {VERSION}", completed.stdout)
         self.assertIn(f"doctor {VERSION}", completed.stdout)
+
+    def test_default_version_is_the_stable_release(self) -> None:
+        completed, installed, _, _ = self._run_installer(set_version=False)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertTrue(installed)
+        self.assertIn(f"Installed AgentAPI Doctor {VERSION}", completed.stdout)
 
     def test_rejects_checksum_mismatch_without_installing(self) -> None:
         completed, installed, _, _ = self._run_installer(valid_checksum=False)
@@ -66,6 +72,7 @@ class InstallScriptTests(unittest.TestCase):
         machine: str = "x86_64",
         valid_checksum: bool = True,
         shasum_only: bool = False,
+        set_version: bool = True,
     ) -> tuple[subprocess.CompletedProcess[str], bool, bool, bool]:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -152,9 +159,12 @@ class InstallScriptTests(unittest.TestCase):
                     "SHASUM_MARKER": str(marker),
                     "AGENTAPI_DOCTOR_INSTALL_DIR": str(destination),
                     "AGENTAPI_DOCTOR_RELEASE_BASE": "https://example.invalid/release",
-                    "AGENTAPI_DOCTOR_VERSION": VERSION,
                 }
             )
+            if set_version:
+                environment["AGENTAPI_DOCTOR_VERSION"] = VERSION
+            else:
+                environment.pop("AGENTAPI_DOCTOR_VERSION", None)
             completed = subprocess.run(
                 ["/bin/sh", str(INSTALLER)],
                 capture_output=True,

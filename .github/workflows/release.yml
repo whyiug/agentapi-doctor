@@ -8,7 +8,7 @@ on:
       version:
         description: Exact dry-run version without a v prefix.
         required: true
-        default: 0.1.0-rc.3
+        default: 0.1.0
         type: string
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
   build:
     name: Build Doctor release assets
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 45
     outputs:
       commit: ${{ steps.identity.outputs.commit }}
       tag: ${{ steps.identity.outputs.tag }}
@@ -95,10 +95,14 @@ jobs:
           "$RUNNER_TEMP/openai-sdk-venv/bin/python" -m pip check
           AGENTAPI_DOCTOR_OPENAI_PYTHON="$RUNNER_TEMP/openai-sdk-venv/bin/python" \
             go test ./internal/openaisdkcase -run '^TestRealPinnedSDK$' -count=2 -timeout=2m
-      - name: Run Doctor and release-specific checks
+      - name: Reproduce the complete offline product gate
         run: |
-          go test ./internal/cli ./internal/openaisdkcase ./internal/productrun ./internal/report ./internal/transport
-          python3 -m unittest discover -s tools -p 'test_release_*.py'
+          make check
+          go test -race ./...
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+          go mod vendor
+          git diff --exit-code -- vendor
           git diff --check
       - name: Build six native Doctor archives without publishing
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
@@ -115,6 +119,21 @@ jobs:
           syft-version: v1.44.0
           upload-artifact: false
           upload-release-assets: false
+      - name: Install the pinned release vulnerability scanner
+        env:
+          GOBIN: ${{ runner.temp }}/release-tools
+        run: |
+          mkdir -p "$GOBIN"
+          go install golang.org/x/vuln/cmd/govulncheck@v1.5.0
+      - name: Verify archived toolchains, SBOM, and Linux binary vulnerabilities
+        env:
+          GOVULNCHECK: ${{ runner.temp }}/release-tools/govulncheck
+        run: >-
+          python3 tools/check_release_toolchain.py
+          --root .
+          --dist dist
+          --release-version "$RELEASE_VERSION"
+          --govulncheck-command "$GOVULNCHECK"
       - name: Bind the SPDX SBOM into the checksum manifest
         shell: bash
         run: |

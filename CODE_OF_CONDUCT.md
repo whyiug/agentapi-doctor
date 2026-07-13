@@ -57,11 +57,15 @@ unrelated personal activity.
 
 ## Reporting
 
-For a confidential project report, use the repository's
-[private GitHub reporting form](https://github.com/whyiug/agentapi-doctor/security/advisories/new)
-and begin the title with `Conduct:`. Do not place sensitive details in a public
-issue. GitHub-hosted abuse can also be reported through
+Do not place sensitive conduct details in a public issue. Contact the lead
+maintainer through the contact method published on
+[@whyiug's GitHub profile](https://github.com/whyiug) when the report does not
+involve that maintainer. The private vulnerability form is reserved for
+security vulnerabilities and must not be used as a general conduct inbox.
+
+GitHub-hosted abuse, or a report involving the sole maintainer, should use
 [GitHub's abuse reporting process](https://support.github.com/contact/report-abuse).
+The project does not currently claim an independent confidential conduct panel.
 
 The project does not promise a response deadline. A report should include the
 relevant links or dates, the behavior observed, its impact, and any immediate

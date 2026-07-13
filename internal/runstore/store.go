@@ -25,7 +25,7 @@ const (
 var (
 	ErrExists          = errors.New("run already exists")
 	ErrCorrupt         = errors.New("local run record is corrupt")
-	ErrLatestForbidden = errors.New("latest run reference is forbidden in CI mode")
+	ErrLatestForbidden = errors.New("latest run reference requires explicit --allow-latest")
 	ErrRootReplaced    = errors.New("run store root identity changed")
 )
 

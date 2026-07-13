@@ -24,17 +24,18 @@ type validatedRun struct {
 var errRunLookup = errors.New("run lookup failed")
 
 const runInspectUsage = "usage: doctor run inspect <run-ref> [--store <path>] [--allow-latest] [--include-plan]"
+const reportUsage = "usage: doctor report <terminal|json|junit|sarif|markdown|html> <run-ref> [--output <path>] [--store <path>] [--allow-latest]"
 
 const reportHelp = `Export a saved run without contacting the tested endpoint.
 
 Usage:
-  doctor report <format> <run-ref> [--output <path>] [--store <path>]
+	  doctor report <format> <run-ref> [--output <path>] [--store <path>] [--allow-latest]
 
 Formats: terminal, json, junit, sarif, markdown, html
 
 Quick paths:
-  doctor report terminal latest
-  doctor report markdown latest --output doctor-report.md
+  doctor report terminal latest --allow-latest
+  doctor report markdown latest --allow-latest --output doctor-report.md
   doctor report html <run-id> --output doctor-report.html
 
 Use the run ID printed by "doctor test" or "doctor demo" for a stable reference.`
@@ -59,7 +60,7 @@ func runInspect(args []string, dependencies Dependencies) int {
 	flags := flag.NewFlagSet("run inspect", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	storePath := flags.String("store", filepath.Join(dependencies.WorkingDir, ".agentapi", "runs"), "run store")
-	allowLatest := flags.Bool("allow-latest", true, "allow local latest pointer")
+	allowLatest := flags.Bool("allow-latest", false, "allow local latest pointer")
 	includePlan := flags.Bool("include-plan", false, "include the persisted canonical run plan")
 	if err := flags.Parse(args[1:]); err != nil || flags.NArg() != 0 {
 		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", runInspectUsage)
@@ -93,7 +94,7 @@ func runReport(args []string, dependencies Dependencies) int {
 		return writeHelp(dependencies.Stdout, reportHelp)
 	}
 	if len(args) < 2 || args[0] == "" || args[1] == "" || args[0][0] == '-' || args[1][0] == '-' {
-		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor report <terminal|json|junit|sarif|markdown|html> <run-ref> [--output <path>] [--store <path>] [--allow-latest]")
+		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", reportUsage)
 	}
 	format, reference := args[0], args[1]
 	if !slices.Contains([]string{"terminal", "json", "junit", "sarif", "markdown", "html"}, format) {
@@ -103,9 +104,9 @@ func runReport(args []string, dependencies Dependencies) int {
 	flags.SetOutput(io.Discard)
 	output := flags.String("output", "", "output path")
 	storePath := flags.String("store", filepath.Join(dependencies.WorkingDir, ".agentapi", "runs"), "run store")
-	allowLatest := flags.Bool("allow-latest", true, "allow local latest pointer")
+	allowLatest := flags.Bool("allow-latest", false, "allow local latest pointer")
 	if err := flags.Parse(args[2:]); err != nil || flags.NArg() != 0 {
-		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor report <format> <run-ref> [--output <path>]")
+		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", reportUsage)
 	}
 	store, err := runstore.Open(absolutePath(dependencies.WorkingDir, *storePath), 0)
 	if err != nil {

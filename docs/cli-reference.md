@@ -2,16 +2,17 @@
 
 [Documentation home](README.md) | [Configuration](configuration.md)
 
-This page documents the implemented `doctor` command surface in the current
-release-candidate source tree. It is a pre-1.0 interface and may change in a
-later release with documented migration notes. The machine-readable contract is
+This page documents the supported `doctor` command surface in `v0.1.0`. It is
+a pre-1.0 interface and may change in a later minor release with documented
+migration notes. The machine-readable contract is
 [`cli/spec.yaml`](../cli/spec.yaml).
 
 ## General behavior
 
 Run `doctor help` for quick paths and the command list, or
-`doctor help test|demo|report|reproduce` for focused examples. There are no
-global flags; place each command's flags in the positions shown below.
+`doctor help <command>` for focused usage. Every documented command and
+subcommand accepts `-h` or `--help` and returns 0 without side effects. There
+are no global flags; place each command's flags in the positions shown below.
 
 Most commands emit a JSON envelope:
 
@@ -34,7 +35,7 @@ Errors use the same envelope on stderr. Exceptions are:
 - inline `doctor test` and `doctor demo` default to a terminal report, while
   `--format json` selects the JSON envelope.
 
-Commands that create a config, plan, report, baseline, or scaffold refuse to
+Commands that create a config, plan, report, or baseline refuse to
 overwrite an existing destination.
 
 ## Project and target setup
@@ -85,6 +86,8 @@ The first form loads a named target from config. The second creates an inline
 target for one run and never creates or changes `.agentapi/config.yaml`.
 Without `--plan-only`, both forms execute at most four checks and persist the
 canonical run under `<data-root>/runs`; the default data root is `.agentapi`.
+Treat `.agentapi/` as private local state and add it to the tested project's
+`.gitignore`.
 
 Flags:
 
@@ -147,7 +150,9 @@ boundary.
 ## Inspect and compare runs
 
 Run references are UUIDv7 run IDs or the local convenience name `latest`.
-Use exact run IDs in CI and durable evidence.
+Use exact run IDs by default. `latest` is rejected unless the command receives
+the explicit local convenience flag `--allow-latest`; never use it in CI or
+durable evidence.
 
 ### `doctor run inspect`
 
@@ -158,11 +163,11 @@ doctor run inspect <run-ref> [--store <path>] [--allow-latest]
 
 Load the canonical stored bundle, its digest, and whether a persisted plan is
 available. The default store is `.agentapi/runs`. `--allow-latest` defaults to
-true; pass `--allow-latest=false` to require an exact ID. `--include-plan`
+false. `--include-plan`
 includes the validated persisted plan; legacy records without one fail
 clearly when that flag is requested.
 
-### `doctor compare <left-run-ref> <right-run-ref>`
+### `doctor compare [--allow-latest] <left-run-ref> <right-run-ref>`
 
 Compare two runs from the default `.agentapi/runs` store. A detected regression
 uses exit code 6.
@@ -177,7 +182,7 @@ letters, digits, dots, underscores, or hyphens. The default directory is
 
 ```text
 doctor baseline accept <run-ref> --name <name>
-  [--store <path>] [--baseline-dir <path>]
+  [--store <path>] [--baseline-dir <path>] [--allow-latest]
 ```
 
 Create a new baseline from a stored run. Existing baseline files are not
@@ -195,7 +200,7 @@ Load and validate one baseline.
 
 ```text
 doctor baseline compare <run-ref> --baseline <name>
-  [--store <path>] [--baseline-dir <path>]
+  [--store <path>] [--baseline-dir <path>] [--allow-latest]
 ```
 
 Compare a run with a named baseline. A regression or new failure uses exit
@@ -215,23 +220,13 @@ file and the CLI emits a JSON success envelope.
 Examples:
 
 ```sh
-./bin/doctor report terminal latest
+./bin/doctor report terminal latest --allow-latest
 RUN_ID='<exact-run-id>'
 ./bin/doctor report sarif "$RUN_ID" --output ./doctor.sarif
 ./bin/doctor report html "$RUN_ID" --output ./doctor-report.html
 ```
 
-## Developer helpers
-
-### `doctor dev scaffold`
-
-```text
-doctor dev scaffold <requirement|scenario|fixture|profile|driver> <name>
-  --output <directory>
-```
-
-Create `<directory>/<name>.yaml` from a draft template. Names follow the same
-format as baseline names, and existing files are not overwritten.
+## Shell and build information
 
 ### `doctor completion <bash|zsh|fish|powershell>`
 
@@ -239,8 +234,10 @@ Write a top-level command completion script to stdout.
 
 ### `doctor version [--json]`
 
-Print build version, commit, and build time. Local source builds normally
-identify themselves as development builds unless build metadata was injected.
+Print build version, commit, and build time. Release archives use injected
+immutable metadata; tagged `go install` builds fall back to Go module and VCS
+build information. Untagged local builds identify themselves as development
+builds.
 
 ## Exit codes
 

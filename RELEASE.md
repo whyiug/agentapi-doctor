@@ -1,8 +1,8 @@
 # Release Policy
 
-The current binary channel is `v0.1.0-rc.3`. Until that exact non-draft entry is
-visible on GitHub Releases with the complete allowlisted asset set, use the
-developer source path in [Installation](docs/installation.md#source-install-for-contributors).
+The current supported binary channel is `v0.1.0`. A version is published only
+when its exact non-draft GitHub Release contains the complete allowlisted asset
+set and passes the public verification workflow.
 
 ## Versioning and channels
 
@@ -12,6 +12,8 @@ developer source path in [Installation](docs/installation.md#source-install-for-
   releases.
 - Before 1.0, release notes identify the supported configuration, schema, and
   protocol surface; breaking changes may occur in a minor version.
+- `v0.1.0` stabilizes the Doctor distribution and documented command workflow,
+  not the candidate pack interpretations or a vendor certification API.
 
 Schemas, protocol packs, profiles, and the Driver RPC carry their own explicit
 version fields so stored evidence can be interpreted independently of the CLI
@@ -40,6 +42,9 @@ The tag-triggered workflow then:
 - reconstructs the hash-locked Python environment, repeats the four pinned
   real-SDK cases twice, and reruns Doctor CLI and release-tool regression tests;
 - builds Linux, macOS, and Windows archives for `amd64` and `arm64`;
+- verifies that every archive was built by the exact Go patch version declared
+  in `go.mod`, checks the SBOM's standard-library versions, and scans the final
+  Linux amd64 binary with `govulncheck`;
 - produces SHA-256 checksums, one SPDX JSON SBOM, GitHub build provenance, and
   a Sigstore bundle over the checksum manifest;
 - verifies the Sigstore certificate identity before any Release is published;
@@ -74,9 +79,9 @@ workflow without requiring a long-lived maintainer signing key.
 
 ## Support and security fixes
 
-Before 1.0, each release note states its support window and known limitations.
-Once a stable support policy is announced, deprecations will include a public
-rationale, replacement, and migration path.
+The latest `0.1.x` receives best-effort security and critical defect fixes.
+Before 1.0, each release note states its support window and known limitations;
+deprecations include a public rationale, replacement, and migration path.
 
 Security fixes normally land on `main` before release. Coordinated disclosure
 may use a private preparation branch; see [SECURITY.md](SECURITY.md).

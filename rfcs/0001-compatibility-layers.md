@@ -1,90 +1,63 @@
-# RFC-0001: Compatibility Layers
+# RFC-0001: Doctor Compatibility Observations
 
-- **Status:** draft
-- **Review:** none recorded
+- **Status:** accepted
+- **Date:** 2026-07-13
+- **Decider:** @whyiug
+- **Review:** implemented behavior and release review
 
 ## Problem
 
-“OpenAI compatible” is often inferred from a successful request or field-name
-similarity. That collapses transport, protocol semantics, model behavior, SDK
-parsing, and agent task behavior into one result. It produces false attribution
-and makes failures difficult for maintainers to reproduce.
+"OpenAI compatible" is often inferred from one successful request or similar
+field names. That collapses transport, protocol semantics, model behavior, SDK
+parsing, and agent behavior into one unsupported claim.
 
-## Goals
+## Accepted v0.1.0 contract
 
-- preserve the layer at which behavior was observed;
-- distinguish execution failure from compatibility verdict;
-- report multiple compatibility dimensions without a universal score;
-- support controlled attribution experiments; and
-- keep insufficient evidence explicitly unknown.
+Doctor reports bounded observations at the layer it actually exercised:
 
-## Proposal
+1. **Raw endpoint Quick Check** observes HTTP, JSON, SSE, error, tool, and
+   lifecycle behavior for one configured OpenAI Chat Completions, OpenAI
+   Responses, or Anthropic Messages endpoint shape.
+2. **Pinned client reproduction** records one named OpenAI Python SDK behavior
+   alongside the correlated raw observation. It proves only that exact case,
+   runtime, package version, and fixture.
 
-### Four test planes
+The two paths do not share or upgrade an evidence claim. A client observation
+cannot repair invalid wire evidence, and a raw protocol result cannot establish
+general SDK or agent compatibility.
 
-1. **Endpoint black-box** observes HTTP, JSON, SSE, errors, tools, state, and
-   resource behavior at the endpoint boundary.
-2. **Controlled backend/provider CI** places a known reference or targeted
-   mutant behind the client-facing endpoint.
-3. **Client fixture replay** runs the exact SDK/agent driver and correlates its
-   observation to capture-layer evidence.
-4. **Real agent E2E** evaluates a bounded task loop after lower planes can
-   explain transport and client behavior.
+## Outcome and attribution
 
-The planes may share a scenario intent but do not share an evidence claim. A
-later plane cannot repair evidence from an earlier plane.
+Selection disposition, execution status, assertion verdict, and finding
+attribution remain distinct. Missing evidence is inconclusive, not PASS. A
+harness or client failure is not a protocol FAIL. Reports preserve the
+candidate, selected, executed, and verdict denominators with the exact built-in
+definition identities.
 
-### Fault domains
+Findings keep wire, provider/model, client/SDK, and harness domains distinct.
+When evidence cannot distinguish domains, the result remains unknown rather
+than assigning confidence by guesswork.
 
-Findings distinguish wire/transport, provider/model, client/SDK, and
-harness/task domains. Attribution includes confidence, calibrated version,
-alternative domains, minimal evidence references, and an ambiguity ID when
-needed. Evidence that cannot distinguish domains yields `UNKNOWN_FAULT_DOMAIN`.
-
-### Compatibility dimensions
-
-Results remain separate across:
-
-- protocol conformance;
-- semantic/model behavior;
-- client-observed compatibility;
-- operational behavior; and
-- evidence/reproducibility quality.
-
-The UI and Registry must not synthesize a default “official” total score. Every
-dimension displays candidate, applicable, and executed denominators.
-
-### Outcome model
-
-Planning disposition (`execute`, `skip`, `not_applicable`), execution status,
-assertion verdict (`pass`, `fail`, `inconclusive`, `skip` where contractually
-allowed), and finding attribution are distinct fields. Harness failure cannot
-become protocol FAIL, and unavailable capability cannot become PASS.
+Doctor does not publish a universal compatibility score, official ranking,
+certification, or default winner ordering.
 
 ## Security and privacy
 
-E2E and client planes can exercise tools, files, networks, and secrets. They
-therefore require explicit side-effect policy, target authorization, hard
-budgets, driver isolation, and write-before-redact evidence. Public reports use
-bounded excerpts and synthetic repros.
+Checks require an exact authorized endpoint, hard request and byte bounds,
+late secret resolution, and sanitize-before-store evidence. Reports use
+bounded excerpts and synthetic reproductions. The loopback demo and release
+fixtures do not access public targets.
 
-## Alternatives considered
+## Deferred extensions
 
-- **One endpoint score:** easy to market but hides denominators and fault
-  boundaries; rejected as the normative model.
-- **Only raw wire conformance:** valuable but cannot establish real client
-  behavior; retained as one plane rather than the whole product.
-- **LLM-as-judge attribution:** useful for hypotheses but nondeterministic and
-  not source-backed; excluded from normative verdicts.
+Generic controlled-provider orchestration, reusable client drivers, real agent
+end-to-end tasks, a five-dimension result model, hosted Matrix presentation,
+and automated root-cause confidence are not part of v0.1.0. Each needs an
+implemented denominator, security boundary, compatibility contract, and
+separate review before promotion.
 
-## Unresolved questions
+## Compatibility
 
-- exact confidence calibration and display thresholds;
-- which E2E tasks are safe and stable enough for a release denominator; and
-- how the UI presents five dimensions accessibly without implying ranking.
-
-## Evidence required before acceptance
-
-Acceptance requires a lawful corpus, correlated capture/client views, explicit
-unknown behavior under insufficient evidence, and substantive review. None of
-that evidence is asserted by this draft.
+The accepted contract covers Doctor CLI and report behavior declared by the
+v0.1.0 release. It does not stabilize experimental packages, authored packs,
+driver protocols, Registry APIs, or hosted-service semantics.

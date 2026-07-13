@@ -308,7 +308,8 @@ func TestRequestedOutputBudgetBindsPackProfileAndBaselineIdentity(t *testing.T) 
 		t.Fatal("requested token mutation changed an unrelated identity")
 	}
 	baseline := report.Baseline{
-		Name: "current", ProfileDigest: before.profile.Digest, PackDigest: before.pack.Digest,
+		SchemaVersion: report.BaselineSchemaVersion,
+		Name:          "current", ProfileDigest: before.profile.Digest, PackDigest: before.pack.Digest,
 		SupportLockDigest: before.support, DenominatorDigest: schema.NewDigest([]byte("denominator")),
 		Cases: map[string]report.CaseState{},
 	}

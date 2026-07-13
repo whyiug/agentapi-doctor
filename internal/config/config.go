@@ -4,18 +4,22 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"slices"
 	"strings"
-
-	"github.com/whyiug/agentapi-doctor/pkg/schema"
 )
 
-const APIVersion = "urn:agentapi-doctor:config:v1beta1"
+const (
+	APIVersion        = "urn:agentapi-doctor:config:v1beta2"
+	legacyAPIVersion  = "urn:agentapi-doctor:config:v1beta1"
+	TargetNamePattern = `^[a-z0-9][a-z0-9._-]{0,127}$`
+)
+
+var targetNamePattern = regexp.MustCompile(TargetNamePattern)
 
 type Config struct {
 	APIVersion string            `yaml:"apiVersion" json:"apiVersion"`
 	Targets    map[string]Target `yaml:"targets" json:"targets"`
-	Defaults   Defaults          `yaml:"defaults" json:"defaults"`
 }
 
 type Target struct {
@@ -36,30 +40,10 @@ type SecretReference struct {
 	Ref string `yaml:"ref" json:"ref"`
 }
 
-type Defaults struct {
-	Profile string          `yaml:"profile,omitempty" json:"profile,omitempty"`
-	Budget  BudgetDefaults  `yaml:"budget" json:"budget"`
-	Capture CaptureDefaults `yaml:"capture" json:"capture"`
-	Retries RetryDefaults   `yaml:"retries" json:"retries"`
-}
-
-type BudgetDefaults struct {
-	MaxRequests     int64           `yaml:"maxRequests" json:"maxRequests"`
-	MaxDuration     schema.Duration `yaml:"maxDuration" json:"maxDuration"`
-	MaxInputTokens  int64           `yaml:"maxInputTokens" json:"maxInputTokens"`
-	MaxOutputTokens int64           `yaml:"maxOutputTokens" json:"maxOutputTokens"`
-}
-
-type CaptureDefaults struct {
-	Content string `yaml:"content" json:"content"`
-}
-
-type RetryDefaults struct {
-	Transport int64 `yaml:"transport" json:"transport"`
-	Semantic  int64 `yaml:"semantic" json:"semantic"`
-}
-
 func (config Config) Validate() error {
+	if config.APIVersion == legacyAPIVersion {
+		return legacyMigrationError()
+	}
 	if config.APIVersion != APIVersion {
 		return fmt.Errorf("unsupported config apiVersion %q", config.APIVersion)
 	}
@@ -67,26 +51,18 @@ func (config Config) Validate() error {
 		return errors.New("config requires at least one target")
 	}
 	for name, target := range config.Targets {
-		if name == "" || strings.EqualFold(name, "latest") {
+		if !targetNamePattern.MatchString(name) {
 			return fmt.Errorf("invalid target name %q", name)
 		}
 		if err := target.Validate(); err != nil {
 			return fmt.Errorf("target %s: %w", name, err)
 		}
 	}
-	if config.Defaults.Budget.MaxRequests <= 0 || config.Defaults.Budget.MaxInputTokens < 0 || config.Defaults.Budget.MaxOutputTokens < 0 {
-		return errors.New("default request budget must be positive and token budgets nonnegative")
-	}
-	if err := config.Defaults.Budget.MaxDuration.Validate(); err != nil {
-		return fmt.Errorf("default duration: %w", err)
-	}
-	if !slices.Contains([]string{"metadata_only", "standard_fixture_only", "redacted_content", "full_local_encrypted"}, config.Defaults.Capture.Content) {
-		return fmt.Errorf("invalid capture content mode %q", config.Defaults.Capture.Content)
-	}
-	if config.Defaults.Retries.Transport < 0 || config.Defaults.Retries.Semantic < 0 {
-		return errors.New("retry counts cannot be negative")
-	}
 	return nil
+}
+
+func legacyMigrationError() error {
+	return fmt.Errorf("config apiVersion %q is no longer supported; remove the top-level defaults field and change apiVersion to %q", legacyAPIVersion, APIVersion)
 }
 
 func (target Target) Validate() error {

@@ -42,9 +42,21 @@ class ReleaseWorkflowTests(unittest.TestCase):
             "agentapi-doctor-registry",
             "agentapi-doctor-reference-server",
             "oci-images.json",
-            "make check",
         ):
             self.assertNotIn(excluded, workflow)
+
+    def test_release_repeats_the_complete_offline_product_gate(self) -> None:
+        workflow = self.workflow()
+        for required in (
+            "make check",
+            "go test -race ./...",
+            "go mod tidy",
+            "git diff --exit-code -- go.mod go.sum",
+            "go mod vendor",
+            "git diff --exit-code -- vendor",
+            "git diff --check",
+        ):
+            self.assertIn(required, workflow)
 
     def test_archive_and_public_smoke_cover_three_representative_platforms(self) -> None:
         workflow = self.workflow()

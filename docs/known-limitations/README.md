@@ -1,13 +1,14 @@
 # Known Limitations
 
-AgentAPI Doctor is in active pre-release development. These are the current
-product boundaries; they are not hidden compatibility claims.
+`v0.1.0` is the stable AgentAPI Doctor binary distribution. The project is
+still pre-1.0: only the documented Doctor CLI, release artifacts, and declared
+read-compatibility floor are supported contracts. These limitations prevent
+experimental source from becoming an implied compatibility claim.
 
 ## Execution and compatibility
 
-- `v0.1.0-rc.3` is a release candidate, not a stable compatibility contract.
-  The supported distribution is the `doctor` CLI archive for Linux, macOS, or
-  Windows. Package-manager channels are not yet published.
+- The supported distribution is the `v0.1.0` `doctor` CLI archive for Linux,
+  macOS, or Windows. Package-manager channels are not published.
 - Client-side execution can target an explicitly authorized local,
   private-network, or remote origin. It currently covers raw HTTP behavior for
   `openai-chat`, `openai-responses`, and `anthropic-messages`, with four
@@ -36,7 +37,9 @@ product boundaries; they are not hidden compatibility claims.
   executable conformance tests; the reference server currently exposes 13
   executable targeted mutation modes.
 - Catalog interpretations marked `candidate` / `pending_review` have not
-  completed independent protocol-source review.
+  completed independent protocol-source review. Human reports expose this as
+  `candidate_interpretations_pending_review`; a `CHECKS PASSED` result remains
+  a bounded observation, not certification.
 - No public result is a vendor certification, endorsement, or guarantee of
   behavior outside the exact endpoint, model, built-in pack/profile digests,
   plan, and evidence tested. A run does not automatically attest its CLI
@@ -50,8 +53,10 @@ product boundaries; they are not hidden compatibility claims.
   attribution and produces `unknown` when Doctor cannot validate the
   controlled wire path.
 - Local run snapshots omit secret references and free-form target metadata,
-  but retain the endpoint URL and model needed to interpret a run. Protect the
-  `.agentapi/` directory as private local state.
+  but retain the endpoint URL and model needed to interpret a run. Structured
+  model content and tool arguments may also appear in evidence. Protect
+  `.agentapi/` as private local state and add `.agentapi/` to every downstream
+  project's `.gitignore`.
 - The raw driver omits opaque non-JSON response content from persistence.
   Structured model content, identifiers, and tool arguments are not
   anonymized; known secret fields, configured canaries, and recognized token
@@ -60,29 +65,43 @@ product boundaries; they are not hidden compatibility claims.
   that a Windows DACL is private. Use `env://` on Windows. Unix-like systems
   require no group/other permission bits. `exec://` remains opt-in.
 
-## Registry and Matrix
+## Experimental Registry and Matrix
 
-- The self-hosted Registry is a single-node implementation using memory or
-  SQLite storage. It has no clustering, managed upgrades, or production SLO.
+- Registry and Matrix source is contributor-only and is not part of the
+  supported v0.1.0 product. The single-node candidate uses memory or SQLite
+  storage and has no clustering, managed upgrades, or production SLO.
 - Windows SQLite storage requires a local drive-letter path; UNC, device, and
   drive-relative paths are rejected.
 - There is no project-operated Registry, hosted verifier, public runner, hosted
   Matrix, or public Registry dataset. A local observation does not receive a
   project trust label.
-- Operators must provide their own TLS termination, authentication boundary,
-  backups, monitoring, retention policy, and recovery testing.
+- Anyone experimenting with the source must provide their own TLS termination,
+  authentication boundary, backups, monitoring, retention policy, and recovery
+  testing. The project provides no production operations support for it.
 
 ## Distribution and contracts
 
 - Release archives include SHA-256 checksums, one SPDX SBOM, and GitHub build
   provenance. Homebrew, Scoop, GitHub Action, reusable-workflow, OCI, Registry,
   and reference-server distributions remain unpublished candidates.
-- Public JSON Schemas and Registry OpenAPI are versioned pre-release contracts.
-  A stable compatibility and migration floor has not been declared.
-- The rc.3 built-in pack/profile identity differs from rc.2 because request
-  budgets are digest-bound. Existing run records remain readable, but an rc.2
-  baseline is intentionally incomparable with an rc.3 run and should be
-  recaptured rather than relabeled.
+- Go packages, Registry OpenAPI, generic driver and pack interfaces, and JSON
+  Schemas outside the declared migration floor remain pre-1.0 contracts. A
+  versioned file in the repository is not by itself a stable public API.
+- New configuration uses `urn:agentapi-doctor:config:v1beta2`. The old v1beta1
+  shape is rejected with an actionable migration error: remove its top-level
+  `defaults` field and update `apiVersion`, then review the resulting effective
+  values. Doctor does not silently reinterpret that configuration.
+- New baselines use `urn:agentapi-doctor:baseline:v1`. Doctor reads the legacy
+  unversioned v0.1.0-rc.3 baseline shape and migrates it in memory; subsequent
+  writes use baseline v1.
+- The v0.1.0 reader accepts current local run records and report bundles at
+  v1alpha2 plus the legacy v1alpha1 forms. Current persisted plan snapshots
+  remain v1alpha1. This is a read promise, not permission to emit new legacy
+  artifacts or a guarantee for every development schema.
+- The v0.1.0 built-in pack/profile remains `0.1.0-candidate.3`. Its identity
+  differs from the rc.2 candidate because request budgets are digest-bound. An
+  rc.2 baseline is intentionally incomparable and should be recaptured rather
+  than relabeled.
 - No external penetration test, privacy/legal review, verified adopter set, or
   long-term support window is claimed.
 

@@ -1,7 +1,7 @@
 # Support
 
-AgentAPI Doctor is a pre-release community project. Support is best-effort and
-has no guaranteed response or resolution time.
+AgentAPI Doctor is a community project. Support is best-effort and has no
+guaranteed response or resolution time.
 
 ## Choose a channel
 
@@ -28,9 +28,12 @@ unsafe, non-reproducible, or outside the project's authorization boundary.
 
 ## Supported versions
 
-No stable release exists. Development code may change before a stable
-compatibility floor is declared. Future release support windows will be
-published in [RELEASE.md](RELEASE.md) and reflected here.
+`v0.1.0` is the first supported Doctor distribution. The latest `0.1.x`
+receives best-effort security and critical defect fixes; release candidates and
+older patch releases are superseded. Because the project is still pre-1.0,
+documented breaking changes may occur in a later minor release. Versioned
+stored formats follow the read-compatibility floor in
+[Migration](docs/migration/README.md).
 
 The project does not operate a hosted Registry or managed compatibility
 service. Questions about a third-party endpoint remain the responsibility of

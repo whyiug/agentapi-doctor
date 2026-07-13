@@ -1,69 +1,45 @@
 # ADR-0002: Canonical JSON and digest boundaries
 
-- **Status:** proposed
-- **Deciders:** none recorded
-- **Review:** none recorded
+- **Status:** accepted
+- **Date:** 2026-07-13
+- **Decider:** @whyiug
+- **Review:** implemented behavior and release review
 
 ## Context
 
-Results, evidence, plans, observations, and attestations need byte-stable
-identity across languages and platforms. Ordinary JSON encoders can differ in
-object ordering, escaping, and number rendering. Parsers may also accept
-duplicate keys or trailing values, which makes the bytes a signer reviewed
-different from the object another reader uses.
+Doctor artifacts need byte-stable identity across platforms. Ordinary JSON
+encoders may differ in key order, escaping, and number rendering, while
+permissive parsers may accept duplicate keys or trailing values.
 
-The proposed envelope and result model are described in
-[RFC-0002](../rfcs/0002-evidence-and-result-schema.md).
+## Decision
 
-## Proposed decision
+- Parse digest-bound JSON strictly, rejecting duplicate keys, invalid UTF-8,
+  trailing values, non-finite or out-of-contract numbers, and excessive
+  nesting before hashing.
+- Define a versioned immutable projection for each promoted object kind.
+- Encode the projection as RFC 8785 JCS UTF-8 and calculate SHA-256 over those
+  bytes.
+- Exclude self-digests, signatures, convenience locations, and mutable derived
+  state from content identity.
+- Keep object, manifest, artifact-byte, and source-snapshot digest domains
+  distinct.
+- Verify schema and digest on supported reads; a digest does not replace
+  authorization, provenance, or semantic validation.
 
-- Parse immutable public JSON strictly, rejecting duplicate object keys,
-  invalid UTF-8, trailing values, non-finite or out-of-contract numbers,
-  excessive nesting, and schema-invalid values before hashing or signature
-  verification.
-- Define a versioned immutable projection for each object kind. The projection
-  explicitly lists included fields and explicitly excludes self-digests,
-  signatures, convenience locations, and mutable Registry-derived state.
-- Encode that projection as RFC 8785 JSON Canonicalization Scheme (JCS) UTF-8
-  bytes, then calculate SHA-256 over those bytes.
-- Keep public JSON field names `snake_case`. Human-authored YAML resources may
-  use `apiVersion` and `kind`, but YAML source bytes are never the public
-  identity; schema-resolved data is projected to JSON first.
-- Treat field names as case-sensitive. An alternate casing is not an alias
-  unless an explicit migration defines it.
-- Keep distinct digest domains for immutable object content, manifests,
-  artifact bytes, and source snapshots. A
-  reference names both the digest algorithm and exact subject type/version.
-- Verify an artifact's digest again on import and read. A matching digest does
-  not replace schema, authorization, provenance, or rights validation.
+## Release boundary
+
+This decision covers canonicalization and digest boundaries exercised by the
+local Doctor and its promoted artifacts. Experimental Registry attestation and
+import contracts are not accepted by this ADR.
 
 ## Consequences
 
-Every supported language needs the same canonical vectors and projection
-fixtures. Pretty-printed JSON differs from hashed bytes, so tooling must show
-the subject kind, projection version, and digest and support offline
-verification. Adding a mutable convenience field need not change object
-identity; changing an included field or projection is a public contract change.
+Pretty-printed JSON may differ from hashed bytes. Tooling therefore identifies
+the subject kind, projection version, and digest. An identity projection change
+is a public contract change for any artifact included in the migration floor.
 
-JCS narrows representation ambiguity but does not establish semantic validity,
-signer authority, or correctness. Those checks remain separate.
+## Validation basis
 
-## Alternatives
-
-- Encoder-specific sorted JSON is not a cross-language standard and may differ
-  on numbers or escaping.
-- Hashing author-written YAML preserves comments and spelling but also preserves
-  non-semantic formatting and parser ambiguity.
-- Canonical CBOR could provide a compact identity format but would add a second
-  primary representation to a JSON-oriented ecosystem.
-- Including signatures or Registry trust in the content identity creates
-  circular or mutable identifiers.
-
-## Validation before acceptance
-
-Use independent JCS vectors and targeted duplicate-key, number, escaping,
-Unicode, depth, ordering, casing, and projection-sensitivity mutants in every
-supported language. Cross-platform tests must produce identical bytes and
-digests, and old versioned fixtures must remain verifiable without migration.
-Independent schema and security review are still required; implementation
-tests do not accept this ADR.
+The implementation includes strict parsing, JCS canonicalization, sealed
+projections, digest verification, and targeted malformed-input tests. Stable
+reader promises remain limited to the declared migration floor.

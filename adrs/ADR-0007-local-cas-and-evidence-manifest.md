@@ -1,76 +1,43 @@
-# ADR-0007: Local CAS and evidence manifest
+# ADR-0007: Local CAS and evidence records
 
-- **Status:** proposed
-- **Deciders:** none recorded
-- **Review:** none recorded
+- **Status:** accepted
+- **Date:** 2026-07-13
+- **Decider:** @whyiug
+- **Review:** implemented behavior and release review
 
 ## Context
 
-Local runs need tamper-evident, deduplicated evidence that remains usable
-offline and can be replayed without a service. Large payloads must be bounded,
-streamed, and recoverable after interruption. A searchable local index is
-useful, but it must not become a hidden authority or the sole copy of evidence.
+Local Doctor runs need tamper-evident evidence that works offline. Persistence
+must stay behind the sanitize-before-store boundary and must not depend on a
+hosted database or service.
 
-The evidence object model is proposed in
-[RFC-0002](../rfcs/0002-evidence-and-result-schema.md); persistence remains
-behind the write-before-redact boundary in [ADR-0006](ADR-0006-secret-references-and-write-before-redact-prohibition.md).
-
-## Proposed decision
+## Decision
 
 - Store only sanitized persistent payloads in a local SHA-256
-  content-addressed store. Verify the content digest on commit, import, and
-  read.
-- Stream bounded objects through a task-owned staging area, use atomic commit,
-  and discard incomplete or mismatched content. Proposed large-object storage
-  uses independently verified compressed chunks and records the ordered chunk
-  digests, sizes, compression parameters, and whole-object digest.
-- Make an immutable, canonical evidence manifest the root of a run's persisted
-  artifacts. It records schema and manifest version, object references,
-  media/type and sizes, run/invocation/attempt relations, capture layer,
-  redaction policy and records, source/transform/evaluator identities,
-  unavailable reasons, and retention/publication class.
-- Never allow a driver to assert a final CAS reference. The core creates the
-  reference only after receiving, bounding, sanitizing, hashing, and committing
-  the observation.
-- Use pure-Go SQLite only as a local rebuildable index over manifests and CAS
-  objects. Loss or corruption of the index must be recoverable without changing
-  artifact identity. SQLite is not the sole evidence store.
-- Keep the future hosted Registry storage boundary separate: PostgreSQL may be
-  its transactional system of record and content-addressed object storage may
-  hold large artifacts, but neither is required for local use.
-- Make backup and restore preserve manifest/CAS identity and verify every
-  restored object. Derived indexes and read models are rebuilt rather than
-  treated as authority. Operational expectations are described in
-  [backup and recovery](../docs/operations/backup-and-recovery.md).
+  content-addressed store.
+- Verify content digests on commit and supported reads.
+- Use task-owned staging and atomic file operations so incomplete content does
+  not become a completed run artifact.
+- Link run records, results, reports, and evidence objects by versioned object
+  references and preserve explicit unavailable reasons.
+- Treat indexes and convenience pointers as derived state, never as artifact
+  identity or the sole evidence copy.
+- Keep persistence independent of any Registry or hosted store.
+
+## Release boundary
+
+This decision covers the file-based local CAS and run records used by Doctor.
+Chunked large-object storage, a rebuildable SQLite index, garbage collection,
+hosted PostgreSQL/object storage, and hosted backup guarantees remain deferred.
 
 ## Consequences
 
-Content addressing deduplicates immutable sanitized bytes and makes tampering
-detectable. It does not prove that the bytes were lawful, complete, or produced
-by an authorized runner. Chunk and manifest metadata increase implementation
-complexity, and garbage collection must trace immutable roots without deleting
-referenced objects.
+Content addressing detects accidental or malicious byte changes but does not
+prove that an observation is complete, lawful, or from an authorized target.
+Readers must continue to enforce schema, size, digest, and migration rules.
 
-Maintaining distinct local and hosted stores requires shared object and
-integrity fixtures. Local users avoid PostgreSQL and object-service operations;
-hosted operators still need migrations, backup/restore, retention, and
-quarantine controls.
+## Validation basis
 
-## Alternatives
-
-- Store evidence only in SQLite: simple queries, but database corruption would
-  destroy the sole copy and obscure content identity.
-- Use PostgreSQL everywhere: breaks zero-service local and offline use.
-- Let each report embed payloads: duplicates content and makes integrity,
-  retention, and redaction harder to audit.
-- Address encrypted raw plaintext by its pre-redaction hash: leaks correlation
-  and violates the strict persistence boundary.
-
-## Validation before acceptance
-
-Test streaming and deduplication, atomic interruption at every commit stage,
-digest mismatch, chunk loss/reordering/corruption, manifest traversal and size
-limits, SQLite loss/rebuild/concurrency, backup/restore, and garbage-collection
-reachability on supported platforms. Secret canaries must remain absent from
-staging, CAS, index, manifest, and backups. Hosted PostgreSQL claims require
-separate migration and recovery evidence; none is accepted by this ADR.
+Acceptance is based on the local CAS, atomic run persistence, digest checks,
+sanitized evidence path, and release-reviewed run inspection/report behavior.
+Only artifacts named by the migration floor receive a reader promise.

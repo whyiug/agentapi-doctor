@@ -8,12 +8,15 @@ import (
 	"io"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/whyiug/agentapi-doctor/pkg/schema"
 )
 
 var ErrIncomparable = errors.New("baseline and run have different immutable test identities")
 var baselineNamePattern = regexp.MustCompile(`^[a-z][a-z0-9._-]{0,63}$`)
+
+const BaselineSchemaVersion = "urn:agentapi-doctor:baseline:v1"
 
 type CaseState struct {
 	Disposition schema.PlanDisposition `json:"plan_disposition"`
@@ -22,6 +25,7 @@ type CaseState struct {
 }
 
 type Baseline struct {
+	SchemaVersion     string               `json:"schema_version"`
 	Name              string               `json:"name"`
 	ProfileDigest     schema.Digest        `json:"profile_digest"`
 	PackDigest        schema.Digest        `json:"pack_digest"`
@@ -31,6 +35,9 @@ type Baseline struct {
 }
 
 func (baseline Baseline) Validate() error {
+	if baseline.SchemaVersion != BaselineSchemaVersion {
+		return fmt.Errorf("unsupported baseline schema %q", baseline.SchemaVersion)
+	}
 	if !baselineNamePattern.MatchString(baseline.Name) {
 		return errors.New("invalid baseline name")
 	}
@@ -43,11 +50,23 @@ func (baseline Baseline) Validate() error {
 		return errors.New("baseline cases are required")
 	}
 	for id, state := range baseline.Cases {
-		if id == "" {
+		if strings.TrimSpace(id) == "" {
 			return errors.New("baseline scenario ID is required")
 		}
 		if state.Disposition != schema.DispositionExecute && state.Disposition != schema.DispositionSkip && state.Disposition != schema.DispositionNotApplicable {
 			return fmt.Errorf("scenario %s has invalid disposition", id)
+		}
+		switch state.Execution {
+		case "", schema.ExecutionPlanned, schema.ExecutionRunning, schema.ExecutionCompleted, schema.ExecutionSkipped, schema.ExecutionCancelled, schema.ExecutionErrored:
+		default:
+			return fmt.Errorf("scenario %s has invalid execution status", id)
+		}
+		if state.Verdict != nil {
+			switch *state.Verdict {
+			case schema.VerdictPass, schema.VerdictFail, schema.VerdictWarn, schema.VerdictInconclusive:
+			default:
+				return fmt.Errorf("scenario %s has invalid verdict", id)
+			}
 		}
 		if state.Verdict != nil && state.Execution != schema.ExecutionCompleted {
 			return fmt.Errorf("scenario %s has verdict without completed execution", id)
@@ -77,6 +96,32 @@ func DecodeBaseline(raw []byte) (Baseline, error) {
 	var trailing any
 	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
 		return Baseline{}, errors.New("baseline contains trailing JSON")
+	}
+	var shape struct {
+		SchemaVersion json.RawMessage `json:"schema_version"`
+		Cases         map[string]struct {
+			Execution json.RawMessage `json:"execution_status"`
+			Verdict   json.RawMessage `json:"verdict"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(raw, &shape); err != nil {
+		return Baseline{}, err
+	}
+	for id, state := range shape.Cases {
+		if len(state.Execution) > 0 && (bytes.Equal(state.Execution, []byte("null")) || bytes.Equal(state.Execution, []byte(`""`))) {
+			return Baseline{}, fmt.Errorf("scenario %s has invalid execution status", id)
+		}
+		if bytes.Equal(state.Verdict, []byte("null")) {
+			return Baseline{}, fmt.Errorf("scenario %s has invalid verdict", id)
+		}
+	}
+	// Release candidates wrote an otherwise identical, unversioned baseline.
+	// Continue to read that exact shape while every new write uses v1.
+	if baseline.SchemaVersion == "" {
+		if len(shape.SchemaVersion) != 0 {
+			return Baseline{}, fmt.Errorf("unsupported baseline schema %q", baseline.SchemaVersion)
+		}
+		baseline.SchemaVersion = BaselineSchemaVersion
 	}
 	if err := baseline.Validate(); err != nil {
 		return Baseline{}, err
@@ -133,7 +178,7 @@ func NewBaseline(name string, bundle Bundle) (Baseline, error) {
 		}
 		cases[result.ScenarioID] = CaseState{Disposition: result.PlanDisposition, Execution: result.ExecutionStatus, Verdict: verdictCopy}
 	}
-	baseline := Baseline{Name: name, ProfileDigest: bundle.Profile.Digest, PackDigest: pack.Digest, SupportLockDigest: bundle.SupportLock, DenominatorDigest: bundle.Denominators.CandidateDigest, Cases: cases}
+	baseline := Baseline{SchemaVersion: BaselineSchemaVersion, Name: name, ProfileDigest: bundle.Profile.Digest, PackDigest: pack.Digest, SupportLockDigest: bundle.SupportLock, DenominatorDigest: bundle.Denominators.CandidateDigest, Cases: cases}
 	return baseline, baseline.Validate()
 }
 

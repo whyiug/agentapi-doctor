@@ -28,6 +28,7 @@ const (
 	evidenceSchemaID     = "urn:agentapi-doctor:schema:evidence:v1alpha2"
 	resultSchemaID       = "urn:agentapi-doctor:schema:result:v1alpha2"
 	reportSchemaID       = "urn:agentapi-doctor:schema:report-bundle:v1alpha2"
+	baselineSchemaID     = "urn:agentapi-doctor:schema:baseline:v1"
 	driverFrameSchemaID  = "urn:agentapi-doctor:schema:driver-control-frame:v1alpha1"
 	driverHeaderSchemaID = "urn:agentapi-doctor:schema:driver-data-frame-header:v1alpha1"
 	observationSchemaID  = "urn:agentapi-doctor:schema:observation:v1"
@@ -38,6 +39,7 @@ func TestVersionedPublicSchemasAcceptGoContracts(t *testing.T) {
 	intent, resolved := planFixtures(t)
 	evidence, assertion, finding, caseResult, profile := resultFixtures(t)
 	bundle := reportFixture(t, caseResult)
+	baseline := baselineFixture(t)
 	capability := capabilityFixture(t, intent)
 	observation := observationFixture(t)
 
@@ -55,6 +57,7 @@ func TestVersionedPublicSchemasAcceptGoContracts(t *testing.T) {
 		{name: "CaseResult", schemaID: resultSchemaID, value: caseResult},
 		{name: "ProfileResult", schemaID: resultSchemaID, value: profile},
 		{name: "report.Bundle", schemaID: reportSchemaID, value: bundle},
+		{name: "report.Baseline", schemaID: baselineSchemaID, value: baseline},
 		{name: "Registry Observation", schemaID: observationSchemaID, value: observation},
 	}
 	for _, contract := range contracts {
@@ -134,6 +137,49 @@ func TestPublicSchemaAndGoValidationRejectInvalidContracts(t *testing.T) {
 	assertRawSchemaRejects(t, compiled[driverFrameSchemaID], unknownParams)
 	if _, err := driverprotocol.DecodeControlFrame(unknownParams); err == nil {
 		t.Fatal("Driver codec accepted an unknown method parameter")
+	}
+
+	whitespaceID := baselineFixture(t)
+	whitespaceID.Cases["   "] = whitespaceID.Cases["scenario.one"]
+	delete(whitespaceID.Cases, "scenario.one")
+	if err := whitespaceID.Validate(); err == nil {
+		t.Fatal("Go validator accepted a whitespace-only baseline scenario ID")
+	}
+	assertSchemaRejects(t, compiled[baselineSchemaID], whitespaceID)
+
+	invalidExecution := baselineFixture(t)
+	state := invalidExecution.Cases["scenario.one"]
+	state.Execution = publicschema.ExecutionStatus("bogus")
+	invalidExecution.Cases["scenario.one"] = state
+	if err := invalidExecution.Validate(); err == nil {
+		t.Fatal("Go validator accepted an unknown baseline execution status")
+	}
+	assertSchemaRejects(t, compiled[baselineSchemaID], invalidExecution)
+
+	invalidVerdict := baselineFixture(t)
+	bogusVerdict := publicschema.Verdict("bogus")
+	state = invalidVerdict.Cases["scenario.one"]
+	state.Verdict = &bogusVerdict
+	invalidVerdict.Cases["scenario.one"] = state
+	if err := invalidVerdict.Validate(); err == nil {
+		t.Fatal("Go validator accepted an unknown baseline verdict")
+	}
+	assertSchemaRejects(t, compiled[baselineSchemaID], invalidVerdict)
+
+	for name, execution := range map[string]publicschema.ExecutionStatus{
+		"missing execution status":       "",
+		"non-completed execution status": publicschema.ExecutionRunning,
+	} {
+		t.Run(name, func(t *testing.T) {
+			mutant := baselineFixture(t)
+			state := mutant.Cases["scenario.one"]
+			state.Execution = execution
+			mutant.Cases["scenario.one"] = state
+			if err := mutant.Validate(); err == nil {
+				t.Fatal("Go validator accepted a baseline verdict without completed execution")
+			}
+			assertSchemaRejects(t, compiled[baselineSchemaID], mutant)
+		})
 	}
 }
 
@@ -261,12 +307,36 @@ func compileRepositorySchemas(t *testing.T) map[string]*jsonschema.Schema {
 		}
 		compiled[id] = value
 	}
-	for _, id := range []string{commonSchemaID, intentSchemaID, capabilitySchemaID, resolvedSchemaID, evidenceSchemaID, resultSchemaID, reportSchemaID, driverFrameSchemaID, driverHeaderSchemaID, observationSchemaID} {
+	for _, id := range []string{commonSchemaID, intentSchemaID, capabilitySchemaID, resolvedSchemaID, evidenceSchemaID, resultSchemaID, reportSchemaID, baselineSchemaID, driverFrameSchemaID, driverHeaderSchemaID, observationSchemaID} {
 		if compiled[id] == nil {
 			t.Fatalf("required schema %s is not indexed", id)
 		}
 	}
 	return compiled
+}
+
+func baselineFixture(t *testing.T) report.Baseline {
+	t.Helper()
+	verdict := publicschema.VerdictPass
+	baseline := report.Baseline{
+		SchemaVersion:     report.BaselineSchemaVersion,
+		Name:              "main",
+		ProfileDigest:     fixtureDigest('1'),
+		PackDigest:        fixtureDigest('2'),
+		SupportLockDigest: fixtureDigest('3'),
+		DenominatorDigest: fixtureDigest('4'),
+		Cases: map[string]report.CaseState{
+			"scenario.one": {
+				Disposition: publicschema.DispositionExecute,
+				Execution:   publicschema.ExecutionCompleted,
+				Verdict:     &verdict,
+			},
+		},
+	}
+	if err := baseline.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	return baseline
 }
 
 func validateTypedContract(t *testing.T, compiled *jsonschema.Schema, value any) {
