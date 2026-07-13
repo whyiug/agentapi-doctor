@@ -321,11 +321,27 @@ func buildReport(planned PlannedRun, derived artifacts, result executor.Result, 
 	if candidateDigest != planned.Intent.CandidateDenominatorDigest || applicableDigest != planned.Resolved.DenominatorDigest {
 		return report.Bundle{}, errors.New("executor denominator membership differs from the resolved plan")
 	}
-	outcome, dimension, exitCode := aggregate(result.Cases, classes, executionErr)
+	outcome, dimension, exitCode := aggregate(result.Cases, classes, executionErr, result.Budget.Exhausted)
 	conditions := []report.Condition{{
 		Code:    "candidate_interpretations_pending_review",
 		Message: "This client-side raw-wire slice uses candidate Requirement Catalog interpretations pending independent review; it does not establish a support tier or vendor certification.",
 	}}
+	if len(result.Budget.Unknown) > 0 {
+		conditions = append(conditions, report.Condition{
+			Code:    "provider_usage_unknown",
+			Message: "Token usage was unavailable for one or more attempts (fields: " + strings.Join(result.Budget.Unknown, ", ") + "). Known estimates were used for enforcement where available; these values are not observed zeroes.",
+		})
+	}
+	budgetCondition := result.Budget.Exhausted
+	for _, item := range result.Cases {
+		if item.ReasonCode == schema.ReasonBudgetExhausted {
+			budgetCondition = true
+			break
+		}
+	}
+	if budgetCondition {
+		conditions = append(conditions, report.Condition{Code: "run_budget_exhausted", Message: "The bounded run exceeded or could not reserve its approved budget; the profile result is incomplete unless a higher-priority lifecycle or infrastructure outcome applies."})
+	}
 	switch {
 	case errors.Is(executionErr, context.DeadlineExceeded):
 		conditions = append(conditions, report.Condition{Code: "run_deadline_exceeded", Message: "The bounded run deadline expired; remaining checks are inconclusive rather than target failures."})
@@ -373,8 +389,8 @@ func buildReport(planned PlannedRun, derived artifacts, result executor.Result, 
 	return bundle, nil
 }
 
-func aggregate(cases []schema.CaseResult, classes map[string]executor.ErrorClass, executionErr error) (schema.ProfileOutcome, schema.DimensionOutcome, int) {
-	hasFailure, hasWarning, hasIncomplete, hasInfrastructure, hasPermission, hasCancelled := false, false, false, false, false, false
+func aggregate(cases []schema.CaseResult, classes map[string]executor.ErrorClass, executionErr error, budgetExhausted bool) (schema.ProfileOutcome, schema.DimensionOutcome, int) {
+	hasFailure, hasWarning, hasIncomplete, hasInfrastructure, hasPermission, hasCancelled := false, false, budgetExhausted, false, false, false
 	for _, class := range classes {
 		if class == executor.ErrorAuthentication || class == executor.ErrorPermission {
 			hasPermission = true
@@ -386,6 +402,9 @@ func aggregate(cases []schema.CaseResult, classes map[string]executor.ErrorClass
 		}
 		if item.ExecutionStatus == schema.ExecutionErrored {
 			hasInfrastructure = true
+		}
+		if item.ReasonCode == schema.ReasonBudgetExhausted {
+			hasIncomplete = true
 		}
 		if item.PlanDisposition != schema.DispositionExecute || item.ExecutionStatus == schema.ExecutionSkipped || item.Verdict == nil {
 			hasIncomplete = true

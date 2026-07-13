@@ -5,17 +5,26 @@ product boundaries; they are not hidden compatibility claims.
 
 ## Execution and compatibility
 
-- `v0.1.0-rc.2` is a release candidate, not a stable compatibility contract.
+- `v0.1.0-rc.3` is a release candidate, not a stable compatibility contract.
   The supported distribution is the `doctor` CLI archive for Linux, macOS, or
   Windows. Package-manager channels are not yet published.
 - Client-side execution can target an explicitly authorized local,
   private-network, or remote origin. It currently covers raw HTTP behavior for
   `openai-chat`, `openai-responses`, and `anthropic-messages`, with four
   built-in checks chosen for the configured protocol.
-- Each built-in request asks the provider for a 64-token output limit. This is
-  not a client-enforced token ceiling: a provider can reject or ignore the
-  field. Explicit field rejection and limit-induced completion truncation are
-  reported as inconclusive prerequisites rather than target incompatibility.
+- Structural checks request a 64-token output limit. The OpenAI Chat and
+  Responses terminal-status checks request 512 tokens, for a four-request
+  requested maximum of 704; all four selected Anthropic checks remain at 64
+  and request 256 in total. These are not client-enforced token ceilings: a
+  provider can reject or ignore the field. Explicit field rejection and
+  limit-induced completion truncation remain inconclusive prerequisites rather
+  than target incompatibility. Reported reasoning-token usage improves that
+  diagnosis but never creates a failure by itself.
+- The terminal-status value 512 is a bounded cross-provider default, not a
+  guarantee that every reasoning model will finish. Models with larger default
+  reasoning budgets may still produce an honest INCONCLUSIVE result. Doctor
+  does not disable thinking, branch on model names, or retry with a hidden
+  larger request.
 - The four checks run sequentially under one 60-second deadline. A deadline
   produces a persisted partial, inconclusive report (exit 4), not a target
   incompatibility or a user-interruption exit.
@@ -70,6 +79,10 @@ product boundaries; they are not hidden compatibility claims.
   and reference-server distributions remain unpublished candidates.
 - Public JSON Schemas and Registry OpenAPI are versioned pre-release contracts.
   A stable compatibility and migration floor has not been declared.
+- The rc.3 built-in pack/profile identity differs from rc.2 because request
+  budgets are digest-bound. Existing run records remain readable, but an rc.2
+  baseline is intentionally incomparable with an rc.3 run and should be
+  recaptured rather than relabeled.
 - No external penetration test, privacy/legal review, verified adopter set, or
   long-term support window is claimed.
 

@@ -183,6 +183,9 @@ func TestRawDriverPlanBudgetCancellationAndErrorBoundaries(t *testing.T) {
 			runner, root, _ := newRunner(t, server.URL, scenario, 1<<20)
 			outcome, err := runner.Run(context.Background(), invocationFor(t, scenario))
 			typed := assertRunError(t, outcome, err, statusCase.class)
+			if fmt.Sprint(typed.UnknownUsage) != "[input_tokens output_tokens]" {
+				t.Fatalf("classified status token usage = %#v", typed.UnknownUsage)
+			}
 			if len(typed.EvidenceRefs) != 3 {
 				t.Fatalf("classified status retained %d Evidence refs, want request, metadata, and body", len(typed.EvidenceRefs))
 			}
@@ -215,7 +218,10 @@ func TestRawDriverPlanBudgetCancellationAndErrorBoundaries(t *testing.T) {
 		runner, _, _ := newRunner(t, server.URL, scenario, 1<<20)
 		server.Close()
 		outcome, err := runner.Run(context.Background(), invocationFor(t, scenario))
-		assertRunError(t, outcome, err, executor.ErrorDriver)
+		typed := assertRunError(t, outcome, err, executor.ErrorDriver)
+		if fmt.Sprint(typed.UnknownUsage) != "[input_tokens output_tokens]" {
+			t.Fatalf("transport failure token usage = %#v", typed.UnknownUsage)
+		}
 	})
 
 	t.Run("cancellation", func(t *testing.T) {
@@ -335,7 +341,7 @@ func TestRawDriverOutputLimitPrerequisitesDoNotBecomeTargetFailures(t *testing.T
 	})
 
 	t.Run("chat length with requested cap is inconclusive", func(t *testing.T) {
-		response := []byte(`{"id":"chatcmpl_limited","object":"chat.completion","created":1700000000,"model":"fixture-model","choices":[{"index":0,"message":{"role":"assistant","content":"partial"},"finish_reason":"length"}],"usage":{"prompt_tokens":4,"completion_tokens":64,"total_tokens":68}}`)
+		response := []byte(`{"id":"chatcmpl_limited","object":"chat.completion","created":1700000000,"model":"fixture-model","choices":[{"index":0,"message":{"role":"assistant","content":""},"finish_reason":"length"}],"usage":{"prompt_tokens":4,"completion_tokens":64,"total_tokens":68,"completion_tokens_details":{"reasoning_tokens":64}}}`)
 		server := httptest.NewServer(statusHandler(http.StatusOK, response))
 		defer server.Close()
 		scenario := scenarioFor(mutationCase{
@@ -344,6 +350,7 @@ func TestRawDriverOutputLimitPrerequisitesDoNotBecomeTargetFailures(t *testing.T
 		}, "chat-output-limit-reached")
 		outcome, _, _ := runScenario(t, server, scenario)
 		assertOutputLimitInconclusive(t, outcome, schema.ReasonInsufficientSamples, "max_completion_tokens")
+		assertReasoningLimitDiagnostic(t, outcome, 64, 64, 64)
 	})
 
 	t.Run("responses incomplete max_output_tokens is inconclusive", func(t *testing.T) {
@@ -356,6 +363,87 @@ func TestRawDriverOutputLimitPrerequisitesDoNotBecomeTargetFailures(t *testing.T
 		}, "responses-output-limit-reached")
 		outcome, _, _ := runScenario(t, server, scenario)
 		assertOutputLimitInconclusive(t, outcome, schema.ReasonInsufficientSamples, "max_output_tokens")
+		assertReasoningLimitDiagnostic(t, outcome, 64, 64, 64)
+	})
+
+	for _, test := range []struct {
+		name      string
+		reasoning *int64
+	}{
+		{name: "responses stream reasoning reaches cap", reasoning: int64Pointer(64)},
+		{name: "responses stream reasoning below cap", reasoning: int64Pointer(63)},
+		{name: "responses stream reasoning details absent"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			usage := map[string]any{"input_tokens": 4, "output_tokens": 64, "total_tokens": 68}
+			if test.reasoning != nil {
+				usage["output_tokens_details"] = map[string]any{"reasoning_tokens": *test.reasoning}
+			}
+			terminal, err := json.Marshal(map[string]any{
+				"type": "response.incomplete",
+				"response": map[string]any{
+					"id": "resp_limited", "status": "incomplete",
+					"incomplete_details": map[string]any{"reason": "max_output_tokens"},
+					"usage":              usage,
+				},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			stream := "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_limited\",\"status\":\"in_progress\"}}\n\n" +
+				"event: response.incomplete\ndata: " + string(terminal) + "\n\n"
+			server := httptest.NewServer(streamHandler(http.StatusOK, []byte(stream)))
+			defer server.Close()
+			scenario := scenarioFor(mutationCase{
+				protocol: rawdriver.ProtocolOpenAIResponses, path: "/v1/responses",
+				body: rawResponsesBody(t, true, false), stream: true,
+				check: rawdriver.CheckFinishReason, allowed: []string{"completed"},
+			}, "responses-stream-reasoning-diagnostic")
+			outcome, _, _ := runScenario(t, server, scenario)
+			assertOutputLimitInconclusive(t, outcome, schema.ReasonInsufficientSamples, "max_output_tokens")
+			observed := outcome.AssertionResults[0].Observed.(map[string]any)
+			if test.reasoning == nil {
+				if _, present := observed["reasoning_tokens"]; present {
+					t.Fatalf("absent reasoning usage was invented: %#v", observed)
+				}
+				if _, present := observed["reasoning_tokens_reached_requested_limit"]; present {
+					t.Fatalf("absent reasoning saturation was invented: %#v", observed)
+				}
+				return
+			}
+			wantReached := *test.reasoning >= 64
+			if fmt.Sprint(observed["reasoning_tokens"]) != fmt.Sprint(*test.reasoning) || observed["reasoning_tokens_reached_requested_limit"] != wantReached {
+				t.Fatalf("stream reasoning diagnostic = %#v, want reached=%t", observed, wantReached)
+			}
+		})
+	}
+
+	t.Run("reasoning usage alone does not imply truncation", func(t *testing.T) {
+		response := []byte(`{"id":"chatcmpl_complete","object":"chat.completion","created":1700000000,"model":"fixture-model","choices":[{"index":0,"message":{"role":"assistant","content":"ok"},"finish_reason":"stop"}],"usage":{"prompt_tokens":4,"completion_tokens":64,"total_tokens":68,"completion_tokens_details":{"reasoning_tokens":62}}}`)
+		server := httptest.NewServer(statusHandler(http.StatusOK, response))
+		defer server.Close()
+		scenario := scenarioFor(mutationCase{
+			protocol: rawdriver.ProtocolOpenAIChat, path: "/v1/chat/completions",
+			body: rawChatBody(t, false, false), check: rawdriver.CheckFinishReason, allowed: []string{"stop"},
+		}, "chat-reasoning-usage-without-limit-signal")
+		outcome, _, _ := runScenario(t, server, scenario)
+		if outcome.Verdict != schema.VerdictPass || len(outcome.Findings) != 0 {
+			t.Fatalf("reasoning usage invented output-limit truncation: %#v", outcome)
+		}
+	})
+
+	t.Run("missing provider usage remains unknown", func(t *testing.T) {
+		response := []byte(`{"id":"chatcmpl_no_usage","object":"chat.completion","created":1700000000,"model":"fixture-model","choices":[{"index":0,"message":{"role":"assistant","content":"ok"},"finish_reason":"stop"}]}`)
+		server := httptest.NewServer(statusHandler(http.StatusOK, response))
+		defer server.Close()
+		scenario := scenarioFor(mutationCase{
+			protocol: rawdriver.ProtocolOpenAIChat, path: "/v1/chat/completions",
+			body: rawChatBody(t, false, false), check: rawdriver.CheckFinishReason, allowed: []string{"stop"},
+		}, "chat-missing-provider-usage")
+		outcome, _, _ := runScenario(t, server, scenario)
+		if outcome.Verdict != schema.VerdictPass || fmt.Sprint(outcome.UnknownUsage) != "[input_tokens output_tokens]" {
+			t.Fatalf("missing provider usage was presented as observed zero: %#v", outcome)
+		}
 	})
 
 	t.Run("chat streaming length leaves an unrelated assertion evaluable", func(t *testing.T) {
@@ -452,7 +540,7 @@ func TestRawDriverRedactsBeforeCASAndUsesExactRegistryEstimate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if estimate.Requests != 1 || estimate.RequestBytes != int64(len(scenario.Body)) || estimate.ResponseBytes != scenario.Budget.ResponseBytes {
+	if estimate.Requests != 1 || estimate.RequestBytes != int64(len(scenario.Body)) || estimate.ResponseBytes != scenario.Budget.ResponseBytes || estimate.OutputTokens != 64 {
 		t.Fatalf("estimate = %#v", estimate)
 	}
 	other := scenario
@@ -894,12 +982,28 @@ func assertOutputLimitInconclusive(t *testing.T, outcome executor.Outcome, reaso
 	}
 }
 
+func assertReasoningLimitDiagnostic(t *testing.T, outcome executor.Outcome, requested, output, reasoning int64) {
+	t.Helper()
+	observed, ok := outcome.AssertionResults[0].Observed.(map[string]any)
+	if !ok || fmt.Sprint(observed["requested_output_tokens"]) != fmt.Sprint(requested) ||
+		fmt.Sprint(observed["output_tokens"]) != fmt.Sprint(output) ||
+		fmt.Sprint(observed["reasoning_tokens"]) != fmt.Sprint(reasoning) ||
+		observed["reasoning_tokens_reached_requested_limit"] != true {
+		t.Fatalf("reasoning saturation diagnostic = %#v", observed)
+	}
+}
+
+func int64Pointer(value int64) *int64 { return &value }
+
 func limitedResponsesDocument(reason string) []byte {
 	value := map[string]any{
 		"id": "resp_limited", "object": "response", "created_at": 1700000000,
 		"status": "incomplete", "model": "fixture-model", "output": []any{},
 		"incomplete_details": map[string]any{"reason": reason},
-		"usage":              map[string]any{"input_tokens": 4, "output_tokens": 64, "total_tokens": 68},
+		"usage": map[string]any{
+			"input_tokens": 4, "output_tokens": 64, "total_tokens": 68,
+			"output_tokens_details": map[string]any{"reasoning_tokens": 64},
+		},
 	}
 	result, _ := json.Marshal(value)
 	return result

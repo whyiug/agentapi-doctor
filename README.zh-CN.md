@@ -27,18 +27,18 @@ endpoint 是否真的符合 client 依赖的行为，并生成可复现、可比
 
 ## 从下载到得到答案
 
-Linux 和 macOS 无需 Go，即可安装固定的 `v0.1.0-rc.2`：
+Linux 和 macOS 无需 Go，即可安装固定的 `v0.1.0-rc.3`：
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.2/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh | sh
 $HOME/.local/bin/doctor demo
 ```
 
 固定版本 installer 会先用 `checksums.txt` 校验 release archive，再执行解压。
 如果希望先审阅脚本，请下载 [`install.sh`](install.sh)，然后运行
 `sh install.sh`。Windows 用户可以从
-[GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.2)
+[GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.3)
 下载经过校验的 ZIP；[安装文档](docs/installation.md)提供所有平台的 checksum
 步骤。
 
@@ -162,7 +162,9 @@ Doctor 不是模型质量 benchmark、Provider 排名、relay 真伪检查或厂
   因此两次结果可以被可靠比较。
 - 结构化 model content 和 tool arguments 不一定匿名，分享前必须人工审阅。
 - 目标 Provider 仍会收到有界的合成 prompt，也可能按其政策保留请求。
-- Provider 可能拒绝或忽略请求中的 64-token output 字段，因此它不是强制成本上限。
+- 结构检查请求 64 个 output tokens；Chat/Responses 的 terminal-status 检查请求
+  512 个，使默认启用 thinking 的模型更可能自然结束。Provider 可能拒绝或忽略
+  这些字段，因此它们不是强制成本上限。
 
 只测试你已获得明确授权的系统。
 

@@ -171,23 +171,24 @@ func (runner *Runner) Run(ctx context.Context, invocation executor.Invocation) (
 	}
 	evidence = append(evidence, requestEvidence)
 	usage := budget.Usage{Requests: 1, RequestBytes: int64(len(scenario.Body))}
+	unknownUsage := []string{"input_tokens", "output_tokens"}
 
 	response, err := runner.transport.Do(ctx, scenario.Method, scenario.Path, scenario.Headers, scenario.Body)
 	if err != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
-			return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, ctxErr, usage, true, evidence)
+			return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, ctxErr, usage, true, unknownUsage, evidence)
 		}
 		class := executor.ErrorDriver
 		if errors.Is(err, transport.ErrBodyLimit) {
 			class = executor.ErrorHarness
 		}
-		return executor.Outcome{}, runErrorWithEvidence(class, fmt.Errorf("raw HTTP transport: %w", err), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(class, fmt.Errorf("raw HTTP transport: %w", err), usage, true, unknownUsage, evidence)
 	}
 	usage.ResponseBytes = int64(len(response.Body))
 
 	responseMetadata, err := marshalResponseMetadata(response)
 	if err != nil {
-		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("encode response metadata: %w", err), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("encode response metadata: %w", err), usage, true, unknownUsage, evidence)
 	}
 	metadataEvidence, err := capture.Record(ctx, recorder.Observation{
 		Sequence:            2,
@@ -200,48 +201,55 @@ func (runner *Runner) Run(ctx context.Context, invocation executor.Invocation) (
 		Format:              recorder.PayloadJSON,
 	})
 	if err != nil {
-		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("record response metadata: %w", err), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("record response metadata: %w", err), usage, true, unknownUsage, evidence)
 	}
 	evidence = append(evidence, metadataEvidence)
 
 	if int64(len(response.Body)) > scenario.Budget.ResponseBytes {
 		usage.ArtifactBytes, _ = runner.artifactBytes(ctx, evidence)
-		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, errors.New("response body exceeds the registered scenario budget"), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, errors.New("response body exceeds the registered scenario budget"), usage, true, unknownUsage, evidence)
 	}
 	if len(response.Body) > 0 {
 		bodyEvidence, recordErr := runner.recordResponseBody(ctx, capture, scenario, response.Body, started)
 		evidence = append(evidence, bodyEvidence...)
 		if recordErr != nil {
 			usage.ArtifactBytes, _ = runner.artifactBytes(ctx, evidence)
-			return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("record response body: %w", recordErr), usage, true, evidence)
+			return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("record response body: %w", recordErr), usage, true, unknownUsage, evidence)
 		}
 	}
 	usage.ArtifactBytes, err = runner.artifactBytes(ctx, evidence)
 	if err != nil {
-		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("measure evidence artifacts: %w", err), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("measure evidence artifacts: %w", err), usage, true, unknownUsage, evidence)
 	}
 
 	if class, classified := classifyHTTPStatus(response.StatusCode); classified {
-		return executor.Outcome{}, runErrorWithEvidence(class, fmt.Errorf("HTTP status %d", response.StatusCode), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(class, fmt.Errorf("HTTP status %d", response.StatusCode), usage, true, unknownUsage, evidence)
 	}
 
 	refs := evidenceRefs(evidence)
 	evaluation, err := evaluate(scenario, response.StatusCode, response.Header, response.Body, refs)
 	if err != nil {
-		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("evaluate response: %w", err), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("evaluate response: %w", err), usage, true, unknownUsage, evidence)
 	}
 	if err := sanitizeOutcome(runner.redactor, &evaluation.Outcome); err != nil {
-		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("sanitize oracle outcome: %w", err), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("sanitize oracle outcome: %w", err), usage, true, unknownUsage, evidence)
 	}
 	usage.InputTokens = evaluation.Usage.Input
 	usage.OutputTokens = evaluation.Usage.Output
+	unknownUsage = unknownUsage[:0]
+	if !evaluation.Usage.HasInput {
+		unknownUsage = append(unknownUsage, "input_tokens")
+	}
+	if !evaluation.Usage.HasOutput {
+		unknownUsage = append(unknownUsage, "output_tokens")
+	}
 	if evaluation.Outcome.ReasonCode == schema.ReasonHarnessError {
-		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, errors.New("oracle reported a harness precondition failure"), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, errors.New("oracle reported a harness precondition failure"), usage, true, unknownUsage, evidence)
 	}
 
 	assertionID, err := runner.newID()
 	if err != nil {
-		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("create assertion result ID: %w", err), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("create assertion result ID: %w", err), usage, true, unknownUsage, evidence)
 	}
 	assertion := schema.AssertionResult{
 		AssertionResultID: assertionID,
@@ -258,14 +266,14 @@ func (runner *Runner) Run(ctx context.Context, invocation executor.Invocation) (
 		EvaluatorDigest:   scenario.Assertion.EvaluatorDigest,
 	}
 	if err := assertion.Validate(); err != nil {
-		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("validate assertion result: %w", err), usage, true, evidence)
+		return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("validate assertion result: %w", err), usage, true, unknownUsage, evidence)
 	}
 
 	findings := []schema.Finding{}
 	if evaluation.Outcome.TargetFailure {
 		finding, findingErr := runner.finding(scenario, assertion, evaluation.Outcome)
 		if findingErr != nil {
-			return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("construct finding: %w", findingErr), usage, true, evidence)
+			return executor.Outcome{}, runErrorWithEvidence(executor.ErrorHarness, fmt.Errorf("construct finding: %w", findingErr), usage, true, unknownUsage, evidence)
 		}
 		findings = append(findings, finding)
 	}
@@ -276,6 +284,7 @@ func (runner *Runner) Run(ctx context.Context, invocation executor.Invocation) (
 		AssertionResults: []schema.AssertionResult{assertion},
 		Findings:         findings,
 		Usage:            usage,
+		UnknownUsage:     unknownUsage,
 	}, nil
 }
 
@@ -571,8 +580,8 @@ func runError(class executor.ErrorClass, err error, usage budget.Usage, known bo
 	return &executor.RunError{Class: class, Err: err, Usage: usage, UsageKnown: known}
 }
 
-func runErrorWithEvidence(class executor.ErrorClass, err error, usage budget.Usage, known bool, evidence []schema.Evidence) error {
-	return &executor.RunError{Class: class, Err: err, Usage: usage, UsageKnown: known, EvidenceRefs: evidenceRefs(evidence)}
+func runErrorWithEvidence(class executor.ErrorClass, err error, usage budget.Usage, known bool, unknownUsage []string, evidence []schema.Evidence) error {
+	return &executor.RunError{Class: class, Err: err, Usage: usage, UsageKnown: known, UnknownUsage: append([]string(nil), unknownUsage...), EvidenceRefs: evidenceRefs(evidence)}
 }
 
 func elapsedNS(started time.Time) int64 {

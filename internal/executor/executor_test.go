@@ -83,12 +83,16 @@ type scriptedRunner struct {
 	mu            sync.Mutex
 	outcomes      []Outcome
 	errors        []error
+	estimate      *budget.Usage
 	calls         int
 	finalized     []string
 	finalizeError map[string]error
 }
 
 func (runner *scriptedRunner) Estimate(schema.ScenarioDecision) (budget.Usage, error) {
+	if runner.estimate != nil {
+		return *runner.estimate, nil
+	}
 	return budget.Usage{Requests: 1, RequestBytes: 10, ResponseBytes: 100, ArtifactBytes: 100}, nil
 }
 func (runner *scriptedRunner) Run(_ context.Context, _ Invocation) (Outcome, error) {
@@ -163,6 +167,108 @@ func TestExecutePreservesDispositionAndEndpointVerdict(t *testing.T) {
 	}
 	if result.Cases[1].Verdict != nil || result.Cases[1].ApplicableMember {
 		t.Fatalf("not-applicable case gained a verdict: %#v", result.Cases[1])
+	}
+}
+
+func TestExecutePreservesUnknownTokenUsage(t *testing.T) {
+	decision := schema.ScenarioDecision{ScenarioID: "unknown-usage.case", Disposition: schema.DispositionExecute, Driver: driver()}
+	plan := testPlan(t, []schema.ScenarioDecision{decision}, nil)
+	outcome := passOutcome()
+	outcome.Usage.InputTokens = 7
+	outcome.UnknownUsage = []string{"output_tokens"}
+	estimate := budget.Usage{Requests: 1, RequestBytes: 10, ResponseBytes: 100, ArtifactBytes: 100, OutputTokens: 64}
+	runner := &scriptedRunner{outcomes: []Outcome{outcome}, estimate: &estimate}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(180), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Attempts) != 1 {
+		t.Fatalf("attempts = %#v", result.Attempts)
+	}
+	consumed := result.Attempts[0].ConsumedBudget
+	if consumed.InputTokens == nil || *consumed.InputTokens != 7 || consumed.OutputTokens != nil || fmt.Sprint(consumed.Unknown) != "[output_tokens]" {
+		t.Fatalf("unknown token usage was converted to zero: %#v", consumed)
+	}
+	if result.Budget.Consumed.InputTokens != 7 || result.Budget.Consumed.OutputTokens != 64 || fmt.Sprint(result.Budget.Unknown) != "[output_tokens]" {
+		t.Fatalf("unknown token usage was not conservatively accounted: %#v", result.Budget)
+	}
+}
+
+func TestExecutePreservesObservedZeroTokenUsage(t *testing.T) {
+	decision := schema.ScenarioDecision{ScenarioID: "observed-zero-usage.case", Disposition: schema.DispositionExecute, Driver: driver()}
+	plan := testPlan(t, []schema.ScenarioDecision{decision}, nil)
+	runner := &scriptedRunner{outcomes: []Outcome{passOutcome()}}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(182), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	consumed := result.Attempts[0].ConsumedBudget
+	if consumed.InputTokens == nil || *consumed.InputTokens != 0 || consumed.OutputTokens == nil || *consumed.OutputTokens != 0 || len(consumed.Unknown) != 0 {
+		t.Fatalf("observed zero usage was converted to unknown: %#v", consumed)
+	}
+}
+
+func TestExecutePreservesUnknownTokenUsageOnError(t *testing.T) {
+	decision := schema.ScenarioDecision{ScenarioID: "unknown-error-usage.case", Disposition: schema.DispositionExecute, Driver: driver()}
+	plan := testPlan(t, []schema.ScenarioDecision{decision}, nil)
+	estimate := budget.Usage{Requests: 1, RequestBytes: 10, ResponseBytes: 100, ArtifactBytes: 100, OutputTokens: 64}
+	runner := &scriptedRunner{
+		estimate: &estimate,
+		errors:   []error{&RunError{Class: ErrorAuthentication, Err: errors.New("401"), UsageKnown: false}},
+	}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(185), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Attempts) != 1 || result.Attempts[0].ReasonCode != schema.ReasonAuthenticationFailed {
+		t.Fatalf("error attempts = %#v", result.Attempts)
+	}
+	consumed := result.Attempts[0].ConsumedBudget
+	if consumed.InputTokens != nil || consumed.OutputTokens != nil || fmt.Sprint(consumed.Unknown) != "[input_tokens output_tokens]" {
+		t.Fatalf("unknown error usage was presented as observed: %#v", consumed)
+	}
+	if result.Budget.Consumed != estimate || fmt.Sprint(result.Budget.Unknown) != "[input_tokens output_tokens]" {
+		t.Fatalf("unknown error usage was not conservatively accounted: %#v", result.Budget)
+	}
+}
+
+func TestExecuteReservationOvershootWithinRunBudgetPreservesVerdict(t *testing.T) {
+	decision := schema.ScenarioDecision{ScenarioID: "reservation-overshoot.case", Disposition: schema.DispositionExecute, Driver: driver()}
+	plan := testPlan(t, []schema.ScenarioDecision{decision}, nil)
+	estimate := budget.Usage{Requests: 1, RequestBytes: 10, ResponseBytes: 100, ArtifactBytes: 100, OutputTokens: 512}
+	outcome := passOutcome()
+	outcome.Usage.OutputTokens = 513
+	runner := &scriptedRunner{outcomes: []Outcome{outcome}, estimate: &estimate}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(188), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Cases) != 1 || result.Cases[0].Verdict == nil || *result.Cases[0].Verdict != schema.VerdictPass || result.Cases[0].ReasonCode == schema.ReasonBudgetExhausted {
+		t.Fatalf("in-budget reservation overshoot changed the target verdict: %#v", result.Cases)
+	}
+	if result.Budget.Exhausted || result.Budget.Overshoot.OutputTokens != 1 || result.Budget.Consumed.OutputTokens != 513 {
+		t.Fatalf("in-budget reservation overshoot accounting = %#v", result.Budget)
+	}
+}
+
+func TestExecuteRejectsInvalidUnknownUsageMetadata(t *testing.T) {
+	decision := schema.ScenarioDecision{ScenarioID: "invalid-unknown-usage.case", Disposition: schema.DispositionExecute, Driver: driver()}
+	plan := testPlan(t, []schema.ScenarioDecision{decision}, nil)
+	outcome := passOutcome()
+	outcome.UnknownUsage = []string{"tokens"}
+	runner := &scriptedRunner{outcomes: []Outcome{outcome}}
+	result, err := Execute(context.Background(), plan, plan.ContentDigest, Config{Runners: resolver{runner: runner}, NewID: idSource(190), Now: func() time.Time { return time.Unix(2, 0) }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Cases) != 1 || result.Cases[0].ExecutionStatus != schema.ExecutionErrored || result.Cases[0].ReasonCode != schema.ReasonHarnessError {
+		t.Fatalf("invalid unknown usage metadata was accepted: %#v", result.Cases)
+	}
+	if len(result.Attempts) != 1 || result.Attempts[0].ConsumedBudget.InputTokens != nil || result.Attempts[0].ConsumedBudget.OutputTokens != nil || fmt.Sprint(result.Attempts[0].ConsumedBudget.Unknown) != "[input_tokens output_tokens]" {
+		t.Fatalf("invalid outcome usage was trusted: %#v", result.Attempts)
+	}
+	if fmt.Sprint(result.Budget.Unknown) != "[input_tokens output_tokens]" {
+		t.Fatalf("invalid outcome lost conservative accounting metadata: %#v", result.Budget)
 	}
 }
 

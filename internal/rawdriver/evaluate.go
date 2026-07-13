@@ -18,12 +18,14 @@ import (
 )
 
 type observedUsage struct {
-	Input     int64
-	Output    int64
-	Total     int64
-	HasInput  bool
-	HasOutput bool
-	HasTotal  bool
+	Input        int64
+	Output       int64
+	Reasoning    int64
+	Total        int64
+	HasInput     bool
+	HasOutput    bool
+	HasReasoning bool
+	HasTotal     bool
 }
 
 type exchangeFacts struct {
@@ -245,13 +247,24 @@ func checkScenario(scenario Scenario, facts exchangeFacts, refs []schema.ObjectR
 			return observedFail(refs, "streaming_tool_call_missing", "at least one streamed tool call", "none")
 		}
 	case CheckFinishReason:
-		if field, requested := requestedOutputLimitField(scenario); requested && facts.outputLimitHit != "" {
+		if field, limit, requested := requestedOutputLimit(scenario); requested && facts.outputLimitHit != "" {
+			observed := map[string]any{
+				"request_field": field, "requested_output_tokens": limit,
+				"terminal_signal": facts.outputLimitHit,
+			}
+			if facts.usage.HasOutput {
+				observed["output_tokens"] = facts.usage.Output
+			}
+			if facts.usage.HasReasoning {
+				observed["reasoning_tokens"] = facts.usage.Reasoning
+				observed["reasoning_tokens_reached_requested_limit"] = facts.usage.Reasoning >= limit
+			}
 			return observedInconclusive(
 				refs,
 				schema.ReasonInsufficientSamples,
 				"provider_output_limit_reached",
-				map[string]any{"request_field": field, "prerequisite": "response completes before the requested output limit"},
-				map[string]any{"request_field": field, "terminal_signal": facts.outputLimitHit},
+				map[string]any{"request_field": field, "requested_output_tokens": limit, "prerequisite": "response completes before the requested output limit"},
+				observed,
 			)
 		}
 		if len(facts.finishReasons) == 0 {
@@ -419,7 +432,9 @@ func inspectNonStream(protocol Protocol, value map[string]any, facts *exchangeFa
 				facts.outputLimitHit = "finish_reason=length"
 			}
 		}
-		readUsage(objectValue(value["usage"]), "prompt_tokens", "completion_tokens", "total_tokens", &facts.usage)
+		usage := objectValue(value["usage"])
+		readUsage(usage, "prompt_tokens", "completion_tokens", "total_tokens", &facts.usage)
+		readReasoningUsage(usage, "completion_tokens_details", &facts.usage)
 	case ProtocolOpenAIResponses:
 		for _, itemValue := range arrayValue(value["output"]) {
 			item := objectValue(itemValue)
@@ -434,7 +449,9 @@ func inspectNonStream(protocol Protocol, value map[string]any, facts *exchangeFa
 		if responsesOutputLimitReached(value) {
 			facts.outputLimitHit = "status=incomplete,incomplete_details.reason=max_output_tokens"
 		}
-		readUsage(objectValue(value["usage"]), "input_tokens", "output_tokens", "total_tokens", &facts.usage)
+		usage := objectValue(value["usage"])
+		readUsage(usage, "input_tokens", "output_tokens", "total_tokens", &facts.usage)
+		readReasoningUsage(usage, "output_tokens_details", &facts.usage)
 	case ProtocolAnthropic:
 		for _, contentValue := range arrayValue(value["content"]) {
 			content := objectValue(contentValue)
@@ -463,6 +480,12 @@ func readUsage(value map[string]any, inputName, outputName, totalName string, us
 	}
 }
 
+func readReasoningUsage(value map[string]any, detailsName string, usage *observedUsage) {
+	if reasoning, ok := integerValue(objectValue(value[detailsName])["reasoning_tokens"]); ok {
+		usage.Reasoning, usage.HasReasoning = reasoning, true
+	}
+}
+
 func decodeObject(raw []byte) (map[string]any, error) {
 	decoder := json.NewDecoder(strings.NewReader(string(raw)))
 	decoder.UseNumber()
@@ -473,22 +496,32 @@ func decodeObject(raw []byte) (map[string]any, error) {
 	return value, nil
 }
 
-func requestedOutputLimitField(scenario Scenario) (string, bool) {
+func requestedOutputLimit(scenario Scenario) (string, int64, bool) {
 	field := ""
 	switch scenario.Protocol {
 	case ProtocolOpenAIChat:
 		field = "max_completion_tokens"
 	case ProtocolOpenAIResponses:
 		field = "max_output_tokens"
+	case ProtocolAnthropic:
+		field = "max_tokens"
 	default:
-		return "", false
+		return "", 0, false
 	}
 	request, err := decodeObject(scenario.Body)
 	if err != nil {
-		return "", false
+		return "", 0, false
 	}
 	limit, ok := integerValue(request[field])
-	return field, ok && limit > 0
+	return field, limit, ok && limit > 0
+}
+
+func requestedOutputLimitField(scenario Scenario) (string, bool) {
+	if scenario.Protocol != ProtocolOpenAIChat && scenario.Protocol != ProtocolOpenAIResponses {
+		return "", false
+	}
+	field, _, requested := requestedOutputLimit(scenario)
+	return field, requested
 }
 
 func unsupportedOutputLimitField(scenario Scenario, status int, body []byte) (string, bool) {
@@ -770,7 +803,9 @@ func (decoder *streamDecoder) consumeResponses(value map[string]any, typeName st
 		if reason, ok := stringValue(response["status"]); ok {
 			facts.finishReasons = append(facts.finishReasons, reason)
 		}
-		readUsage(objectValue(response["usage"]), "input_tokens", "output_tokens", "total_tokens", &facts.usage)
+		usage := objectValue(response["usage"])
+		readUsage(usage, "input_tokens", "output_tokens", "total_tokens", &facts.usage)
+		readReasoningUsage(usage, "output_tokens_details", &facts.usage)
 		decoder.append(statemachine.Event{Type: statemachine.EventResponseCompleted})
 	case "response.failed":
 		facts.terminalCount++
@@ -784,14 +819,18 @@ func (decoder *streamDecoder) consumeResponses(value map[string]any, typeName st
 		if responsesOutputLimitReached(response) {
 			facts.outputLimitHit = "status=incomplete,incomplete_details.reason=max_output_tokens"
 		}
-		readUsage(objectValue(response["usage"]), "input_tokens", "output_tokens", "total_tokens", &facts.usage)
+		usage := objectValue(response["usage"])
+		readUsage(usage, "input_tokens", "output_tokens", "total_tokens", &facts.usage)
+		readReasoningUsage(usage, "output_tokens_details", &facts.usage)
 		decoder.append(statemachine.Event{Type: statemachine.EventResponseIncomplete})
 	}
 }
 
 func (decoder *streamDecoder) consumeChat(value map[string]any, facts *exchangeFacts) {
 	decoder.ensureChatCreated()
-	readUsage(objectValue(value["usage"]), "prompt_tokens", "completion_tokens", "total_tokens", &facts.usage)
+	usage := objectValue(value["usage"])
+	readUsage(usage, "prompt_tokens", "completion_tokens", "total_tokens", &facts.usage)
+	readReasoningUsage(usage, "completion_tokens_details", &facts.usage)
 	choice := firstObject(value["choices"])
 	if choice == nil {
 		return

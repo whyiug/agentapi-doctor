@@ -11,7 +11,7 @@ Linux 或 macOS：
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.2/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
@@ -20,15 +20,15 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fSLO \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.2/install.sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh
 less install.sh
 sh install.sh
 ```
 
 Windows 用户可以从
-[v0.1.0-rc.2](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.2)
-下载 `agentapi-doctor_0.1.0-rc.2_windows_amd64.zip` 或
-`agentapi-doctor_0.1.0-rc.2_windows_arm64.zip`。精确 PowerShell checksum 与解压
+[v0.1.0-rc.3](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.3)
+下载 `agentapi-doctor_0.1.0-rc.3_windows_amd64.zip` 或
+`agentapi-doctor_0.1.0-rc.3_windows_arm64.zip`。精确 PowerShell checksum 与解压
 步骤见[安装文档（英文）](../installation.md)。
 
 ## 2. 运行无 Key Demo
@@ -107,12 +107,15 @@ arguments 不一定匿名。
 
 - 最多发送 **4 个请求**；
 - 使用一个 **60 秒 deadline**；
-- 每个请求最多要求 **64 个 output tokens**；
+- 结构检查请求 **64 个 output tokens**，OpenAI Chat/Responses 的
+  terminal-status 检查请求 **512 个**；
 - 在 `.agentapi/` 下保存 evidence 和 run record。
 
-Output-token 字段只是向 Provider 提出的请求，不是客户端强制成本上限；Provider
-可以拒绝或忽略它。PASS 只绑定精确 endpoint、model、版本化 artifact 和执行的
-4 个检查；它不是完整 SDK/Agent 兼容或厂商认证。
+一次 4 请求的 Chat 或 Responses run 最多请求 704 个 output tokens，Anthropic
+Messages 为 256 个。Output-token 字段只是向 Provider 提出的请求，不是客户端
+强制成本上限；Provider 可以拒绝或忽略它。Provider 报告命中 token limit 时仍为
+INCONCLUSIVE，reasoning-token usage 只用于诊断。PASS 只绑定精确 endpoint、model、
+版本化 artifact 和执行的 4 个检查；它不是完整 SDK/Agent 兼容或厂商认证。
 
 后续：[CLI 参考（英文）](../cli-reference.md) ·
 [真实 SDK 案例（英文）](../cases/openai-python-responses-null-output.md) ·
