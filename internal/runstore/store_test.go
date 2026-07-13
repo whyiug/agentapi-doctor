@@ -33,7 +33,9 @@ func TestPutGetLatestAndList(t *testing.T) {
 		t.Fatalf("record=%#v", record)
 	}
 	if _, err := store.Get("latest", false); !errors.Is(err, ErrLatestForbidden) {
-		t.Fatalf("expected CI guard, got %v", err)
+		t.Fatalf("expected latest guard, got %v", err)
+	} else if err.Error() != "latest run reference requires explicit --allow-latest" {
+		t.Fatalf("latest error is not actionable: %v", err)
 	}
 	ids, err := store.List()
 	if err != nil || len(ids) != 1 || ids[0] != runID {

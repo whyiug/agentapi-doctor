@@ -20,8 +20,8 @@ CHECKSUM_RE = re.compile(r"^([0-9a-f]{64})[ \t]+([A-Za-z0-9][A-Za-z0-9._-]{0,199
 MAX_JSON_BYTES = 1024 * 1024
 MAX_CHECKSUM_BYTES = 4 * 1024 * 1024
 TARGETS = {
-    "windows-amd64": "agentapi-doctor_{version}_windows_amd64.tar.gz",
-    "windows-arm64": "agentapi-doctor_{version}_windows_arm64.tar.gz",
+    "windows-amd64": "agentapi-doctor_{version}_windows_amd64.zip",
+    "windows-arm64": "agentapi-doctor_{version}_windows_arm64.zip",
 }
 RELEASE_ROOT = "https://github.com/whyiug/agentapi-doctor/releases/download"
 
@@ -150,7 +150,7 @@ def required_checksums(version: str, path: Path) -> dict[str, str]:
 
 def release_url(version: str, filename: str) -> str:
     validate_version(version)
-    if not re.fullmatch(r"agentapi-doctor_[A-Za-z0-9._-]+_windows_(?:amd64|arm64)\.tar\.gz", filename):
+    if not re.fullmatch(r"agentapi-doctor_[A-Za-z0-9._-]+_windows_(?:amd64|arm64)\.zip", filename):
         raise ValidationError("release filename is outside the Scoop target set")
     return f"{RELEASE_ROOT}/v{version}/{filename}"
 

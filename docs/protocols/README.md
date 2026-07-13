@@ -1,15 +1,22 @@
 # Protocol Families
 
-Protocol documentation is organized by family so native semantics are not
-forced into an OpenAI-shaped model:
+The v0.1.0 Doctor Quick Check sends four bounded raw HTTP checks for one of
+three endpoint shapes:
 
 - [OpenAI Chat Completions](openai-chat/README.md)
 - [OpenAI Responses](openai-responses/README.md)
 - [Anthropic Messages](anthropic-messages/README.md)
+
+These checks produce reproducible protocol observations. Their built-in
+interpretations remain versioned candidate material pending source review;
+they do not certify an endpoint or establish full SDK, model, or agent
+compatibility.
+
+The following pages are design research, not v0.1.0 support claims:
+
 - [Google APIs](google/README.md)
 - [Model Context Protocol](mcp/README.md)
 
-These pages describe planned boundaries, not current support claims. Before a
-pack becomes normative, its primary sources must be reverified, locked by
-digest, converted into Requirement Catalog entries, and covered by reference
-and mutant tests.
+Promoting a protocol pack requires locked primary sources, Requirement Catalog
+records, reference-pass tests, targeted-mutant-fail tests, and an explicit
+release support declaration.

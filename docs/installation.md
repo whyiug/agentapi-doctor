@@ -2,10 +2,11 @@
 
 [Documentation home](README.md) | [Quick Start](quick-start.md)
 
-`v0.1.0-rc.3` is the current AgentAPI Doctor release candidate. The supported
-distribution is the `doctor` CLI archive on GitHub Releases. Registry,
-reference-server, OCI, Homebrew, Scoop, and GitHub Action files remain
-unpublished candidates and are not installation channels.
+`v0.1.0` is the stable AgentAPI Doctor distribution. The supported user
+artifact is the `doctor` CLI archive on GitHub Releases. The project remains
+pre-1.0: Go packages and experimental schemas, Registry, driver, pack,
+reference-server, OCI, Homebrew, Scoop, and GitHub Action surfaces are not
+stable public APIs or supported installation channels.
 
 ## Fast install on Linux or macOS
 
@@ -15,18 +16,23 @@ under `$HOME/.local/bin`:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 doctor version
 doctor demo
 ```
+
+> [!WARNING]
+> Doctor writes endpoint and run evidence under `.agentapi/` in the current
+> directory. Treat it as private local state and add `.agentapi/` to the
+> downstream project's `.gitignore` before running Doctor there.
 
 The script does not use `sudo`, change shell configuration, or contact an LLM
 endpoint. Read it before execution if piping a script is outside your policy:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fSLO \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh
 less install.sh
 sh install.sh
 ```
@@ -43,7 +49,7 @@ sh install.sh
 Choose an exact release, never a moving `latest` URL:
 
 ```sh
-VERSION='0.1.0-rc.3'
+VERSION='0.1.0'
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 case "$(uname -m)" in
   x86_64|amd64) ARCH=amd64 ;;
@@ -77,7 +83,7 @@ Run these commands in a new empty directory. Select `arm64` only on Windows on
 ARM; otherwise use `amd64`:
 
 ```powershell
-$Version = '0.1.0-rc.3'
+$Version = '0.1.0'
 $Arch = 'amd64'
 $Asset = "agentapi-doctor_${Version}_windows_${Arch}.zip"
 $Base = "https://github.com/whyiug/agentapi-doctor/releases/download/v${Version}"
@@ -101,10 +107,10 @@ archive also contains license, notice, security, and data-policy files.
 ## Source install for contributors
 
 Source installation is a developer alternative, not the default user path. It
-requires the Go version selected by `go.mod` (Go 1.26.5 for this RC):
+requires the Go version selected by `go.mod` (Go 1.26.5 for this release):
 
 ```sh
-go install github.com/whyiug/agentapi-doctor/cmd/doctor@v0.1.0-rc.3
+go install github.com/whyiug/agentapi-doctor/cmd/doctor@v0.1.0
 doctor version
 doctor demo
 ```
@@ -114,7 +120,7 @@ To modify the project, build a checkout instead:
 ```sh
 git clone https://github.com/whyiug/agentapi-doctor.git
 cd agentapi-doctor
-git checkout v0.1.0-rc.3
+git checkout v0.1.0
 mkdir -p ./bin
 go build -trimpath -o ./bin/doctor ./cmd/doctor
 ./bin/doctor demo
@@ -139,6 +145,8 @@ rm "$HOME/.local/bin/doctor"
 ```
 
 On Windows, remove the exact `doctor.exe` you extracted. Local runs are stored
-under the working directory's `.agentapi/` tree; inspect or archive them before
-removing that directory. Uninstalling the CLI does not delete run evidence
-automatically.
+under the working directory's `.agentapi/` tree. It can contain endpoint URLs,
+model content, tool arguments, and redacted evidence, so treat it as private
+local state and add `.agentapi/` to every downstream project's `.gitignore`.
+Inspect or archive it before removal. Uninstalling the CLI does not delete run
+evidence automatically.

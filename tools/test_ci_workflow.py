@@ -1,6 +1,7 @@
-"""Regression checks for the pinned real-SDK Product CI job."""
+"""Regression checks for GitHub workflow dependency and Product CI contracts."""
 
 from pathlib import Path
+import re
 import unittest
 
 
@@ -17,9 +18,9 @@ class ProductCIWorkflowTests(unittest.TestCase):
         workflow = self.workflow()
         self.assertIn("openai-python-sdk:", workflow)
         self.assertIn("runs-on: ubuntu-24.04", workflow)
-        self.assertIn(
-            "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0",
+        self.assertRegex(
             workflow,
+            r"(?m)^\s*uses: actions/setup-python@[0-9a-f]{40} # v[0-9]+\.[0-9]+\.[0-9]+$",
         )
         self.assertIn("python-version: '3.12.12'", workflow)
         self.assertIn("--require-hashes", workflow)
@@ -45,6 +46,31 @@ class ProductCIWorkflowTests(unittest.TestCase):
             "OPENAI_PYTHON_SDK: ${{ needs.openai-python-sdk.result }}", workflow
         )
         self.assertIn('test "$OPENAI_PYTHON_SDK" = success', workflow)
+
+    def test_every_external_action_is_pinned_by_full_commit(self) -> None:
+        action = re.compile(r"^\s*uses:\s+([^\s@]+)@([^\s#]+)(?:\s+#\s+.+)?$")
+        for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+            for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                if "uses:" not in line or "uses: ./" in line:
+                    continue
+                match = action.fullmatch(line)
+                self.assertIsNotNone(match, f"malformed external action at {path}:{number}")
+                self.assertRegex(
+                    match.group(2),
+                    r"^[0-9a-f]{40}$",
+                    f"floating external action at {path}:{number}",
+                )
+
+    def test_every_setup_go_reads_the_single_go_mod_version(self) -> None:
+        setup_count = 0
+        version_file_count = 0
+        for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+            workflow = path.read_text(encoding="utf-8")
+            setup_count += workflow.count("uses: actions/setup-go@")
+            version_file_count += workflow.count("go-version-file: go.mod")
+            self.assertNotRegex(workflow, r"(?m)^\s+go-version:\s*")
+        self.assertGreater(setup_count, 0)
+        self.assertEqual(version_file_count, setup_count)
 
 
 if __name__ == "__main__":

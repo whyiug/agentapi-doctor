@@ -55,7 +55,10 @@ func Run(ctx context.Context, args []string, dependencies Dependencies) int {
 		dependencies.WorkingDir, _ = os.Getwd()
 	}
 	if len(args) == 0 {
-		return writeError(dependencies.Stderr, ExitInput, "missing_command", usage())
+		return writeHelp(dependencies.Stdout, usage())
+	}
+	if path, ok := requestedHelpPath(args); ok {
+		return runHelp(path, dependencies)
 	}
 	select {
 	case <-ctx.Done():
@@ -87,8 +90,6 @@ func Run(ctx context.Context, args []string, dependencies Dependencies) int {
 		return runBaseline(args[1:], dependencies)
 	case "completion":
 		return runCompletion(args[1:], dependencies)
-	case "dev":
-		return runDev(args[1:], dependencies)
 	case "help":
 		return runHelp(args[1:], dependencies)
 	case "--help", "-h":
@@ -306,7 +307,7 @@ Quick paths:
   doctor demo                                  Run four safe local checks
   doctor test --base-url <url> --protocol <id> --model <id>
                                                Check an authorized endpoint
-  doctor report markdown latest --output doctor-report.md
+  doctor report markdown latest --allow-latest --output doctor-report.md
                                                Export the latest saved result
 
 Pinned client case:
@@ -320,30 +321,65 @@ Core commands:
   run        Inspect a saved run
   target     Manage saved target configuration
 
-Other commands: reproduce, init, self-check, compare, baseline, completion, dev, version
-Use "doctor help test", "doctor help demo", "doctor help report", or
-"doctor help reproduce" for examples.`
+Other commands: reproduce, init, self-check, compare, baseline, completion, version
+Use "doctor help <command>" for command-specific usage.`
 }
 
 func runHelp(args []string, dependencies Dependencies) int {
 	if len(args) == 0 {
 		return writeHelp(dependencies.Stdout, usage())
 	}
-	if len(args) != 1 {
-		return writeError(dependencies.Stderr, ExitInput, "invalid_arguments", "usage: doctor help [test|demo|report|reproduce]")
+	if help, ok := commandHelp(strings.Join(args, " ")); ok {
+		return writeHelp(dependencies.Stdout, help)
 	}
-	switch args[0] {
-	case "test":
-		return writeHelp(dependencies.Stdout, testHelp)
-	case "demo":
-		return writeHelp(dependencies.Stdout, demoHelp)
-	case "report":
-		return writeHelp(dependencies.Stdout, reportHelp)
-	case "reproduce":
-		return writeHelp(dependencies.Stdout, reproduceHelp)
-	default:
-		return writeError(dependencies.Stderr, ExitInput, "unknown_help_topic", fmt.Sprintf("unknown help topic %q; available topics: test, demo, report, reproduce", args[0]))
+	return writeError(dependencies.Stderr, ExitInput, "unknown_help_topic", fmt.Sprintf("unknown help topic %q", strings.Join(args, " ")))
+}
+
+func requestedHelpPath(args []string) ([]string, bool) {
+	if len(args) < 2 || (args[len(args)-1] != "--help" && args[len(args)-1] != "-h") {
+		return nil, false
 	}
+	path := append([]string(nil), args[:len(args)-1]...)
+	for _, part := range path {
+		if strings.HasPrefix(part, "-") {
+			return nil, false
+		}
+	}
+	return path, true
+}
+
+func commandHelp(path string) (string, bool) {
+	help := map[string]string{
+		"init": `Usage: doctor init [<directory>]
+
+Create a private .agentapi/config.yaml without overwriting an existing file.`,
+		"self-check": `Usage: doctor self-check [--config <path>]
+
+Validate local configuration and binary identity without network access.`,
+		"target": `Usage: doctor target <add|list|inspect> ...
+
+Manage saved endpoint definitions.`,
+		"target add":                        `Usage: doctor target add <name> --base-url <url> --protocol <id> --model <id> [--auth-ref <secret-ref>] [--config <path>]`,
+		"target list":                       `Usage: doctor target list [--config <path>]`,
+		"target inspect":                    `Usage: doctor target inspect <target> [--config <path>]`,
+		"test":                              testHelp,
+		"demo":                              demoHelp,
+		"reproduce":                         reproduceHelp,
+		"reproduce openai-python-responses": reproduceHelp,
+		"run":                               `Usage: doctor run inspect <run-ref> [--store <path>] [--allow-latest] [--include-plan]`,
+		"run inspect":                       runInspectUsage,
+		"report":                            reportHelp,
+		"compare":                           `Usage: doctor compare [--allow-latest] <run-ref> <run-ref>`,
+		"baseline":                          `Usage: doctor baseline <accept|list|inspect|compare> ...`,
+		"baseline accept":                   `Usage: doctor baseline accept <run-ref> --name <name> [--allow-latest] [--store <path>] [--baseline-dir <path>]`,
+		"baseline list":                     `Usage: doctor baseline list [--baseline-dir <path>]`,
+		"baseline inspect":                  `Usage: doctor baseline inspect <name> [--baseline-dir <path>]`,
+		"baseline compare":                  `Usage: doctor baseline compare <run-ref> --baseline <name> [--allow-latest] [--store <path>] [--baseline-dir <path>]`,
+		"completion":                        `Usage: doctor completion <bash|zsh|fish|powershell>`,
+		"version":                           `Usage: doctor version [--json]`,
+	}
+	value, ok := help[path]
+	return value, ok
 }
 
 func helpRequested(args []string) bool {

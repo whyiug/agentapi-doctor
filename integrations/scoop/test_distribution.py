@@ -43,6 +43,31 @@ class ScoopDistributionTests(unittest.TestCase):
         self.assertTrue(all(value["sha256"] is None for value in candidate["artifacts"].values()))
         schema = json.loads((DIRECTORY / "candidate.schema.json").read_text(encoding="utf-8"))
         self.assertEqual(schema["properties"]["version"]["type"], "null")
+        self.assertEqual(
+            schema["$defs"]["windowsAmd64"]["allOf"][1]["properties"]["archiveTemplate"]["const"],
+            "agentapi-doctor_{version}_windows_amd64.zip",
+        )
+        self.assertEqual(
+            schema["$defs"]["windowsArm64"]["allOf"][1]["properties"]["archiveTemplate"]["const"],
+            "agentapi-doctor_{version}_windows_arm64.zip",
+        )
+
+    def test_windows_archives_are_zip_and_reject_tarball_mutant(self) -> None:
+        candidate = validation.load_json(DIRECTORY / "candidate.json")
+        self.assertTrue(
+            all(value["archiveTemplate"].endswith(".zip") for value in candidate["artifacts"].values())
+        )
+        mutant = json.loads(json.dumps(candidate))
+        mutant["artifacts"]["windows-amd64"]["archiveTemplate"] = (
+            "agentapi-doctor_{version}_windows_amd64.tar.gz"
+        )
+        with self.assertRaises(validation.ValidationError):
+            validation.validate_candidate(mutant)
+        with self.assertRaises(validation.ValidationError):
+            validation.release_url(
+                self.version,
+                f"agentapi-doctor_{self.version}_windows_amd64.tar.gz",
+            )
 
     def test_generator_emits_exact_architecture_urls_and_hashes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

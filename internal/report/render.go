@@ -26,9 +26,16 @@ func Terminal(bundle Bundle) ([]byte, error) {
 	}
 	counts := Count(bundle)
 	var output strings.Builder
-	fmt.Fprintf(&output, "Run: %s\nProfile outcome: %s\n", bundle.RunID, strings.ToUpper(string(bundle.Outcome)))
+	fmt.Fprintf(&output, "Run: %s\nResult: %s\n", bundle.RunID, strings.ToUpper(humanCheckResult(bundle.Outcome)))
 	fmt.Fprintf(&output, "Cases: %d candidate / %d applicable / %d executed\n", bundle.Denominators.CandidateCount, bundle.Denominators.ApplicableCount, bundle.Denominators.ExecutedCount)
 	fmt.Fprintf(&output, "Verdicts: PASS %d | FAIL %d | WARN %d | INCONCLUSIVE %d | SKIPPED %d | ERRORED %d\n", counts.Pass, counts.Fail, counts.Warn, counts.Inconclusive, counts.Skipped, counts.Errored)
+	if len(bundle.Conditions) > 0 {
+		output.WriteString("\nImportant conditions:\n")
+		for _, condition := range bundle.Conditions {
+			fmt.Fprintf(&output, "  [%s] %s\n", safeLine(condition.Code), safeLine(condition.Message))
+		}
+		output.WriteByte('\n')
+	}
 	for _, result := range sortedCases(bundle) {
 		item := presentCase(result)
 		if !item.Detailed {
@@ -202,7 +209,14 @@ func Markdown(bundle Bundle) ([]byte, error) {
 	}
 	counts := Count(bundle)
 	var output strings.Builder
-	fmt.Fprintf(&output, "# AgentAPI Doctor report\n\n- Run: `%s`\n- Profile: `%s@%s`\n- Outcome: **%s**\n- Exit code: `%d`\n\n", bundle.RunID, markdownInline(string(bundle.Profile.Name)), markdownInline(bundle.Profile.Version), strings.ToUpper(string(bundle.Outcome)), bundle.PrimaryExitCode)
+	fmt.Fprintf(&output, "# AgentAPI Doctor report\n\n- Run: `%s`\n- Profile: `%s@%s`\n- Result: **%s**\n- Exit code: `%d`\n\n", bundle.RunID, markdownInline(string(bundle.Profile.Name)), markdownInline(bundle.Profile.Version), humanCheckResult(bundle.Outcome), bundle.PrimaryExitCode)
+	if len(bundle.Conditions) > 0 {
+		output.WriteString("## Important conditions\n\n")
+		for _, condition := range bundle.Conditions {
+			fmt.Fprintf(&output, "- **%s**: %s\n", markdownInline(condition.Code), markdownInline(condition.Message))
+		}
+		output.WriteByte('\n')
+	}
 	fmt.Fprintf(&output, "| Pass | Fail | Warn | Inconclusive | Skipped | Errored |\n|---:|---:|---:|---:|---:|---:|\n| %d | %d | %d | %d | %d | %d |\n\n", counts.Pass, counts.Fail, counts.Warn, counts.Inconclusive, counts.Skipped, counts.Errored)
 	output.WriteString("| Scenario | Disposition | Execution | Verdict | Reason |\n|---|---|---|---|---|\n")
 	for _, result := range sortedCases(bundle) {
@@ -244,9 +258,10 @@ func Markdown(bundle Bundle) ([]byte, error) {
 var htmlReportTemplate = template.Must(template.New("report").Parse(`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
-<title>AgentAPI Doctor report</title><style>body{font:15px system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#161616}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:.45rem;text-align:left;vertical-align:top}code{overflow-wrap:anywhere}.pass{color:#086b2d}.fail{color:#a40000}.muted{color:#555}.diagnostic{border-left:4px solid #a40000;background:#f7f7f7;margin:1rem 0;padding:.25rem 1rem}.diagnostic h2{font-size:1.1rem}.diagnostic dt{font-weight:700;margin-top:.5rem}.diagnostic dd{margin-left:0}</style></head>
-<body><h1>AgentAPI Doctor report</h1><p><strong>Run:</strong> <code>{{.RunID}}</code><br><strong>Profile:</strong> <code>{{.Profile.Name}}@{{.Profile.Version}}</code><br><strong>Outcome:</strong> {{.Outcome}}</p>
+<title>AgentAPI Doctor report</title><style>body{font:15px system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#161616}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:.45rem;text-align:left;vertical-align:top}code{overflow-wrap:anywhere}.pass{color:#086b2d}.fail{color:#a40000}.muted{color:#555}.conditions{border:2px solid #8a5a00;background:#fff8e6;margin:1rem 0;padding:.25rem 1rem}.conditions h2{font-size:1.1rem}.diagnostic{border-left:4px solid #a40000;background:#f7f7f7;margin:1rem 0;padding:.25rem 1rem}.diagnostic h2{font-size:1.1rem}.diagnostic dt{font-weight:700;margin-top:.5rem}.diagnostic dd{margin-left:0}</style></head>
+<body><h1>AgentAPI Doctor report</h1><p><strong>Run:</strong> <code>{{.RunID}}</code><br><strong>Profile:</strong> <code>{{.Profile.Name}}@{{.Profile.Version}}</code><br><strong>Result:</strong> {{.CheckResult}}</p>
 <p class="muted">Candidate {{.Denominators.CandidateCount}}, applicable {{.Denominators.ApplicableCount}}, executed {{.Denominators.ExecutedCount}}. This report is an observation, not vendor certification.</p>
+{{if .PresentedConditions}}<section class="conditions"><h2>Important conditions</h2><ul>{{range .PresentedConditions}}<li><strong><code>{{.Code}}</code></strong>: {{.Message}}</li>{{end}}</ul></section>{{end}}
 <table><thead><tr><th>Scenario</th><th>Disposition</th><th>Execution</th><th>Verdict</th><th>Reason</th></tr></thead><tbody>{{range .Cases}}<tr><td>{{if .Detailed}}<strong>{{.ScenarioName}}</strong><br>{{end}}<code>{{.ScenarioID}}</code></td><td>{{.PlanDisposition}}</td><td>{{.ExecutionStatus}}</td><td>{{.Label}}</td><td>{{.Reason}}</td></tr>{{end}}</tbody></table>
 {{range .Cases}}{{if .Detailed}}<section class="diagnostic"><h2>{{.Label}} — {{.ScenarioName}}</h2><dl><dt>Scenario ID</dt><dd><code>{{.ScenarioID}}</code></dd>{{if not .Findings}}<dt>Finding category</dt><dd>{{.Category}}</dd><dt>Fault domain</dt><dd>{{.FaultDomain}}</dd>{{end}}{{if .Reason}}<dt>Reason</dt><dd>{{.Reason}}</dd>{{end}}{{if .NextAction}}<dt>Next action</dt><dd>{{.NextAction}}</dd>{{end}}</dl>
 {{range .Assertions}}<p><strong>Assertion <code>{{.ID}}</code></strong><br><strong>Expected:</strong> {{.Expected}}<br><strong>Observed:</strong> {{.Observed}}</p>{{end}}
@@ -256,7 +271,10 @@ func HTML(bundle Bundle) ([]byte, error) {
 	if err := bundle.Validate(); err != nil {
 		return nil, err
 	}
-	view := htmlReportView{Bundle: bundle}
+	view := htmlReportView{Bundle: bundle, CheckResult: humanCheckResult(bundle.Outcome)}
+	for _, condition := range bundle.Conditions {
+		view.PresentedConditions = append(view.PresentedConditions, Condition{Code: safeLine(condition.Code), Message: safeLine(condition.Message)})
+	}
 	for _, result := range sortedCases(bundle) {
 		view.Cases = append(view.Cases, presentCase(result))
 	}
@@ -321,7 +339,24 @@ func markdownCell(value string) string { return strings.ReplaceAll(markdownInlin
 
 type htmlReportView struct {
 	Bundle
-	Cases []casePresentation
+	CheckResult         string
+	PresentedConditions []Condition
+	Cases               []casePresentation
+}
+
+func humanCheckResult(outcome schema.ProfileOutcome) string {
+	switch outcome {
+	case schema.ProfileCompatible:
+		return "checks passed"
+	case schema.ProfileDegraded:
+		return "checks passed with warnings"
+	case schema.ProfileIncompatible:
+		return "checks failed"
+	case schema.ProfileInconclusive:
+		return "checks inconclusive"
+	default:
+		return "checks inconclusive"
+	}
 }
 
 type casePresentation struct {

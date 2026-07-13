@@ -22,13 +22,22 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
+          dependabot_author='dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>'
+          dependabot_signoff='Signed-off-by: dependabot[bot] <support@github.com>'
           git rev-list --reverse "$BASE_SHA..$HEAD_SHA" > "$RUNNER_TEMP/commits"
           test -s "$RUNNER_TEMP/commits"
           while IFS= read -r commit; do
             author="$(git show -s --format='%an <%ae>' "$commit")"
-            git show -s --format=%B "$commit" | grep -Fqx "Signed-off-by: $author" || {
-              echo "::error::commit $commit lacks exact DCO sign-off for $author"
-              exit 1
-            }
+            if git show -s --format=%B "$commit" | grep -Fqx "Signed-off-by: $author"; then
+              continue
+            fi
+            if test "$PR_AUTHOR" = 'dependabot[bot]' && \
+               test "$author" = "$dependabot_author" && \
+               git show -s --format=%B "$commit" | grep -Fqx "$dependabot_signoff"; then
+              continue
+            fi
+            echo "::error::commit $commit lacks an authorized exact DCO sign-off for $author"
+            exit 1
           done < "$RUNNER_TEMP/commits"

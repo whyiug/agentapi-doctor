@@ -6,13 +6,17 @@ Install one binary, run a credential-free demo, then check any authorized local,
 private-network, or remote endpoint. No project initialization or YAML is
 required.
 
-## 1. Install the release candidate
+`v0.1.0` is the stable Doctor distribution. The project remains pre-1.0, so
+Go packages, experimental schemas, Registry, driver, and pack interfaces are
+not stable public APIs unless the release documentation explicitly says so.
+
+## 1. Install v0.1.0
 
 On Linux or macOS:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
@@ -21,14 +25,14 @@ against that release's `checksums.txt` before extraction. To inspect it first:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fSLO \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh
 less install.sh
 sh install.sh
 ```
 
-Windows users can download `agentapi-doctor_0.1.0-rc.3_windows_amd64.zip` or
-`agentapi-doctor_0.1.0-rc.3_windows_arm64.zip` from
-[v0.1.0-rc.3](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.3).
+Windows users can download `agentapi-doctor_0.1.0_windows_amd64.zip` or
+`agentapi-doctor_0.1.0_windows_arm64.zip` from
+[v0.1.0](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0).
 See [Installation](installation.md) for exact PowerShell checksum and extraction
 steps.
 
@@ -45,13 +49,24 @@ returning. It makes no external request and needs no credential.
 Expected summary:
 
 ```text
-Profile outcome: COMPATIBLE
+Result: CHECKS PASSED
 Cases: 4 candidate / 4 applicable / 4 executed
 Verdicts: PASS 4 | FAIL 0 | WARN 0 | INCONCLUSIVE 0 | SKIPPED 0 | ERRORED 0
+Important conditions:
+  [candidate_interpretations_pending_review] Candidate raw-wire interpretations; not certification.
 ```
 
 This validates the installed CLI and exact synthetic fixture, not another
 endpoint.
+
+> [!WARNING]
+> Doctor writes run evidence beneath `.agentapi/` in the current directory.
+> Treat it as private local state and add this entry to every downstream
+> project's `.gitignore` before running Doctor there:
+
+```gitignore
+.agentapi/
+```
 
 ## 3. Check an authorized endpoint
 
@@ -90,11 +105,21 @@ Requests remain on the configured origin and redirects are not followed.
 
 ## Read and share a result
 
-FAIL/WARN/INCONCLUSIVE cases show a human-readable check name plus expected and
-observed behavior. When the evidence supports a finding, the report also shows
-its fault domain and remediation; otherwise it explicitly says no domain was
-attributed and gives the next review step. The terminal prints the exact export
-command after every run. For example:
+`CHECKS FAILED`, WARN, and INCONCLUSIVE results show a human-readable check name
+plus expected and observed behavior. When the evidence supports a finding, the
+report also shows its fault domain and remediation; otherwise it explicitly
+says no domain was attributed and gives the next review step. The terminal
+keeps the candidate interpretation boundary visible when a check fails:
+
+```text
+Result: CHECKS FAILED
+Cases: 4 candidate / 4 applicable / 4 executed
+Verdicts: PASS 3 | FAIL 1 | WARN 0 | INCONCLUSIVE 0 | SKIPPED 0 | ERRORED 0
+Important conditions:
+  [candidate_interpretations_pending_review] Candidate raw-wire interpretations; not certification.
+```
+
+It also prints the exact export command after every run. For example:
 
 ```sh
 doctor report markdown '<run-id>' --output doctor-report.md
@@ -112,7 +137,7 @@ Each endpoint run:
 - uses one **60-second deadline**;
 - requests **64 output tokens** for structural checks and **512** for the
   OpenAI Chat/Responses terminal-status check; and
-- stores evidence and the run record beneath `.agentapi/`.
+- stores evidence and the run record beneath the private `.agentapi/` tree.
 
 The requested maximum is 704 output tokens for one four-request Chat or
 Responses run and 256 for Anthropic Messages. The output-token field is a

@@ -1,5 +1,38 @@
-schemaVersion: urn:agentapi-doctor:migration-floor:v1alpha1
+schemaVersion: urn:agentapi-doctor:migration-floor:v1
 kind: MigrationFloor
-status: provisional
-preStableArtifacts: []
-note: No pre-1.0 artifact has been promised as a stable public compatibility floor.
+release: v0.1.0
+status: supported
+supportedRead:
+  - artifact: local-run-record
+    schemaVersions:
+      - urn:agentapi-doctor:local-run-record:v1alpha1
+      - urn:agentapi-doctor:local-run-record:v1alpha2
+    writeVersion: urn:agentapi-doctor:local-run-record:v1alpha2
+  - artifact: report-bundle
+    schemaVersions:
+      - urn:agentapi-doctor:report-bundle:v1alpha1
+      - urn:agentapi-doctor:report-bundle:v1alpha2
+    writeVersion: urn:agentapi-doctor:report-bundle:v1alpha2
+  - artifact: persisted-plan
+    schemaVersions:
+      - urn:agentapi-doctor:local-plan-snapshot:v1alpha1
+    writeVersion: urn:agentapi-doctor:local-plan-snapshot:v1alpha1
+  - artifact: baseline
+    schemaVersions:
+      - unversioned-v0.1.0-rc
+      - urn:agentapi-doctor:baseline:v1
+    writeVersion: urn:agentapi-doctor:baseline:v1
+  - artifact: cli-result
+    schemaVersions:
+      - urn:agentapi-doctor:cli-result:v1alpha1
+    writeVersion: urn:agentapi-doctor:cli-result:v1alpha1
+manualMigration:
+  - artifact: config
+    from: urn:agentapi-doctor:config:v1beta1
+    to: urn:agentapi-doctor:config:v1beta2
+    action: remove top-level defaults and update apiVersion
+currentWrite:
+  config: urn:agentapi-doctor:config:v1beta2
+notes:
+  - Read compatibility does not imply baseline comparability across changed immutable digests.
+  - Candidate pack interpretations remain pending independent review.

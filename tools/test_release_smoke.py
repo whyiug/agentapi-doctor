@@ -158,9 +158,10 @@ case "$1" in
     ;;
   demo)
     printf '%s\\n' \\
-      'Profile outcome: COMPATIBLE' \\
+      'Result: CHECKS PASSED' \\
       'Cases: 4 candidate / 4 applicable / 4 executed' \\
-      'Verdicts: PASS 4 | FAIL 0 | WARN 0 | INCONCLUSIVE 0 | SKIPPED 0 | ERRORED 0'
+      'Verdicts: PASS 4 | FAIL 0 | WARN 0 | INCONCLUSIVE 0 | SKIPPED 0 | ERRORED 0' \\
+      'candidate_interpretations_pending_review'
     ;;
   *) exit 2 ;;
 esac

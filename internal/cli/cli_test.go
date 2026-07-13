@@ -117,15 +117,19 @@ func TestQuickPathHelpIsSuccessfulAndSideEffectFree(t *testing.T) {
 		args     []string
 		contains []string
 	}{
-		{name: "general help", args: []string{"help"}, contains: []string{"Quick paths:", "doctor demo", "doctor help test"}},
+		{name: "general help", args: []string{"help"}, contains: []string{"Quick paths:", "doctor demo", "doctor help <command>"}},
 		{name: "test topic", args: []string{"help", "test"}, contains: []string{"Check one authorized endpoint", "--base-url", "--auth-env"}},
 		{name: "demo topic", args: []string{"help", "demo"}, contains: []string{"four compatibility checks", "no API key"}},
-		{name: "report topic", args: []string{"help", "report"}, contains: []string{"Export a saved run", "markdown latest"}},
+		{name: "report topic", args: []string{"help", "report"}, contains: []string{"Export a saved run", "markdown latest", "[--allow-latest]"}},
 		{name: "reproduce topic", args: []string{"help", "reproduce"}, contains: []string{"pinned real-SDK", "never reads an API key"}},
 		{name: "test flag", args: []string{"test", "--help"}, contains: []string{"Check one authorized endpoint", "--plan-only"}},
 		{name: "demo flag", args: []string{"demo", "--help"}, contains: []string{"four compatibility checks", "doctor demo"}},
 		{name: "report flag", args: []string{"report", "--help"}, contains: []string{"Formats: terminal", "doctor-report.md"}},
 		{name: "reproduce flag", args: []string{"reproduce", "--help"}, contains: []string{"OpenAI Python SDK 2.38.0", "maintainer-ready bundle"}},
+		{name: "version flag", args: []string{"version", "--help"}, contains: []string{"doctor version", "--json"}},
+		{name: "target flag", args: []string{"target", "--help"}, contains: []string{"doctor target", "add|list|inspect"}},
+		{name: "nested target flag", args: []string{"target", "add", "--help"}, contains: []string{"doctor target add", "--base-url"}},
+		{name: "baseline flag", args: []string{"baseline", "compare", "--help"}, contains: []string{"doctor baseline compare", "--allow-latest"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -142,6 +146,22 @@ func TestQuickPathHelpIsSuccessfulAndSideEffectFree(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(directory, ".agentapi")); !os.IsNotExist(err) {
 		t.Fatalf("help command created runtime data: %v", err)
+	}
+	code, stdout, stderr := runRawWithDependencies(t, Dependencies{WorkingDir: directory}, []string{}...)
+	if code != ExitSuccess || stderr != "" || !strings.Contains(stdout, "doctor <command>") {
+		t.Fatalf("empty invocation did not print readable help: code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+}
+
+func TestReportParseErrorsRetainCompleteUsage(t *testing.T) {
+	for _, args := range [][]string{
+		{"report", "terminal"},
+		{"report", "terminal", "run-id", "--unknown"},
+	} {
+		code, output := run(t, t.TempDir(), args...)
+		if code != ExitInput || len(output.Conditions) != 1 || output.Conditions[0].Message != reportUsage {
+			t.Fatalf("incomplete report usage: code=%d output=%#v", code, output)
+		}
 	}
 }
 
@@ -184,7 +204,19 @@ func TestRunInspectAndOfflineReport(t *testing.T) {
 	if _, err := runs.Put(id, runstore.Payload{Bundle: encoded, Plan: planJSON}); err != nil {
 		t.Fatal(err)
 	}
-	code, output := run(t, directory, "run", "inspect", "latest")
+	if code, rejected := run(t, directory, "run", "inspect", "latest"); code != ExitInput || rejected.PrimaryExitCode != ExitInput {
+		t.Fatalf("latest was accepted without explicit opt-in: %#v", rejected)
+	}
+	for name, args := range map[string][]string{
+		"report":          {"report", "terminal", "latest"},
+		"baseline accept": {"baseline", "accept", "latest", "--name", "main"},
+		"compare":         {"compare", "latest", string(id)},
+	} {
+		if rejectedCode, rejected := run(t, directory, args...); rejectedCode != ExitInput || rejected.PrimaryExitCode != ExitInput {
+			t.Fatalf("%s accepted latest without explicit opt-in: %#v", name, rejected)
+		}
+	}
+	code, output := run(t, directory, "run", "inspect", "latest", "--allow-latest")
 	if code != ExitSuccess || output.Status != "pass" {
 		t.Fatalf("inspect=%#v", output)
 	}
@@ -195,7 +227,7 @@ func TestRunInspectAndOfflineReport(t *testing.T) {
 	if _, exposed := data["plan"]; exposed {
 		t.Fatalf("inspect exposed plan without --include-plan: %#v", data)
 	}
-	code, included := run(t, directory, "run", "inspect", "latest", "--include-plan")
+	code, included := run(t, directory, "run", "inspect", "latest", "--allow-latest", "--include-plan")
 	if code != ExitSuccess || included.Status != "pass" {
 		t.Fatalf("inspect include-plan=%#v", included)
 	}
@@ -206,7 +238,7 @@ func TestRunInspectAndOfflineReport(t *testing.T) {
 		t.Fatalf("included plan lost exact base URL: %#v", includedTarget)
 	}
 	outputPath := filepath.Join(directory, "report.html")
-	if code, output := run(t, directory, "report", "html", "latest", "--output", outputPath); code != ExitSuccess || output.Status != "pass" {
+	if code, output := run(t, directory, "report", "html", "latest", "--allow-latest", "--output", outputPath); code != ExitSuccess || output.Status != "pass" {
 		t.Fatalf("report=%#v", output)
 	}
 	html, err := os.ReadFile(outputPath)
@@ -215,6 +247,12 @@ func TestRunInspectAndOfflineReport(t *testing.T) {
 	}
 	if !bytes.Contains(html, []byte("Content-Security-Policy")) {
 		t.Fatalf("unsafe report: %s", html)
+	}
+	if code, accepted := run(t, directory, "baseline", "accept", "latest", "--allow-latest", "--name", "main"); code != ExitSuccess || accepted.Status != "pass" {
+		t.Fatalf("baseline explicit latest opt-in failed: %#v", accepted)
+	}
+	if code, rejected := run(t, directory, "baseline", "compare", "latest", "--baseline", "main"); code != ExitInput || rejected.PrimaryExitCode != ExitInput {
+		t.Fatalf("baseline compare accepted latest without explicit opt-in: %#v", rejected)
 	}
 }
 
@@ -335,22 +373,11 @@ func TestRunInspectRejectsSemanticallyInvalidPersistedPlan(t *testing.T) {
 	}
 }
 
-func TestCompletionAndScaffold(t *testing.T) {
+func TestCompletion(t *testing.T) {
 	directory := t.TempDir()
 	var stdout, stderr bytes.Buffer
 	if code := Run(context.Background(), []string{"completion", "bash"}, Dependencies{Stdout: &stdout, Stderr: &stderr, WorkingDir: directory}); code != ExitSuccess || !bytes.Contains(stdout.Bytes(), []byte("complete -F")) {
 		t.Fatalf("code=%d out=%q err=%q", code, stdout.String(), stderr.String())
-	}
-	code, output := run(t, directory, "dev", "scaffold", "scenario", "sample.case", "--output", "drafts")
-	if code != ExitSuccess || output.Status != "pass" {
-		t.Fatalf("scaffold=%#v", output)
-	}
-	path := filepath.Join(directory, "drafts", "sample.case.yaml")
-	if _, err := os.Stat(path); err != nil {
-		t.Fatal(err)
-	}
-	if code, _ := run(t, directory, "dev", "scaffold", "scenario", "sample.case", "--output", "drafts"); code != ExitInput {
-		t.Fatalf("existing scaffold code=%d", code)
 	}
 }
 
@@ -409,7 +436,7 @@ func TestTestReferencePassesAndPersistsReport(t *testing.T) {
 	if code != ExitSuccess || output.Status != "pass" {
 		t.Fatalf("test result=%#v", output)
 	}
-	if code, inspected := run(t, directory, "run", "inspect", "latest"); code != ExitSuccess || inspected.Status != "pass" {
+	if code, inspected := run(t, directory, "run", "inspect", "latest", "--allow-latest"); code != ExitSuccess || inspected.Status != "pass" {
 		t.Fatalf("persisted run=%#v", inspected)
 	}
 }
@@ -431,7 +458,7 @@ func TestTestTargetedMutantReturnsFailureAndKeepsReport(t *testing.T) {
 	if code != ExitTargetFailure || output.Status != "fail" || output.PrimaryExitCode != ExitTargetFailure {
 		t.Fatalf("mutant result=%#v code=%d", output, code)
 	}
-	if code, inspected := run(t, directory, "run", "inspect", "latest"); code != ExitSuccess || inspected.Status != "pass" {
+	if code, inspected := run(t, directory, "run", "inspect", "latest", "--allow-latest"); code != ExitSuccess || inspected.Status != "pass" {
 		t.Fatalf("failed run was not persisted: %#v", inspected)
 	}
 }
@@ -527,7 +554,7 @@ func TestTestInlineReferencePassesWithoutConfigAndRedactsSecret(t *testing.T) {
 	if bytes.Contains(persisted.Bytes(), []byte(referenceserver.SyntheticBearerToken)) {
 		t.Fatal("resolved inline credential reached evidence or run persistence")
 	}
-	code, inspected := run(t, directory, "run", "inspect", "latest")
+	code, inspected := run(t, directory, "run", "inspect", "latest", "--allow-latest")
 	if code != ExitSuccess || inspected.Status != "pass" {
 		t.Fatalf("inline run was not inspectable: code=%d result=%#v", code, inspected)
 	}
@@ -538,7 +565,7 @@ func TestTestInlineReferencePassesWithoutConfigAndRedactsSecret(t *testing.T) {
 	if _, exposed := inspectData["plan"]; exposed {
 		t.Fatalf("inline inspect exposed plan by default: %#v", inspectData)
 	}
-	code, included := run(t, directory, "run", "inspect", "latest", "--include-plan")
+	code, included := run(t, directory, "run", "inspect", "latest", "--allow-latest", "--include-plan")
 	if code != ExitSuccess || included.Status != "pass" {
 		t.Fatalf("inline include-plan failed: code=%d result=%#v", code, included)
 	}
@@ -596,7 +623,7 @@ func TestTestInlineCustomHeaderDefaultsToTerminal(t *testing.T) {
 	if code != ExitSuccess || stderr != "" || requests.Load() != 4 || unexpectedAuthorization.Load() {
 		t.Fatalf("code=%d requests=%d auth=%t stdout=%q stderr=%q", code, requests.Load(), unexpectedAuthorization.Load(), stdout, stderr)
 	}
-	if !strings.Contains(stdout, "Profile outcome: COMPATIBLE") || !strings.Contains(stdout, "Verdicts: PASS 4") {
+	if !strings.Contains(stdout, "Result: CHECKS PASSED") || !strings.Contains(stdout, "Verdicts: PASS 4") || !strings.Contains(stdout, "candidate_interpretations_pending_review") {
 		t.Fatalf("inline terminal report is not readable or complete:\n%s", stdout)
 	}
 	if strings.HasPrefix(strings.TrimSpace(stdout), "{") {
@@ -888,7 +915,7 @@ func TestDemoRunsFourChecksPersistsAndAutomaticallyStopsServer(t *testing.T) {
 	if !stopped.Load() {
 		t.Fatal("demo returned without stopping its in-process server")
 	}
-	if !strings.Contains(stdout.String(), "Profile outcome: COMPATIBLE") || !strings.Contains(stdout.String(), "Verdicts: PASS 4") {
+	if !strings.Contains(stdout.String(), "Result: CHECKS PASSED") || !strings.Contains(stdout.String(), "Verdicts: PASS 4") || !strings.Contains(stdout.String(), "candidate_interpretations_pending_review") {
 		t.Fatalf("demo did not complete all four checks:\n%s", stdout.String())
 	}
 	passRows := 0
@@ -911,7 +938,7 @@ func TestDemoRunsFourChecksPersistsAndAutomaticallyStopsServer(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(directory, ".agentapi", "config.yaml")); !os.IsNotExist(err) {
 		t.Fatalf("demo created config: %v", err)
 	}
-	code, inspected := run(t, directory, "run", "inspect", "latest")
+	code, inspected := run(t, directory, "run", "inspect", "latest", "--allow-latest")
 	if code != ExitSuccess || inspected.Status != "pass" {
 		t.Fatalf("demo run was not persisted: code=%d result=%#v", code, inspected)
 	}
@@ -922,7 +949,7 @@ func TestDemoRunsFourChecksPersistsAndAutomaticallyStopsServer(t *testing.T) {
 	if _, exposed := inspectData["plan"]; exposed {
 		t.Fatalf("demo inspect exposed plan by default: %#v", inspectData)
 	}
-	code, included := run(t, directory, "run", "inspect", "latest", "--include-plan")
+	code, included := run(t, directory, "run", "inspect", "latest", "--allow-latest", "--include-plan")
 	if code != ExitSuccess || included.Status != "pass" {
 		t.Fatalf("demo include-plan failed: code=%d result=%#v", code, included)
 	}
@@ -984,7 +1011,7 @@ func TestDemoStopFailureCannotReturnPass(t *testing.T) {
 			code := runDemoWithServer(context.Background(), arguments, Dependencies{
 				WorkingDir: directory, Stdout: &stdout, Stderr: &stderr,
 			}, starter)
-			if code != ExitInfrastructure || stdout.Len() != 0 || strings.Contains(stderr.String(), "Profile outcome: COMPATIBLE") {
+			if code != ExitInfrastructure || stdout.Len() != 0 || strings.Contains(stderr.String(), "Result: CHECKS PASSED") {
 				t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 			}
 			if test.json {

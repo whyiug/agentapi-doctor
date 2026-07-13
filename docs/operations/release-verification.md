@@ -2,16 +2,20 @@
 
 ## Publication status
 
-The current supported binary channel is `v0.1.0-rc.3`. Treat it as published only
-when the exact tag has a non-draft entry on the project's
+The current supported binary channel is `v0.1.0`. Treat it as published only
+when the exact tag has a non-draft, non-prerelease entry on the project's
 [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases) page with
 the complete asset set below. If that entry is absent, use the developer source
 path in [Installation](../installation.md#source-install-for-contributors).
 Never substitute a guessed version or checksum into these commands.
 
-The first release publishes only the `doctor` CLI. Registry,
+The v0.1.0 release publishes only the `doctor` CLI. Registry,
 reference-server, OCI, Homebrew, Scoop, composite Action, and reusable-workflow
 files in the repository remain unpublished development candidates.
+
+This is a stable Doctor distribution, not a 1.0 API declaration. Experimental
+Go packages, schemas outside the declared migration floor, packs, drivers, and
+Registry interfaces remain pre-1.0 contracts.
 
 ## Exact release asset set
 
@@ -63,7 +67,7 @@ Set explicit values only after the release page exists. Use `tar.gz` for Linux
 and macOS and `zip` for Windows.
 
 ```bash
-VERSION='0.1.0-rc.3'
+VERSION='0.1.0'
 TARGET_OS='linux'
 TARGET_ARCH='amd64'
 EXTENSION='tar.gz'
@@ -156,9 +160,24 @@ doctor version --json
 doctor demo
 ```
 
+The human-readable demo summary includes both the check outcome and the
+candidate interpretation boundary:
+
+```text
+Result: CHECKS PASSED
+Cases: 4 candidate / 4 applicable / 4 executed
+Verdicts: PASS 4 | FAIL 0 | WARN 0 | INCONCLUSIVE 0 | SKIPPED 0 | ERRORED 0
+Important conditions:
+  [candidate_interpretations_pending_review] Candidate raw-wire interpretations; not certification.
+```
+
 The demo is credential-free, uses only a temporary loopback listener, and
-removes that listener when the process exits. It writes redacted local evidence
-under `.agentapi/` in the current directory.
+removes that listener when the process exits.
+
+> [!WARNING]
+> Doctor writes redacted local evidence under `.agentapi/` in the current
+> directory. Treat it as private local state and add `.agentapi/` to the
+> downstream project's `.gitignore`.
 
 To uninstall a manually copied release, remove only the exact executable path
 you installed. Inspect or archive `.agentapi/` separately before deleting local

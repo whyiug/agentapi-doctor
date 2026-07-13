@@ -1,8 +1,6 @@
 module github.com/whyiug/agentapi-doctor
 
-go 1.26.0
-
-toolchain go1.26.5
+go 1.26.5
 
 require (
 	github.com/google/cel-go v0.29.2

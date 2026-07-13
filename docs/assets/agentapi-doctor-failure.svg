@@ -20,7 +20,7 @@
   <text x="174" y="76" fill="#aab9d4" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18">doctor test · synthetic missing-terminal-event</text>
 
   <text x="82" y="139" fill="#8292ad" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="17">$ doctor test --protocol openai-responses ...</text>
-  <text x="82" y="183" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="22" font-weight="700">Profile outcome: INCOMPATIBLE</text>
+  <text x="82" y="183" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="22" font-weight="700">Result: CHECKS FAILED</text>
   <text x="82" y="217" fill="#aab9d4" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="17">4 checks · 3 pass · 1 targeted fail · exit 1</text>
 
   <rect x="82" y="246" width="1036" height="58" rx="10" fill="#102d2a" stroke="#1f7664"/>
@@ -36,8 +36,8 @@
   <text x="824" y="389" fill="#aab9d4" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">STREAM_STATE_MACHINE</text>
 
   <rect x="82" y="437" width="1036" height="70" rx="10" fill="#17233b" stroke="#344766"/>
-  <text x="105" y="469" fill="#aab9d4" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16">Evidence saved locally · secret-redacted · content-addressed</text>
-  <text x="105" y="493" fill="#7dd3fc" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">Next: doctor report markdown &lt;run-id&gt; --output doctor-report.md</text>
+  <text x="105" y="469" fill="#fbbf24" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">candidate_interpretations_pending_review · not certification</text>
+  <text x="105" y="493" fill="#7dd3fc" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">Evidence saved locally · secret-redacted · content-addressed</text>
 
-  <text x="82" y="548" fill="#8292ad" font-family="system-ui, sans-serif" font-size="15">Real deterministic output from a checked-in loopback fixture · no API key · no external endpoint</text>
+  <text x="82" y="548" fill="#8292ad" font-family="system-ui, sans-serif" font-size="15">Deterministic visualization of a checked-in loopback fixture · no API key · no external endpoint</text>
 </svg>

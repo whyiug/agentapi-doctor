@@ -1,30 +1,11 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
-<title>AgentAPI Doctor report</title>
-<style>body{font:15px system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#161616}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:.45rem;text-align:left;vertical-align:top}code{overflow-wrap:anywhere}.pass{color:#086b2d}.fail{color:#a40000}.muted{color:#555}.diagnostic{border-left:4px solid #a40000;background:#f7f7f7;margin:1rem 0;padding:.25rem 1rem}.diagnostic h2{font-size:1.1rem}.diagnostic dt{font-weight:700;margin-top:.5rem}.diagnostic dd{margin-left:0}</style>
-</head>
-<body>
-<h1>AgentAPI Doctor report</h1>
-<p><strong>Run:</strong> <code>019f576c-2ece-79d2-a2ca-73bf2cf5c9b6</code><br><strong>Profile:</strong> <code>builtin-openai-responses-raw-candidate@0.1.0-candidate.2</code><br><strong>Outcome:</strong> incompatible</p>
+<title>AgentAPI Doctor report</title><style>body{font:15px system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#161616}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:.45rem;text-align:left;vertical-align:top}code{overflow-wrap:anywhere}.pass{color:#086b2d}.fail{color:#a40000}.muted{color:#555}.conditions{border:2px solid #8a5a00;background:#fff8e6;margin:1rem 0;padding:.25rem 1rem}.conditions h2{font-size:1.1rem}.diagnostic{border-left:4px solid #a40000;background:#f7f7f7;margin:1rem 0;padding:.25rem 1rem}.diagnostic h2{font-size:1.1rem}.diagnostic dt{font-weight:700;margin-top:.5rem}.diagnostic dd{margin-left:0}</style></head>
+<body><h1>AgentAPI Doctor report</h1><p><strong>Run:</strong> <code>019f5b18-5e8b-77a9-bd82-bca800d63110</code><br><strong>Profile:</strong> <code>builtin-openai-responses-raw-candidate@0.1.0-candidate.3</code><br><strong>Result:</strong> checks failed</p>
 <p class="muted">Candidate 4, applicable 4, executed 4. This report is an observation, not vendor certification.</p>
-<table>
-<thead><tr><th>Scenario</th><th>Disposition</th><th>Execution</th><th>Verdict</th><th>Reason</th></tr></thead>
-<tbody>
-<tr><td><code>openai-responses-http-008-stream-media-type</code></td><td>execute</td><td>completed</td><td>PASS</td><td></td></tr>
-<tr><td><code>openai-responses-http-014-required-response-envelope</code></td><td>execute</td><td>completed</td><td>PASS</td><td></td></tr>
-<tr><td><strong>Terminal Exactly Once</strong><br><code>openai-responses-http-030-terminal-exactly-once</code></td><td>execute</td><td>completed</td><td>FAIL</td><td></td></tr>
-<tr><td><code>openai-responses-http-039-terminal-status</code></td><td>execute</td><td>completed</td><td>PASS</td><td></td></tr>
-</tbody>
-</table>
-<section class="diagnostic">
-<h2>FAIL — Terminal Exactly Once</h2>
-<dl><dt>Scenario ID</dt><dd><code>openai-responses-http-030-terminal-exactly-once</code></dd></dl>
+<section class="conditions"><h2>Important conditions</h2><ul><li><strong><code>candidate_interpretations_pending_review</code></strong>: This client-side raw-wire slice uses candidate Requirement Catalog interpretations pending independent review; it does not establish a support tier or vendor certification.</li><li><strong><code>provider_usage_unknown</code></strong>: Token usage was unavailable for one or more attempts (fields: input_tokens, output_tokens). Known estimates were used for enforcement where available; these values are not observed zeroes.</li></ul></section>
+<table><thead><tr><th>Scenario</th><th>Disposition</th><th>Execution</th><th>Verdict</th><th>Reason</th></tr></thead><tbody><tr><td><code>openai-responses-http-008-stream-media-type</code></td><td>execute</td><td>completed</td><td>PASS</td><td></td></tr><tr><td><code>openai-responses-http-014-required-response-envelope</code></td><td>execute</td><td>completed</td><td>PASS</td><td></td></tr><tr><td><strong>Terminal Exactly Once</strong><br><code>openai-responses-http-030-terminal-exactly-once</code></td><td>execute</td><td>completed</td><td>FAIL</td><td></td></tr><tr><td><code>openai-responses-http-039-terminal-status</code></td><td>execute</td><td>completed</td><td>PASS</td><td></td></tr></tbody></table>
+<section class="diagnostic"><h2>FAIL — Terminal Exactly Once</h2><dl><dt>Scenario ID</dt><dd><code>openai-responses-http-030-terminal-exactly-once</code></dd></dl>
 <p><strong>Assertion <code>builtin.openai-responses-http-030-terminal-exactly-once</code></strong><br><strong>Expected:</strong> 1<br><strong>Observed:</strong> 0</p>
-<p><strong>Finding category:</strong> terminal_event_count<br><strong>Fault domain:</strong> STREAM_STATE_MACHINE<br><strong>Remediation:</strong> conform the emitted response to the cited requirement and preserve the failing exchange as a regression fixture</p>
-</section>
-</body>
-</html>
+<p><strong>Finding category:</strong> terminal_event_count<br><strong>Fault domain:</strong> STREAM_STATE_MACHINE<br><strong>Remediation:</strong> conform the emitted response to the cited requirement and preserve the failing exchange as a regression fixture</p></section></body></html>

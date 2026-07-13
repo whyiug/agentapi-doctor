@@ -14,7 +14,7 @@ local OS, architecture, Go runtime, and binary digest when available.
 
 ## The release download returns 404
 
-Confirm the exact `v0.1.0-rc.3` entry is visible on
+Confirm the exact `v0.1.0` entry is visible on
 [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases) and use
 its exact asset name. There is no moving package-manager channel. If the release
 entry is not yet public, use the contributor source path in
@@ -24,7 +24,7 @@ unpublished candidates.
 
 ## `doctor` is not found after `make build`
 
-`make build` compile-checks the supported commands; it does not install them or
+`make build` compile-checks repository commands; it does not install them or
 write `./bin/doctor`. Build an executable explicitly:
 
 ```sh
@@ -40,9 +40,9 @@ On Windows, use `./bin/doctor.exe`.
 This section applies to source builds and contributors; prebuilt archives do
 not require Go.
 
-Use the version selected by `go.mod`. Check both `go version` and the
-`toolchain` line in that file. Do not work around a toolchain mismatch by
-editing `go.mod` unless the change itself is being reviewed.
+Use the exact version in the `go` directive in `go.mod` and compare it with
+`go version`. Do not work around a mismatch by editing `go.mod` unless the
+change itself is being reviewed.
 
 ## `doctor init` says the config already exists
 
@@ -58,7 +58,7 @@ Common causes are:
 
 - an unknown or misspelled field;
 - more than one YAML document;
-- a non-canonical duration such as `300s` where `5m0s` is expected;
+- a release-candidate `v1beta1` document or legacy top-level `defaults` block;
 - a relative URL, embedded URL credential, query, or fragment in `baseURL`;
 - a plaintext secret instead of a reference such as `env://TOKEN`;
 - an empty target map; or
@@ -72,6 +72,11 @@ Validate without contacting a target:
 
 See [Configuration](configuration.md) and the
 [configuration schema](../schemas/config/config.schema.json).
+
+The current config API is `urn:agentapi-doctor:config:v1beta2`. A v1beta1
+document is rejected with an explicit migration message: remove the old
+top-level `defaults` field and change `apiVersion` to the v1beta2 value. Review
+the resulting effective values instead of changing only the version string.
 
 ## An inline test rejects plain HTTP
 
@@ -160,18 +165,32 @@ root, pass the matching store:
 
 ```sh
 ./bin/doctor test local-reference --data-root ./local-data
-./bin/doctor run inspect latest --store ./local-data/runs
-./bin/doctor report terminal latest --store ./local-data/runs
+./bin/doctor run inspect latest --allow-latest --store ./local-data/runs
+./bin/doctor report terminal latest --allow-latest --store ./local-data/runs
 ```
 
-For CI, capture the exact `run_id` returned by `doctor test` and use
-`--allow-latest=false` when inspecting or rendering it.
+For CI, capture the exact `run_id` returned by `doctor test`. The mutable
+pointer is rejected unless `--allow-latest` is explicitly present.
+
+## `.agentapi/` appeared in my project
+
+This is Doctor's local state directory. It can contain endpoint URLs, model
+content, tool arguments, run records, and redacted evidence. Redaction is not
+anonymization. Treat the directory as private and add it to the downstream
+project's `.gitignore` before running Doctor there:
+
+```gitignore
+.agentapi/
+```
+
+Use `--data-root` when local policy requires a different private location.
+Inspect or archive evidence before removal; uninstalling the binary does not
+delete this directory.
 
 ## An output or baseline already exists
 
-The CLI does not overwrite plans, report files, baselines, configs, or
-scaffolds. Choose a new path or name. Inspect the existing file before moving
-or removing it.
+The CLI does not overwrite plans, report files, baselines, or configs. Choose a
+new path or name. Inspect the existing file before moving or removing it.
 
 ## A run is non-zero
 
@@ -185,9 +204,11 @@ smallest local reproduction when asking for help. Follow [SUPPORT.md](../SUPPORT
 for public support and [SECURITY.md](../SECURITY.md) for suspected
 vulnerabilities.
 
-## Docker or Compose ports conflict
+## Experimental Docker or Compose ports conflict
 
-`compose.yaml` binds only to loopback by default. Choose unused host ports:
+The Compose services are contributor-only experimental surfaces, not a
+supported Doctor distribution. `compose.yaml` binds only to loopback by
+default. Choose unused host ports:
 
 ```sh
 AGENTAPI_REGISTRY_PORT=28080 \

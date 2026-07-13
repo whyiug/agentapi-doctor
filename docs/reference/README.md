@@ -1,42 +1,22 @@
 # Reference
 
-This page maps the runnable source and versioned contracts. For command syntax,
-see the [CLI reference](../cli-reference.md); for a first run, use the
+This page distinguishes the supported Doctor product from source-only
+development components. For command syntax, see the
+[CLI reference](../cli-reference.md); for a first run, use the
 [Quick Start](../quick-start.md).
 
-## Runnable components
+## Supported v0.1.0 surface
 
-- `cmd/doctor` and `internal/cli` — initialization, target/config management,
-  offline planning, client-side execution, run inspection, comparison,
-  baselines, reporting, completions, and development scaffolding.
-- `internal/productrun` and `internal/rawdriver` — execution against one exact
-  configured origin for `openai-chat`, `openai-responses`, and
-  `anthropic-messages`.
-- `reference/server` and `reference/mutant-server` — deterministic synthetic
-  protocol fixtures and 13 executable targeted mutation modes.
-- `internal/config`, `internal/planner`, `internal/budget`, and
-  `internal/executor` — typed configuration, IntentPlan/ResolvedRunPlan, hard
-  budgets, and execution contracts.
-- `internal/redaction`, `internal/cas`, and `internal/runstore` —
-  sanitize-before-store evidence and local run persistence.
-- `cmd/registry`, `registry/api`, and `internal/registry` — local Registry HTTP
-  surface with memory or single-node SQLite storage and consistent backup.
-- `web/matrix` — static Matrix UI source; the project does not currently host
-  it as a service.
+The supported product is the local `doctor` CLI in `cmd/doctor` and
+`internal/cli`. Its user workflows cover target and configuration management,
+offline preparation, bounded endpoint checks, run inspection, baselines,
+comparison, reporting, and shell completions.
 
-Build and check the current source with:
+`internal/productrun` and `internal/rawdriver` execute four raw checks against
+one exact configured origin for `openai-chat`, `openai-responses`, or
+`anthropic-messages`. The checks are observations, not vendor certification.
 
-```sh
-make build
-make check
-make race
-make docker-check   # optional; requires Docker
-```
-
-## CLI execution and reports
-
-The CLI runs locally, while its configured exact origin may be a local,
-private-network, or remote authorized endpoint:
+Run Doctor with either a saved target or explicit endpoint inputs:
 
 ```text
 doctor demo [--data-root <path>] [--output <path>] [--format terminal|json]
@@ -49,48 +29,61 @@ doctor test --base-url <url> --protocol <id> --model <id> [--auth-env <name>] [-
 probe target capabilities. A normal run stores its report below
 `<data-root>/runs` (`.agentapi/runs` by default).
 
-Stored runs can be inspected or rendered with:
+Inspect or render a stored run with:
 
 ```text
 doctor run inspect <run-ref> [--store <path>] [--allow-latest] [--include-plan]
 doctor report <terminal|json|junit|sarif|markdown|html> <run-ref> [--output <path>] [--store <path>] [--allow-latest]
 ```
 
-`latest` is convenient for local interactive use. CI and durable evidence
-references should use an exact run ID. The machine-readable command contract is
-[`cli/spec.yaml`](../../cli/spec.yaml).
+Use an exact run ID for CI and durable evidence references. The mutable local
+`latest` pointer is rejected unless `--allow-latest` is explicit. The
+machine-readable command contract is [`cli/spec.yaml`](../../cli/spec.yaml).
 
-## Schemas and generated indexes
+Doctor release archives, checksums, SBOMs, signatures, and provenance are the
+supported distribution path. No hosted service, managed image, GitHub Action,
+Homebrew formula, Scoop manifest, or package-manager channel is part of the
+v0.1.0 support surface.
 
-The repository includes versioned artifacts for:
+## Persistence and security boundary
 
-- configuration and the common envelope;
-- IntentPlan, CapabilityObservation, and ResolvedRunPlan;
-- evidence, results, reports, and catalog statistics;
-- scenarios, protocol snapshots, Requirement Catalog records, packs, and
-  profiles;
-- Driver RPC control/data frames and support manifests;
-- Registry observations and Registry OpenAPI; and
-- the schema index and migration floor.
+`internal/config`, `internal/planner`, `internal/budget`, and
+`internal/executor` implement typed configuration, run preparation, hard
+budgets, and execution contracts. `internal/redaction`, `internal/cas`, and
+`internal/runstore` implement sanitize-before-store evidence and local run
+persistence.
 
-Run `make schema-check` to verify schema references, generated catalog digests,
-and support-manifest consistency. These are pre-release contracts until a
-release explicitly declares a stable compatibility floor.
+Schemas and migration promises apply only where the release documentation and
+[`schemas/migration-floor.yaml`](../../schemas/migration-floor.yaml) explicitly
+include an artifact. Other checked-in schemas are experimental repository
+contracts and are not stable third-party APIs.
 
-## Catalog counts
+## Experimental repository components
 
-[`specs/catalog-statistics.json`](../../specs/catalog-statistics.json) records
-260 metadata scenarios across seven packs. Those reference and targeted-mutant
-records must not be confused with the 13 executable targeted mutation modes or
-the four selected checks per protocol in the current client-side runner.
+The following source is available for development and deterministic testing,
+but is not a supported v0.1.0 product or extension API:
 
-## Registry and release tooling
+- `reference/server` and `reference/mutant-server` synthetic fixtures;
+- `pkg/packapi`, Requirement Catalog records, authored packs, and profiles;
+- `pkg/driverprotocol` and generic out-of-process driver contracts;
+- `cmd/registry`, `registry/api`, `internal/registry`, and `web/matrix`;
+- Registry OpenAPI, support manifests, and trust/attestation models; and
+- Compose, OCI, GitHub Action, Homebrew, and Scoop candidates.
 
-The Registry OpenAPI, SQLite store, backup path, Compose configuration, Matrix,
-GitHub Action/reusable workflow, Homebrew/Scoop metadata, GoReleaser
-configuration, checksums/SBOM/provenance flow, and CI/CD workflows are testable
-from this repository. No hosted verifier or service exists, and no distribution
-artifact has been published yet.
+The repository records 260 candidate metadata scenarios in
+[`specs/catalog-statistics.json`](../../specs/catalog-statistics.json) and 13
+targeted synthetic server modes. A normal Doctor run selects four raw checks
+for its protocol; catalog counts do not imply executable or supported
+coverage.
 
-Generated views never replace their source: a versioned artifact and its digest
-define the exact input used for a run or observation.
+Build and test repository source with:
+
+```sh
+make build
+make check
+make race
+make docker-check   # optional; requires Docker
+```
+
+Generated views never replace their source. A promoted versioned artifact and
+its digest define the exact input used for a run or observation.

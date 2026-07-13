@@ -69,6 +69,71 @@ func TestTerminalExplainsInconclusiveCase(t *testing.T) {
 	}
 }
 
+func TestHumanRenderersUseCheckResultsInsteadOfCompatibilityClaims(t *testing.T) {
+	tests := []struct {
+		outcome schema.ProfileOutcome
+		want    string
+	}{
+		{outcome: schema.ProfileCompatible, want: "checks passed"},
+		{outcome: schema.ProfileDegraded, want: "checks passed with warnings"},
+		{outcome: schema.ProfileIncompatible, want: "checks failed"},
+		{outcome: schema.ProfileInconclusive, want: "checks inconclusive"},
+	}
+	renderers := map[string]func(Bundle) ([]byte, error){"terminal": Terminal, "markdown": Markdown, "html": HTML}
+	for _, test := range tests {
+		for name, renderer := range renderers {
+			t.Run(name+"/"+string(test.outcome), func(t *testing.T) {
+				bundle := validBundle()
+				bundle.Outcome = test.outcome
+				data, err := renderer(bundle)
+				if err != nil {
+					t.Fatal(err)
+				}
+				text := strings.ToLower(string(data))
+				if !strings.Contains(text, test.want) {
+					t.Fatalf("%s output omitted %q:\n%s", name, test.want, data)
+				}
+				if strings.Contains(text, "compatible") || strings.Contains(text, "incompatible") {
+					t.Fatalf("%s output retained a compatibility claim:\n%s", name, data)
+				}
+			})
+		}
+	}
+}
+
+func TestHumanRenderersProminentlyAndSafelyRenderEveryCondition(t *testing.T) {
+	bundle := validBundle()
+	bundle.Conditions = []Condition{
+		{Code: "provider_usage_unknown", Message: "Usage unavailable <script>alert(1)</script> & verify\nforged\x1b[31m"},
+		{Code: "run_budget_exhausted", Message: "The bounded run exhausted its budget."},
+	}
+	renderers := map[string]func(Bundle) ([]byte, error){"terminal": Terminal, "markdown": Markdown, "html": HTML}
+	for name, renderer := range renderers {
+		t.Run(name, func(t *testing.T) {
+			data, err := renderer(bundle)
+			if err != nil {
+				t.Fatal(err)
+			}
+			text := string(data)
+			normalized := strings.ReplaceAll(text, `\_`, "_")
+			for _, required := range []string{"Important conditions", "provider_usage_unknown", "run_budget_exhausted", "Usage unavailable", "exhausted its budget"} {
+				if !strings.Contains(normalized, required) {
+					t.Fatalf("%s output omitted condition content %q:\n%s", name, required, text)
+				}
+			}
+			if strings.Contains(text, "\x1b") || strings.Contains(text, "\nforged") {
+				t.Fatalf("%s output retained condition control text:\n%s", name, text)
+			}
+			if name != "terminal" && strings.Contains(strings.ToLower(text), "<script>") {
+				t.Fatalf("%s output retained active condition markup:\n%s", name, text)
+			}
+			if name == "html" && !strings.Contains(text, "&lt;script&gt;") {
+				t.Fatalf("HTML did not safely escape condition markup:\n%s", text)
+			}
+		})
+	}
+}
+
 func TestHumanRenderersExplainNonPassingCasesAndKeepPassCompact(t *testing.T) {
 	bundle := diagnosticBundle()
 	renderers := map[string]func(Bundle) ([]byte, error){

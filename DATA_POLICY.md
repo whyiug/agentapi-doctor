@@ -1,95 +1,68 @@
 # Data Policy
 
-## Current status
+## Scope
 
-AgentAPI Doctor is local-first and pre-release. No project-operated hosted
-Registry, public runner, telemetry service, or observation upload service is
-available today. This policy describes current repository behavior and the
-minimum boundaries any future hosted service must satisfy.
+The supported AgentAPI Doctor v0.1.0 product is a local CLI. The project does
+not operate telemetry, an upload service, a public runner, a hosted Registry,
+or a public observation dataset. Experimental Registry and Matrix source in
+this repository does not create a project-operated service.
 
-## Data classes
+## Local processing
 
-The project distinguishes:
-
-- configuration and secret references;
-- requests, responses, stream events, and tool data;
-- raw capture-layer evidence and normalized internal representations;
-- result, report, failure, and run metadata;
-- local artifacts, fixtures, logs, and crash output;
-- identity, signature, ownership, and audit metadata; and
-- a future public projection of non-sensitive compatibility facts.
-
-These classes must not be silently collapsed. In particular, a public fact is
-not permission to publish its raw artifact, identity record, comment, model
-text, or signature.
-
-## Local use
-
-Local runs do not opt users into telemetry or upload. Until a versioned feature
-explicitly says otherwise:
+Doctor sends requests only to the exact endpoint a user configures for an
+authorized check. Local runs do not opt users into telemetry or publication.
+Until a versioned feature explicitly says otherwise:
 
 - data remains in locations selected by the user;
 - users control local retention and deletion;
-- the local CLI must work without a public Registry;
-- ambient credentials, keychains, real `.env` files, and the user's home
-  directory are not test inputs; and
-- tests use synthetic data and an isolated temporary `HOME`.
+- the CLI works without a Registry or project-operated network service;
+- tests do not read ambient credentials, keychains, real `.env` files, or the
+  user's home directory; and
+- offline fixtures use synthetic data and an isolated temporary `HOME`.
 
-Users remain responsible for authorization to process endpoint traffic and for
-the security of their local output directory.
+Users are responsible for authorization to test an endpoint and for access to
+their local output directory.
+
+## Data handled by Doctor
+
+A run may process configuration and secret references; requests, responses,
+stream events, and tool data; capture-layer evidence; result and report data;
+and local logs or crash information. These classes are kept distinct so a
+report does not silently expose a raw artifact or credential.
 
 ## Collection minimization and redaction
 
-Only data needed for a declared test or evidence purpose should be collected.
-Strict capture must redact secrets before any persistent write, including raw
-artifacts, normalized artifacts, reports, logs, temporary files, and crash
-output. A failure to establish write-before-redact safety blocks that feature.
+Doctor collects only data needed for the selected checks and their evidence.
+Persistent evidence must cross the sanitize-before-store boundary: secrets are
+redacted before content enters the run store, reports, logs, archives, or
+content-addressed storage. If content cannot be safely classified or
+sanitized, the operation must omit it or fail closed.
 
-Redaction must cover credentials and authorization headers, cookies, secret
-references, provider keys, private URLs where configured, and user-defined
-patterns. Reports should prefer digests, bounded excerpts, and synthetic
-reproductions. Redaction is not anonymization; residual re-identification risk
-must be documented.
+Redaction covers credentials and authorization headers, cookies, secret
+references, private keys, configured private URLs, and user-defined patterns.
+Reports prefer digests, bounded excerpts, and synthetic reproductions.
+Redaction is not anonymization, so users should review an artifact before
+sharing it.
 
-## Public observations
+## Sharing artifacts
 
-No public observation dataset exists today. A future public export may contain
-only the non-sensitive factual projection defined in
-[DATA_LICENSE.md](DATA_LICENSE.md), when the submitter:
+Doctor does not upload run artifacts. A user who chooses to share a report or
+reproduction bundle controls that transfer and should verify that the target
+recipient is authorized to receive it. Public issues must not contain secrets,
+private endpoint data, production content, or unredacted credentials.
 
-1. has the right to submit the facts and underlying material;
-2. explicitly opts into the stated public license;
-3. previews the exact public projection;
-4. passes secret, policy, and provenance checks; and
-5. receives a durable record of the applicable terms and object digests.
+If sensitive data is found in repository content or a shared artifact, stop
+further publication and report it privately under [SECURITY.md](SECURITY.md).
+Do not copy the sensitive value into a public removal request.
 
-Identity, comments, signatures, raw artifacts, private configuration, and model
-text are not automatically part of that projection.
+## Future services
 
-## Future hosted processing
+A future hosted or public-data feature would be a separate product surface. It
+requires explicit opt-in, reviewed effective terms and privacy documentation,
+purpose-limited collection, access controls, retention and deletion rules,
+quarantine, incident response, and independent security and legal review.
+Repository design documents do not authorize collection or publication.
 
-Before a hosted Registry can accept data, the project must publish reviewed,
-effective versions of its Registry Terms and Privacy Notice and implement:
-
-- purpose-limited collection and access controls;
-- two-phase upload with a public-projection preview;
-- secret quarantine and deterministic validation;
-- retention schedules for each data class;
-- withdrawal, dispute, supersede, tombstone, and physical-deletion procedures;
-- ownership and audit records;
-- incident response and breach handling;
-- backup/restore behavior with stated RPO/RTO; and
-- applicable cross-border, age, and legal review.
-
-The draft files in this repository are not a substitute for those controls.
-
-## Sensitive-data incident
-
-If sensitive data is found in repository content or an artifact, stop further
-publication, preserve only the audit facts needed for response, restrict access,
-and report it privately under [SECURITY.md](SECURITY.md). Do not copy the data
-into a public issue while requesting removal.
-
-Changes that reduce privacy defaults, alter retention, or change public
-projection semantics require the RFC and review process in
+Changes that reduce privacy defaults, add telemetry or upload, alter retention,
+or change publication semantics require the RFC and review process in
 [GOVERNANCE.md](GOVERNANCE.md).

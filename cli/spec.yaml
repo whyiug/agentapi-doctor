@@ -1,8 +1,8 @@
 schemaVersion: urn:agentapi-doctor:cli-spec:v1alpha1
 kind: CLISpec
 binary: doctor
-stability: provisional
-scope: implemented-candidate-surface
+stability: supported-within-v0.1
+scope: doctor-v0.1-command-surface
 runReference:
   syntax: uuidv7-or-latest
   latestAllowedInCI: false
@@ -80,12 +80,14 @@ commands:
       - {name: run-ref, required: true}
     flags:
       - {name: store, type: path, required: false}
-      - {name: allow-latest, type: boolean, default: true}
+      - {name: allow-latest, type: boolean, default: false}
       - {name: include-plan, type: boolean, default: false}
   - path: [compare]
     operands:
       - {name: left-run-ref, required: true}
       - {name: right-run-ref, required: true}
+    flags:
+      - {name: allow-latest, type: boolean, default: false}
   - path: [baseline, accept]
     operands:
       - {name: run-ref, required: true}
@@ -93,6 +95,7 @@ commands:
       - {name: name, type: string, required: true}
       - {name: store, type: path, required: false}
       - {name: baseline-dir, type: path, required: false}
+      - {name: allow-latest, type: boolean, default: false}
   - path: [baseline, list]
     flags:
       - {name: baseline-dir, type: path, required: false}
@@ -108,6 +111,7 @@ commands:
       - {name: baseline, type: string, required: true}
       - {name: store, type: path, required: false}
       - {name: baseline-dir, type: path, required: false}
+      - {name: allow-latest, type: boolean, default: false}
   - path: [report]
     operands:
       - {name: format, required: true, enum: [terminal, json, junit, sarif, markdown, html]}
@@ -115,13 +119,7 @@ commands:
     flags:
       - {name: output, type: path, required: false}
       - {name: store, type: path, required: false}
-      - {name: allow-latest, type: boolean, default: true}
-  - path: [dev, scaffold]
-    operands:
-      - {name: kind, required: true, enum: [requirement, scenario, fixture, profile, driver]}
-      - {name: name, required: true}
-    flags:
-      - {name: output, type: path, required: true}
+      - {name: allow-latest, type: boolean, default: false}
   - path: [completion]
     operands:
       - {name: shell, required: true, enum: [bash, zsh, fish, powershell]}

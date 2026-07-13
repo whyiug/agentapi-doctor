@@ -101,7 +101,7 @@ func TestQuickstartRunsThroughRealProcesses(t *testing.T) {
 	assertQuickstartPersistence(t, workspace, runID)
 	assertNoQuickstartConfig(t, workspace)
 
-	inspected := runEnvelope(t, doctor, workspace, runtimeEnvironment, "run", "inspect", "latest")
+	inspected := runEnvelope(t, doctor, workspace, runtimeEnvironment, "run", "inspect", "latest", "--allow-latest")
 	assertPassingEnvelope(t, "run inspect", inspected)
 	var persisted inspectSummary
 	decodeData(t, "run inspect", inspected.Data, &persisted)
@@ -119,9 +119,10 @@ func TestQuickstartRunsThroughRealProcesses(t *testing.T) {
 func assertPassingTerminal(t *testing.T, command, output string) string {
 	t.Helper()
 	for _, expected := range []string{
-		"Profile outcome: COMPATIBLE",
+		"Result: CHECKS PASSED",
 		"Cases: 4 candidate / 4 applicable / 4 executed",
 		"Verdicts: PASS 4",
+		candidateCondition,
 	} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("%s omitted %q:\n%s", command, expected, output)

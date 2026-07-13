@@ -7,9 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"time"
-
-	"github.com/whyiug/agentapi-doctor/pkg/schema"
 
 	"gopkg.in/yaml.v3"
 )
@@ -19,6 +16,12 @@ const MaxConfigBytes = 1 << 20
 func Decode(raw []byte) (Config, error) {
 	if len(raw) == 0 || len(raw) > MaxConfigBytes {
 		return Config{}, fmt.Errorf("config size must be between 1 and %d bytes", MaxConfigBytes)
+	}
+	var header struct {
+		APIVersion string `yaml:"apiVersion"`
+	}
+	if err := yaml.Unmarshal(raw, &header); err == nil && header.APIVersion == legacyAPIVersion {
+		return Config{}, legacyMigrationError()
 	}
 	decoder := yaml.NewDecoder(bytes.NewReader(raw))
 	decoder.KnownFields(true)
@@ -137,14 +140,7 @@ func Default() Config {
 				BaseURL:  "http://127.0.0.1:8090/v1",
 				Protocol: "openai-responses",
 				Model:    "synthetic-model",
-				Metadata: map[string]string{"runtime": "agentapi-doctor-reference"},
 			},
-		},
-		Defaults: Defaults{
-			Profile: "raw.responses",
-			Budget:  BudgetDefaults{MaxRequests: 20, MaxDuration: schema.NewDuration(5 * time.Minute), MaxInputTokens: 20000, MaxOutputTokens: 5000},
-			Capture: CaptureDefaults{Content: "standard_fixture_only"},
-			Retries: RetryDefaults{Transport: 1, Semantic: 0},
 		},
 	}
 }

@@ -104,7 +104,7 @@
         {
           "properties": {
             "archiveTemplate": {
-              "const": "agentapi-doctor_{version}_windows_amd64.tar.gz"
+              "const": "agentapi-doctor_{version}_windows_amd64.zip"
             }
           }
         }
@@ -118,7 +118,7 @@
         {
           "properties": {
             "archiveTemplate": {
-              "const": "agentapi-doctor_{version}_windows_arm64.tar.gz"
+              "const": "agentapi-doctor_{version}_windows_arm64.zip"
             }
           }
         }

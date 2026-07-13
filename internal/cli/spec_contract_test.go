@@ -43,10 +43,15 @@ func TestPublishedCLISpecMatchesImplementedCommands(t *testing.T) {
 				runInspectFlags = append(runInspectFlags, flag.Name)
 			}
 		}
+		helpArgs := append(append([]string(nil), command.Path...), "--help")
+		code, stdout, stderr := runRawWithDependencies(t, Dependencies{WorkingDir: t.TempDir()}, helpArgs...)
+		if code != ExitSuccess || stderr != "" || !strings.Contains(strings.ToLower(stdout), "usage:") {
+			t.Errorf("%s --help failed: code=%d stdout=%q stderr=%q", path, code, stdout, stderr)
+		}
 	}
 	want := []string{
 		"baseline accept", "baseline compare", "baseline inspect", "baseline list",
-		"compare", "completion", "demo", "dev scaffold", "init", "report", "reproduce", "run inspect",
+		"compare", "completion", "demo", "init", "report", "reproduce", "run inspect",
 		"self-check", "target add", "target inspect", "target list", "test", "version",
 	}
 	slices.Sort(got)
@@ -57,7 +62,7 @@ func TestPublishedCLISpecMatchesImplementedCommands(t *testing.T) {
 		t.Fatalf("published run inspect flags omit include-plan: %v", runInspectFlags)
 	}
 	for shell, script := range completionScripts {
-		for _, root := range []string{"init", "self-check", "target", "test", "demo", "reproduce", "run", "compare", "baseline", "report", "dev", "completion", "version"} {
+		for _, root := range []string{"init", "self-check", "target", "test", "demo", "reproduce", "run", "compare", "baseline", "report", "completion", "version"} {
 			if !strings.Contains(script, root) {
 				t.Errorf("%s completion omits %s", shell, root)
 			}

@@ -8,9 +8,9 @@ GOFMT ?= gofmt
 	docs-check license-check vendor-check docker-check check clean
 
 help:
-	@echo 'AgentAPI Doctor development commands'
+	@echo 'AgentAPI Doctor repository development commands'
 	@echo '  make check          Run the complete local quality gate'
-	@echo '  make build          Build all supported commands'
+	@echo '  make build          Build the supported Doctor CLI plus repository-only commands'
 	@echo '  make test           Run all Go tests'
 	@echo '  make race           Run all Go tests with the race detector'
 	@echo '  make vet            Run go vet'
@@ -21,7 +21,8 @@ help:
 	@echo '  make docs-check     Check repository-local Markdown links'
 	@echo '  make license-check  Validate vendored dependency licenses'
 	@echo '  make vendor-check   Verify the committed vendor tree'
-	@echo '  make docker-check   Build and smoke hardened images offline'
+	@echo '  make docker-check   Smoke Doctor plus experimental repository images offline'
+	@echo '  make clean          Remove build output; preserve local .agentapi evidence'
 
 build:
 	$(GO) build ./cmd/doctor ./cmd/registry ./cmd/reference-server \
@@ -83,4 +84,4 @@ docker-check:
 check: schema-check vendor-check fmt-check build test vet integration-check docs-check license-check
 
 clean:
-	rm -rf bin dist .agentapi
+	rm -rf bin dist

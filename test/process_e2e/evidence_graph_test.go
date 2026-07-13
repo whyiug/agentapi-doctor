@@ -90,7 +90,7 @@ func TestPersistedReportEvidenceGraphCloses(t *testing.T) {
 		t.Fatalf("failing terminal run wrote unexpected stdout:\n%s", stdout)
 	}
 	failureTerminal := string(stderr)
-	for _, expected := range []string{"Profile outcome: INCOMPATIBLE", "FAIL 4"} {
+	for _, expected := range []string{"Result: CHECKS FAILED", "FAIL 4", candidateCondition} {
 		if !strings.Contains(failureTerminal, expected) {
 			t.Fatalf("failing synthetic run omitted %q:\n%s", expected, failureTerminal)
 		}

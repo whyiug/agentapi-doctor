@@ -2,18 +2,24 @@ schemaVersion: urn:agentapi-doctor:schema-index:v1alpha1
 kind: SchemaIndex
 status: provisional
 entries:
+    - id: urn:agentapi-doctor:schema:baseline:v1
+      path: schemas/report/baseline.schema.json
+      digest: sha256:dc2515281f020f4d6ef4141ebcf67a2c7c5bbe59ed2857294e81546c6182da07
     - id: urn:agentapi-doctor:schema:capability-observation:v1alpha1
       path: schemas/plan/capability-observation.schema.json
       digest: sha256:8dba504c67bda2492e2fa1ca9005aa5d87256ff11fc10c18c4a99acad2d4c0a0
     - id: urn:agentapi-doctor:schema:catalog-statistics:v1
       path: schemas/result/catalog-statistics.schema.json
       digest: sha256:93f938f571e00185584853975efa680cc0b7a986dc2cbc3305fa8a63e41d13af
+    - id: urn:agentapi-doctor:schema:cli-result:v1alpha1
+      path: schemas/cli/cli-result.schema.json
+      digest: sha256:492d2ad89a72783a71589a2af6bbf5b4b27223fb30d47ff17bd47d74fbc823e1
     - id: urn:agentapi-doctor:schema:common:envelope:v1alpha1
       path: schemas/common/envelope.schema.json
       digest: sha256:2cf6399e644d31c45b0fd8e9f845ba0da019d89f972337e91a87f32310d791ed
-    - id: urn:agentapi-doctor:schema:config:v1beta1
+    - id: urn:agentapi-doctor:schema:config:v1beta2
       path: schemas/config/config.schema.json
-      digest: sha256:0a7832c86702bc7fc698780fc86b694445328f28bbbbbc18fe9956b0ce004daa
+      digest: sha256:bb3ad1af67897895b9ce31d802e8dd05f154b44736d14d9f6c02b726ddfd73e3
     - id: urn:agentapi-doctor:schema:consumer-profile:v1beta1
       path: schemas/profile/consumer-compatibility-profile.schema.json
       digest: sha256:f286cc22f7997e96ae3d01ad97408c3416f4415dd3fa650d09224270483e316f

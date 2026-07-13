@@ -8,7 +8,7 @@ A small, local-first CLI that checks whether an “OpenAI-compatible” or
 Anthropic-compatible endpoint behaves like a real client expects—and leaves a
 redacted report you can reproduce, compare, and share.
 
-[![Release](https://img.shields.io/github/v/release/whyiug/agentapi-doctor?include_prereleases&label=release)](https://github.com/whyiug/agentapi-doctor/releases)
+[![Release](https://img.shields.io/github/v/release/whyiug/agentapi-doctor?label=release)](https://github.com/whyiug/agentapi-doctor/releases)
 [![CI](https://github.com/whyiug/agentapi-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/whyiug/agentapi-doctor/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/whyiug/agentapi-doctor/actions/workflows/codeql.yml/badge.svg)](https://github.com/whyiug/agentapi-doctor/actions/workflows/codeql.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -27,18 +27,18 @@ redacted report you can reproduce, compare, and share.
 
 ## From download to an answer
 
-Linux and macOS can install the exact `v0.1.0-rc.3` release without Go:
+Linux and macOS can install the exact `v0.1.0` release without Go:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0-rc.3/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh | sh
 $HOME/.local/bin/doctor demo
 ```
 
 The pinned installer verifies the release archive against `checksums.txt`
 before extraction. If you prefer to inspect it first, download
 [`install.sh`](install.sh), then run `sh install.sh`. Windows users can download
-the verified ZIP from [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0-rc.3);
+the verified ZIP from [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0);
 the [Installation guide](docs/installation.md) includes checksum steps for every
 platform.
 
@@ -46,9 +46,11 @@ The demo needs no API key. It starts a random loopback fixture, runs four
 lifecycle checks, stores local evidence, and stops the fixture automatically:
 
 ```text
-Profile outcome: COMPATIBLE
+Result: CHECKS PASSED
 Cases: 4 candidate / 4 applicable / 4 executed
 Verdicts: PASS 4 | FAIL 0 | WARN 0 | INCONCLUSIVE 0 | SKIPPED 0 | ERRORED 0
+Important conditions:
+  [candidate_interpretations_pending_review] Candidate raw-wire interpretations; not certification.
 ```
 
 Demo success validates this exact synthetic fixture and the installed CLI. It
@@ -76,7 +78,8 @@ for testing.
 Each run sends at most four requests under one 60-second deadline. The token is
 read from the named environment variable, not a command argument. Requests stay
 on the configured origin, redirects are not followed, and evidence remains in
-the local `.agentapi/` directory.
+the local `.agentapi/` directory. Treat that directory as private local state
+and add `.agentapi/` to the tested project's `.gitignore`.
 
 ## What Doctor checks
 
@@ -103,9 +106,11 @@ When the checked-in synthetic server omits the Responses terminal event, Doctor
 rejects the stream even though its media type looks correct:
 
 ```text
-Profile outcome: INCOMPATIBLE
+Result: CHECKS FAILED
 Cases: 4 candidate / 4 applicable / 4 executed
 Verdicts: PASS 3 | FAIL 1 | WARN 0 | INCONCLUSIVE 0 | SKIPPED 0 | ERRORED 0
+Important conditions:
+  [candidate_interpretations_pending_review] Candidate raw-wire interpretations; not certification.
 PASS  stream media type
 PASS  required response envelope
 FAIL  terminal event exactly once
@@ -185,10 +190,9 @@ breaks later. Examples include [Open WebUI #21768](https://github.com/open-webui
 [llama.cpp #20607](https://github.com/ggml-org/llama.cpp/issues/20607), and
 [Codex #24973](https://github.com/openai/codex/issues/24973).
 
-The research, competitor comparison, intentionally reduced roadmap, and stop
-conditions are recorded in the [July 13 execution plan](0713-plan.md). The first
-pinned OpenAI Python SDK / Responses case is now reproducible; external reuse,
-not Registry, public matrix, or hosted UI expansion, is the next proof point.
+The public [Roadmap](ROADMAP.md) keeps the next work focused on reproducible
+endpoint checks, report reuse, and verified client cases. Registry, public
+matrix, and hosted-service candidates remain outside the supported v0.1 scope.
 
 ## Documentation and community
 
@@ -207,5 +211,5 @@ private vulnerability reports. Please do not open a public issue containing a
 credential or unredacted provider response.
 
 Source and documentation use the [Apache License 2.0](LICENSE) unless a file
-says otherwise. See [DATA_LICENSE.md](DATA_LICENSE.md) and
-[THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt) for additional terms.
+says otherwise. Vendored dependency notices are recorded in
+[THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt).
