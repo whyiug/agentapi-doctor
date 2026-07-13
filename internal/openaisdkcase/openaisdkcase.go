@@ -139,18 +139,18 @@ func Run(ctx context.Context, request Request) (Result, error) {
 		return Result{}, errors.New("context is required")
 	}
 	if strings.TrimSpace(request.Python) == "" {
-		return Result{}, errors.New("Python executable is required")
+		return Result{}, errors.New("python executable is required")
 	}
 	if !filepath.IsAbs(request.Python) {
-		return Result{}, errors.New("Python executable must be an absolute path")
+		return Result{}, errors.New("python executable must be an absolute path")
 	}
 	pythonInfo, err := os.Stat(request.Python)
 	if err != nil || !pythonInfo.Mode().IsRegular() || pythonInfo.Mode().Perm()&0o111 == 0 {
-		return Result{}, fmt.Errorf("Python executable must be an executable regular file: %s", request.Python)
+		return Result{}, fmt.Errorf("python executable must be an executable regular file: %s", request.Python)
 	}
 	pythonExecutableSHA256, err := sha256File(request.Python)
 	if err != nil {
-		return Result{}, fmt.Errorf("hash Python executable: %w", err)
+		return Result{}, fmt.Errorf("hash python executable: %w", err)
 	}
 	if runtime.GOOS != "linux" || runtime.GOARCH != "amd64" {
 		return Result{}, fmt.Errorf("the frozen OpenAI SDK reproduction baseline supports linux/amd64 only, not %s/%s", runtime.GOOS, runtime.GOARCH)
@@ -203,14 +203,14 @@ func Run(ctx context.Context, request Request) (Result, error) {
 	}
 	pythonInfoAfter, err := os.Stat(request.Python)
 	if err != nil || !os.SameFile(pythonInfo, pythonInfoAfter) {
-		return Result{}, errors.New("Python executable identity changed during reproduction")
+		return Result{}, errors.New("python executable identity changed during reproduction")
 	}
 	pythonExecutableSHA256After, err := sha256File(request.Python)
 	if err != nil {
-		return Result{}, fmt.Errorf("rehash Python executable: %w", err)
+		return Result{}, fmt.Errorf("rehash python executable: %w", err)
 	}
 	if pythonExecutableSHA256After != pythonExecutableSHA256 {
-		return Result{}, errors.New("Python executable content changed during reproduction")
+		return Result{}, errors.New("python executable content changed during reproduction")
 	}
 	captures := recorder.capturesCopy()
 	if len(captures) > 1 {
@@ -1013,7 +1013,7 @@ func deterministicZIP(files map[string][]byte) ([]byte, error) {
 			return nil, fmt.Errorf("invalid bundle path %q", name)
 		}
 		header := &zip.FileHeader{Name: name, Method: zip.Store}
-		header.SetModTime(fixed)
+		header.Modified = fixed
 		header.SetMode(0o644)
 		writer, err := archive.CreateHeader(header)
 		if err != nil {
