@@ -8,7 +8,27 @@ CLI/Core versions will follow
 
 ## [Unreleased]
 
-No changes have been recorded since v0.1.0 was prepared.
+No changes have been recorded since v0.1.1 was prepared.
+
+## [0.1.1] - 2026-07-14
+
+### Added
+
+- Terminal exactly-once failures now include a bounded, ordered trace of
+  terminal markers and logical SSE event indexes instead of reporting only a
+  count. The total remains exact when the displayed trace is truncated.
+- Added deterministic offline Responses coverage for
+  `response.incomplete` / `max_output_tokens`, including coherent usage and
+  missing-usage variants at the complete four-request product boundary.
+
+### Fixed
+
+- Preserved the existing `3 PASS + 1 INCONCLUSIVE` classification when a
+  Responses terminal-status request reaches its output limit, without adding a
+  request, a target finding, or an invented zero-token observation.
+- Made duplicate terminal diagnostics identify sequences such as
+  `response.completed` followed by `[DONE]` while retaining the published
+  candidate interpretation and request budgets.
 
 ## [0.1.0] - 2026-07-13
 
@@ -225,7 +245,8 @@ This first release candidate does not claim external review, adoption, vendor
 certification, or long-term support. Its support and verification boundaries
 are recorded in `release-notes/v0.1.0-rc.1.md`.
 
-[Unreleased]: https://github.com/whyiug/agentapi-doctor/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/whyiug/agentapi-doctor/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/whyiug/agentapi-doctor/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/whyiug/agentapi-doctor/compare/v0.1.0-rc.3...v0.1.0
 [0.1.0-rc.3]: https://github.com/whyiug/agentapi-doctor/compare/v0.1.0-rc.2...v0.1.0-rc.3
 [0.1.0-rc.2]: https://github.com/whyiug/agentapi-doctor/compare/v0.1.0-rc.1...v0.1.0-rc.2

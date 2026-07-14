@@ -5,17 +5,17 @@
 安装一个 binary，先运行无需凭据的 demo，再检查任何获授权的本地、私有网络或
 远程 endpoint。不需要初始化项目，也不需要 YAML。
 
-`v0.1.0` 是正式的 Doctor distribution。项目仍处于 pre-1.0 阶段，因此 Go
+`v0.1.1` 是正式的 Doctor distribution。项目仍处于 pre-1.0 阶段，因此 Go
 package、实验 schema、Registry、driver 与 pack interface 都不是稳定公共 API，
 除非 release 文档明确另有说明。
 
-## 1. 安装 v0.1.0
+## 1. 安装 v0.1.1
 
 Linux 或 macOS：
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.1/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
@@ -24,15 +24,15 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fSLO \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.1/install.sh
 less install.sh
 sh install.sh
 ```
 
 Windows 用户可以从
-[v0.1.0](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0)
-下载 `agentapi-doctor_0.1.0_windows_amd64.zip` 或
-`agentapi-doctor_0.1.0_windows_arm64.zip`。精确 PowerShell checksum 与解压
+[v0.1.1](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.1)
+下载 `agentapi-doctor_0.1.1_windows_amd64.zip` 或
+`agentapi-doctor_0.1.1_windows_arm64.zip`。精确 PowerShell checksum 与解压
 步骤见[安装文档（英文）](../installation.md)。
 
 ## 2. 运行无 Key Demo

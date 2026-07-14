@@ -2,7 +2,7 @@
 
 [项目中文首页](../../README.zh-CN.md) | [English documentation](../README.md)
 
-`v0.1.0` 是正式的 AgentAPI Doctor binary distribution，提供带 checksum 的
+`v0.1.1` 是正式的 AgentAPI Doctor binary distribution，提供带 checksum 的
 GitHub Release archive。项目仍处于 pre-1.0 阶段：Go package、实验 schema、
 pack、driver 与 Registry interface 不是稳定公共 API。当前没有托管服务或已发布
 的包管理器渠道。报告是绑定到被测版本和配置的可复现观察，不是厂商认证。

@@ -5,7 +5,7 @@ development components. For command syntax, see the
 [CLI reference](../cli-reference.md); for a first run, use the
 [Quick Start](../quick-start.md).
 
-## Supported v0.1.0 surface
+## Supported v0.1.x surface
 
 The supported product is the local `doctor` CLI in `cmd/doctor` and
 `internal/cli`. Its user workflows cover target and configuration management,
@@ -43,7 +43,7 @@ machine-readable command contract is [`cli/spec.yaml`](../../cli/spec.yaml).
 Doctor release archives, checksums, SBOMs, signatures, and provenance are the
 supported distribution path. No hosted service, managed image, GitHub Action,
 Homebrew formula, Scoop manifest, or package-manager channel is part of the
-v0.1.0 support surface.
+v0.1.x support surface.
 
 ## Persistence and security boundary
 
@@ -61,7 +61,7 @@ contracts and are not stable third-party APIs.
 ## Experimental repository components
 
 The following source is available for development and deterministic testing,
-but is not a supported v0.1.0 product or extension API:
+but is not a supported v0.1.x product or extension API:
 
 - `reference/server` and `reference/mutant-server` synthetic fixtures;
 - `pkg/packapi`, Requirement Catalog records, authored packs, and profiles;

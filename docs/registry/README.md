@@ -1,7 +1,7 @@
 # Registry (Experimental)
 
 Registry and Matrix code in this repository is a source-only development
-candidate. It is not part of the supported v0.1.0 Doctor product, and the
+candidate. It is not part of the supported v0.1.x Doctor product, and the
 project does not operate a hosted Registry, public runner, upload service,
 managed image, verifier, or compatibility matrix.
 

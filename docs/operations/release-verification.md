@@ -2,14 +2,14 @@
 
 ## Publication status
 
-The current supported binary channel is `v0.1.0`. Treat it as published only
+The current supported binary channel is `v0.1.1`. Treat it as published only
 when the exact tag has a non-draft, non-prerelease entry on the project's
 [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases) page with
 the complete asset set below. If that entry is absent, use the developer source
 path in [Installation](../installation.md#source-install-for-contributors).
 Never substitute a guessed version or checksum into these commands.
 
-The v0.1.0 release publishes only the `doctor` CLI. Registry,
+The v0.1.1 release publishes only the `doctor` CLI. Registry,
 reference-server, OCI, Homebrew, Scoop, composite Action, and reusable-workflow
 files in the repository remain unpublished development candidates.
 
@@ -67,7 +67,7 @@ Set explicit values only after the release page exists. Use `tar.gz` for Linux
 and macOS and `zip` for Windows.
 
 ```bash
-VERSION='0.1.0'
+VERSION='0.1.1'
 TARGET_OS='linux'
 TARGET_ARCH='amd64'
 EXTENSION='tar.gz'

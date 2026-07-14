@@ -1,6 +1,6 @@
 # Release Policy
 
-The current supported binary channel is `v0.1.0`. A version is published only
+The current supported binary channel is `v0.1.1`. A version is published only
 when its exact non-draft GitHub Release contains the complete allowlisted asset
 set and passes the public verification workflow.
 

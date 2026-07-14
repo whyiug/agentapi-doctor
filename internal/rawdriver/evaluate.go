@@ -28,10 +28,19 @@ type observedUsage struct {
 	HasTotal     bool
 }
 
+const maxTerminalTraceEntries = 8
+
+type terminalTraceEntry struct {
+	EventIndex int    `json:"event_index"`
+	Marker     string `json:"marker"`
+}
+
 type exchangeFacts struct {
 	validUTF8       bool
 	framingComplete bool
 	terminalCount   int
+	terminalTrace   []terminalTraceEntry
+	terminalOmitted int
 	postTerminal    int
 	unknownCount    int
 	toolCallCount   int
@@ -180,6 +189,14 @@ func parseStream(scenario Scenario, body []byte, refs []schema.ObjectRef) (excha
 		if terminalSeen && event.Data != "" {
 			facts.postTerminal++
 		}
+		if marker, terminal := countedTerminalMarker(scenario.Protocol, event); terminal {
+			facts.terminalCount++
+			if len(facts.terminalTrace) < maxTerminalTraceEntries {
+				facts.terminalTrace = append(facts.terminalTrace, terminalTraceEntry{EventIndex: index + 1, Marker: marker})
+			} else {
+				facts.terminalOmitted++
+			}
+		}
 		state.consume(event, &facts)
 		if isTerminalEvent(scenario.Protocol, event) {
 			terminalSeen = true
@@ -277,7 +294,17 @@ func checkScenario(scenario Scenario, facts exchangeFacts, refs []schema.ObjectR
 		}
 	case CheckTerminalEvent:
 		if facts.terminalCount != 1 || !facts.framingComplete {
-			return observedFail(refs, "terminal_event_count", 1, facts.terminalCount)
+			trace := slices.Clone(facts.terminalTrace)
+			if trace == nil {
+				trace = []terminalTraceEntry{}
+			}
+			observed := map[string]any{
+				"terminal_count":        facts.terminalCount,
+				"framing_complete":      facts.framingComplete,
+				"terminal_trace":        trace,
+				"trace_entries_omitted": facts.terminalOmitted,
+			}
+			return observedFail(refs, "terminal_event_count", 1, observed)
 		}
 	case CheckNoUnknownEvent:
 		if facts.unknownCount != 0 {
@@ -362,6 +389,38 @@ func isTerminalEvent(protocol Protocol, event recorder.SSELogicalEvent) bool {
 	}
 	typeName, _ := stringValue(value["type"])
 	return typeName == "response.completed" || typeName == "response.failed" || typeName == "response.incomplete"
+}
+
+func countedTerminalMarker(protocol Protocol, event recorder.SSELogicalEvent) (string, bool) {
+	// Some OpenAI-compatible Responses endpoints append the Chat sentinel after
+	// a typed terminal event. The current candidate evaluator counts both; the
+	// trace makes that bounded interpretation visible without retaining payloads.
+	if event.Data == "[DONE]" {
+		return "[DONE]", true
+	}
+	if protocol == ProtocolAnthropic {
+		if event.Event != "message_stop" {
+			return "", false
+		}
+		if _, err := decodeObject([]byte(event.Data)); err != nil {
+			return "", false
+		}
+		return "message_stop", true
+	}
+	if protocol != ProtocolOpenAIResponses {
+		return "", false
+	}
+	value, err := decodeObject([]byte(event.Data))
+	if err != nil {
+		return "", false
+	}
+	typeName, _ := stringValue(value["type"])
+	switch typeName {
+	case "response.completed", "response.failed", "response.incomplete":
+		return typeName, true
+	default:
+		return "", false
+	}
 }
 
 func checkUsage(expected *TokenUsage, actual observedUsage, refs []schema.ObjectRef) oracle.Outcome {
@@ -729,7 +788,6 @@ func (decoder *streamDecoder) append(event statemachine.Event) {
 
 func (decoder *streamDecoder) consume(event recorder.SSELogicalEvent, facts *exchangeFacts) {
 	if event.Data == "[DONE]" {
-		facts.terminalCount++
 		decoder.ensureChatCreated()
 		decoder.append(statemachine.Event{Type: statemachine.EventResponseCompleted})
 		return
@@ -798,7 +856,6 @@ func (decoder *streamDecoder) consumeResponses(value map[string]any, typeName st
 		callID, _ := stringValue(item["call_id"])
 		decoder.append(statemachine.Event{Type: statemachine.EventOutputItemDone, ItemID: itemID, CallID: callID})
 	case "response.completed":
-		facts.terminalCount++
 		response := objectValue(value["response"])
 		if reason, ok := stringValue(response["status"]); ok {
 			facts.finishReasons = append(facts.finishReasons, reason)
@@ -808,10 +865,8 @@ func (decoder *streamDecoder) consumeResponses(value map[string]any, typeName st
 		readReasoningUsage(usage, "output_tokens_details", &facts.usage)
 		decoder.append(statemachine.Event{Type: statemachine.EventResponseCompleted})
 	case "response.failed":
-		facts.terminalCount++
 		decoder.append(statemachine.Event{Type: statemachine.EventResponseFailed})
 	case "response.incomplete":
-		facts.terminalCount++
 		response := objectValue(value["response"])
 		if reason, ok := stringValue(response["status"]); ok {
 			facts.finishReasons = append(facts.finishReasons, reason)
@@ -922,7 +977,6 @@ func (decoder *streamDecoder) consumeAnthropic(eventName string, value map[strin
 			facts.usage.Output, facts.usage.HasOutput = output, true
 		}
 	case "message_stop":
-		facts.terminalCount++
 		decoder.append(statemachine.Event{Type: statemachine.EventResponseCompleted})
 	}
 }

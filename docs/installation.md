@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) | [Quick Start](quick-start.md)
 
-`v0.1.0` is the stable AgentAPI Doctor distribution. The supported user
+`v0.1.1` is the stable AgentAPI Doctor distribution. The supported user
 artifact is the `doctor` CLI archive on GitHub Releases. The project remains
 pre-1.0: Go packages and experimental schemas, Registry, driver, pack,
 reference-server, OCI, Homebrew, Scoop, and GitHub Action surfaces are not
@@ -16,7 +16,7 @@ under `$HOME/.local/bin`:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.1/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 doctor version
 doctor demo
@@ -32,7 +32,7 @@ endpoint. Read it before execution if piping a script is outside your policy:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fSLO \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.1/install.sh
 less install.sh
 sh install.sh
 ```
@@ -49,7 +49,7 @@ sh install.sh
 Choose an exact release, never a moving `latest` URL:
 
 ```sh
-VERSION='0.1.0'
+VERSION='0.1.1'
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 case "$(uname -m)" in
   x86_64|amd64) ARCH=amd64 ;;
@@ -83,7 +83,7 @@ Run these commands in a new empty directory. Select `arm64` only on Windows on
 ARM; otherwise use `amd64`:
 
 ```powershell
-$Version = '0.1.0'
+$Version = '0.1.1'
 $Arch = 'amd64'
 $Asset = "agentapi-doctor_${Version}_windows_${Arch}.zip"
 $Base = "https://github.com/whyiug/agentapi-doctor/releases/download/v${Version}"
@@ -110,7 +110,7 @@ Source installation is a developer alternative, not the default user path. It
 requires the Go version selected by `go.mod` (Go 1.26.5 for this release):
 
 ```sh
-go install github.com/whyiug/agentapi-doctor/cmd/doctor@v0.1.0
+go install github.com/whyiug/agentapi-doctor/cmd/doctor@v0.1.1
 doctor version
 doctor demo
 ```
@@ -120,7 +120,7 @@ To modify the project, build a checkout instead:
 ```sh
 git clone https://github.com/whyiug/agentapi-doctor.git
 cd agentapi-doctor
-git checkout v0.1.0
+git checkout v0.1.1
 mkdir -p ./bin
 go build -trimpath -o ./bin/doctor ./cmd/doctor
 ./bin/doctor demo

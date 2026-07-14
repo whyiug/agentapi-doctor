@@ -1,6 +1,6 @@
 # Protocol Families
 
-The v0.1.0 Doctor Quick Check sends four bounded raw HTTP checks for one of
+The v0.1.x Doctor Quick Check sends four bounded raw HTTP checks for one of
 three endpoint shapes:
 
 - [OpenAI Chat Completions](openai-chat/README.md)
@@ -12,7 +12,7 @@ interpretations remain versioned candidate material pending source review;
 they do not certify an endpoint or establish full SDK, model, or agent
 compatibility.
 
-The following pages are design research, not v0.1.0 support claims:
+The following pages are design research, not v0.1.x support claims:
 
 - [Google APIs](google/README.md)
 - [Model Context Protocol](mcp/README.md)

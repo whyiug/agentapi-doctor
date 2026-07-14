@@ -37,7 +37,14 @@ func (handler *Handler) buildResponses(writer http.ResponseWriter, request *http
 		scenario = ScenarioTool
 		toolName = input.Tools[0].Name
 	}
-	exchange := Exchange{Protocol: ProtocolOpenAIResponses, Scenario: scenario, Streaming: input.Stream, Status: http.StatusOK, Headers: make(http.Header)}
+	requestedOutputTokens := 0
+	if input.MaxOutputTokens != nil {
+		requestedOutputTokens = *input.MaxOutputTokens
+	}
+	exchange := Exchange{
+		Protocol: ProtocolOpenAIResponses, Scenario: scenario, Streaming: input.Stream,
+		ResponsesMaxOutputTokens: requestedOutputTokens, Status: http.StatusOK, Headers: make(http.Header),
+	}
 	if input.Stream {
 		exchange.Events = responsesStream(input.Model, scenario, toolName)
 	} else {

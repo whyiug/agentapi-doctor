@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -434,6 +435,80 @@ func TestExecuteClassifiesRequestedOutputLimitTerminationAsInconclusive(t *testi
 		if item.Verdict == nil || *item.Verdict != schema.VerdictPass {
 			t.Fatalf("unrelated assertion was not independently evaluated: %#v", item)
 		}
+	}
+}
+
+func TestExecuteResponsesMaxOutputTokensFixtureIsInconclusive(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		omitUsage bool
+	}{
+		{name: "coherent usage"},
+		{name: "missing usage stays unknown", omitUsage: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			reference, err := referenceserver.New(referenceserver.Config{
+				Transformer: responsesIncompleteFixture{omitUsage: test.omitUsage},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			paths := &pathRecorder{next: reference}
+			server := httptest.NewServer(paths)
+			defer server.Close()
+
+			planned := mustPlan(t, config.Target{BaseURL: server.URL, Protocol: "openai-responses", Model: "fixture-model"}, schema.BudgetPolicy{})
+			execution, err := Execute(context.Background(), ExecuteRequest{Planned: planned, DataRoot: filepath.Join(t.TempDir(), "data")})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if execution.Report.Outcome != schema.ProfileInconclusive || execution.Report.PrimaryExitCode != 4 || execution.Report.Dimensions["protocol"] != schema.DimensionInconclusive {
+				t.Fatalf("Responses output-limit profile classification = %#v", execution.Report)
+			}
+			if got := len(paths.snapshot()); got != 4 || execution.ExecutorResult.Budget.Consumed.Requests != 4 {
+				t.Fatalf("Responses fixture requests = network:%d ledger:%d", got, execution.ExecutorResult.Budget.Consumed.Requests)
+			}
+			if len(execution.Report.Cases) != 4 || len(execution.ExecutorResult.Attempts) != 4 {
+				t.Fatalf("Responses fixture cases/attempts = %d/%d", len(execution.Report.Cases), len(execution.ExecutorResult.Attempts))
+			}
+			for _, item := range execution.Report.Cases {
+				if len(item.Findings) != 0 {
+					t.Fatalf("Responses output-limit case gained target finding: %#v", item)
+				}
+				if item.ScenarioID != "openai-responses-http-039-terminal-status" {
+					if item.Verdict == nil || *item.Verdict != schema.VerdictPass {
+						t.Fatalf("unrelated Responses assertion was not independently evaluated: %#v", item)
+					}
+					continue
+				}
+				if item.Verdict == nil || *item.Verdict != schema.VerdictInconclusive || item.ReasonCode != schema.ReasonInsufficientSamples || len(item.AssertionResults) != 1 {
+					t.Fatalf("Responses terminal-status prerequisite = %#v", item)
+				}
+				observed, ok := item.AssertionResults[0].Observed.(map[string]any)
+				if !ok || fmt.Sprint(observed["requested_output_tokens"]) != fmt.Sprint(terminalTokenCap) {
+					t.Fatalf("Responses terminal-status diagnostic = %#v", item.AssertionResults[0].Observed)
+				}
+				_, hasOutput := observed["output_tokens"]
+				if hasOutput == test.omitUsage {
+					t.Fatalf("Responses terminal-status usage presence = %#v, omit=%t", observed, test.omitUsage)
+				}
+			}
+
+			terminalAttempt := execution.ExecutorResult.Attempts[len(execution.ExecutorResult.Attempts)-1]
+			if test.omitUsage {
+				if terminalAttempt.ConsumedBudget.InputTokens != nil || terminalAttempt.ConsumedBudget.OutputTokens != nil ||
+					!slices.Equal(terminalAttempt.ConsumedBudget.Unknown, []string{"input_tokens", "output_tokens"}) ||
+					!hasCondition(execution.Report.Conditions, "provider_usage_unknown") {
+					t.Fatalf("missing Responses usage was not preserved as unknown: %#v / %#v", terminalAttempt.ConsumedBudget, execution.Report.Conditions)
+				}
+			} else {
+				if terminalAttempt.ConsumedBudget.InputTokens == nil || *terminalAttempt.ConsumedBudget.InputTokens != 4 ||
+					terminalAttempt.ConsumedBudget.OutputTokens == nil || *terminalAttempt.ConsumedBudget.OutputTokens != terminalTokenCap ||
+					len(terminalAttempt.ConsumedBudget.Unknown) != 0 || hasCondition(execution.Report.Conditions, "provider_usage_unknown") {
+					t.Fatalf("coherent Responses usage was not preserved: %#v / %#v", terminalAttempt.ConsumedBudget, execution.Report.Conditions)
+				}
+			}
+		})
 	}
 }
 
@@ -1186,6 +1261,43 @@ type pathRecorder struct {
 
 type limitedChatHandler struct {
 	next http.Handler
+}
+
+type responsesIncompleteFixture struct {
+	omitUsage bool
+}
+
+func (fixture responsesIncompleteFixture) ID() string {
+	if fixture.omitUsage {
+		return "responses-max-output-tokens-incomplete-without-usage"
+	}
+	return "responses-max-output-tokens-incomplete"
+}
+
+func (fixture responsesIncompleteFixture) Apply(exchange *referenceserver.Exchange) error {
+	if exchange.Protocol != referenceserver.ProtocolOpenAIResponses || exchange.Scenario != referenceserver.ScenarioText ||
+		exchange.Streaming || exchange.ResponsesMaxOutputTokens != int(terminalTokenCap) {
+		return referenceserver.ErrTransformerNotApplicable
+	}
+	exchange.JSON["status"] = "incomplete"
+	exchange.JSON["output"] = []any{}
+	exchange.JSON["incomplete_details"] = map[string]any{"reason": "max_output_tokens"}
+	if fixture.omitUsage {
+		delete(exchange.JSON, "usage")
+		return nil
+	}
+	exchange.JSON["usage"] = map[string]any{
+		"input_tokens": 4,
+		"input_tokens_details": map[string]any{
+			"cached_tokens": 1,
+		},
+		"output_tokens": terminalTokenCap,
+		"output_tokens_details": map[string]any{
+			"reasoning_tokens": terminalTokenCap,
+		},
+		"total_tokens": terminalTokenCap + 4,
+	}
+	return nil
 }
 
 func (handler *limitedChatHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {

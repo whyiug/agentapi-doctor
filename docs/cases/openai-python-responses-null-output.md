@@ -47,7 +47,7 @@ test.
 
 ## Reproduce the release
 
-Install the `v0.1.0` Linux amd64 binary using the main README, and provide
+Install the `v0.1.1` Linux amd64 binary using the main README, and provide
 CPython 3.12.12. The release archive deliberately does not bundle Python or
 third-party wheels.
 
@@ -61,7 +61,7 @@ LOCK="$CASE_ROOT/requirements.lock"
 WHEELHOUSE="$CASE_ROOT/wheelhouse"
 
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/runners/python/openai-responses/requirements-linux-x86_64-py312.lock \
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.1/runners/python/openai-responses/requirements-linux-x86_64-py312.lock \
   -o "$LOCK"
 echo '38cd96f1a1b6a1ba4eb3445fd667fe402374eab16057d0277854187218327a0d  '"$LOCK" \
   | sha256sum --check --strict

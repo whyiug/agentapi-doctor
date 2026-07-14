@@ -27,18 +27,18 @@ redacted report you can reproduce, compare, and share.
 
 ## From download to an answer
 
-Linux and macOS can install the exact `v0.1.0` release without Go:
+Linux and macOS can install the exact `v0.1.1` release without Go:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.1/install.sh | sh
 $HOME/.local/bin/doctor demo
 ```
 
 The pinned installer verifies the release archive against `checksums.txt`
 before extraction. If you prefer to inspect it first, download
 [`install.sh`](install.sh), then run `sh install.sh`. Windows users can download
-the verified ZIP from [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0);
+the verified ZIP from [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.1);
 the [Installation guide](docs/installation.md) includes checksum steps for every
 platform.
 

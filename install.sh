@@ -5,7 +5,7 @@
 
 set -eu
 
-VERSION=${AGENTAPI_DOCTOR_VERSION:-0.1.0}
+VERSION=${AGENTAPI_DOCTOR_VERSION:-0.1.1}
 INSTALL_DIR=${AGENTAPI_DOCTOR_INSTALL_DIR:-"${HOME}/.local/bin"}
 RELEASE_BASE=${AGENTAPI_DOCTOR_RELEASE_BASE:-"https://github.com/whyiug/agentapi-doctor/releases/download/v${VERSION}"}
 

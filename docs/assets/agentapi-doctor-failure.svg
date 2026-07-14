@@ -32,8 +32,8 @@
   <text x="105" y="356" fill="#fb7185" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18" font-weight="700">FAIL</text>
   <text x="184" y="356" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18" font-weight="700">Terminal event exactly once</text>
   <text x="184" y="389" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16">Expected: 1 terminal event</text>
-  <text x="530" y="389" fill="#fda4af" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16">Observed: 0</text>
-  <text x="824" y="389" fill="#aab9d4" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">STREAM_STATE_MACHINE</text>
+  <text x="530" y="389" fill="#fda4af" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">Observed: terminal_count=0 · trace=[]</text>
+  <text x="900" y="389" fill="#aab9d4" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">STREAM_STATE_MACHINE</text>
 
   <rect x="82" y="437" width="1036" height="70" rx="10" fill="#17233b" stroke="#344766"/>
   <text x="105" y="469" fill="#fbbf24" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="15">candidate_interpretations_pending_review · not certification</text>

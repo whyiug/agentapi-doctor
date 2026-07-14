@@ -27,18 +27,18 @@ endpoint 是否真的符合 client 依赖的行为，并生成可复现、可比
 
 ## 从下载到得到答案
 
-Linux 和 macOS 无需 Go，即可安装固定的 `v0.1.0`：
+Linux 和 macOS 无需 Go，即可安装固定的 `v0.1.1`：
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.1/install.sh | sh
 $HOME/.local/bin/doctor demo
 ```
 
 固定版本 installer 会先用 `checksums.txt` 校验 release archive，再执行解压。
 如果希望先审阅脚本，请下载 [`install.sh`](install.sh)，然后运行
 `sh install.sh`。Windows 用户可以从
-[GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0)
+[GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.1)
 下载经过校验的 ZIP；[安装文档](docs/installation.md)提供所有平台的 checksum
 步骤。
 
