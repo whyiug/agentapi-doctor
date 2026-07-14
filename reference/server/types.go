@@ -37,15 +37,16 @@ type SSEEvent struct {
 }
 
 type Exchange struct {
-	Protocol   Protocol
-	Scenario   Scenario
-	Streaming  bool
-	Status     int
-	Headers    http.Header
-	JSON       map[string]any
-	Events     []SSEEvent
-	RawSuffix  []byte
-	MutationID string
+	Protocol                 Protocol
+	Scenario                 Scenario
+	Streaming                bool
+	ResponsesMaxOutputTokens int
+	Status                   int
+	Headers                  http.Header
+	JSON                     map[string]any
+	Events                   []SSEEvent
+	RawSuffix                []byte
+	MutationID               string
 }
 
 func cloneExchange(source Exchange) Exchange {

@@ -34,6 +34,7 @@ class PublicExampleTests(unittest.TestCase):
             "<strong>Result:</strong> checks failed",
             "candidate_interpretations_pending_review",
             "provider_usage_unknown",
+            "terminal_trace",
             "This report is an observation, not vendor certification.",
         ):
             self.assertIn(expected, report)
@@ -45,6 +46,7 @@ class PublicExampleTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("Result: CHECKS FAILED", visual)
         self.assertIn("candidate_interpretations_pending_review", visual)
+        self.assertIn("terminal_count=0", visual)
         self.assertIn("not certification", visual)
         self.assertNotIn("Profile outcome:", visual)
 

@@ -2,7 +2,7 @@
 
 [Project home](../README.md) | [Simplified Chinese](zh-CN/README.md)
 
-The supported v0.1.0 product is the local `doctor` CLI distributed in verified
+The supported v0.1.x product is the local `doctor` CLI distributed in verified
 GitHub Release archives. There is no hosted service or supported
 package-manager channel. Doctor reports reproducible observations tied to an
 endpoint, model, built-in check definitions, run inputs, and evidence; they are
@@ -51,7 +51,7 @@ not vendor certification.
 ## Experimental contributor surfaces
 
 The following areas are source-only development assets. They are not supported
-v0.1.0 product surfaces, hosted services, stable extension contracts, or
+v0.1.x product surfaces, hosted services, stable extension contracts, or
 compatibility claims:
 
 - [Scenario pack authoring](authoring-packs/README.md)

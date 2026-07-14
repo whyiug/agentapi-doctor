@@ -2,7 +2,7 @@
 
 ## Scope
 
-The supported AgentAPI Doctor v0.1.0 product is a local CLI. The project does
+The supported AgentAPI Doctor v0.1.x product is a local CLI. The project does
 not operate telemetry, an upload service, a public runner, a hosted Registry,
 or a public observation dataset. Experimental Registry and Matrix source in
 this repository does not create a project-operated service.

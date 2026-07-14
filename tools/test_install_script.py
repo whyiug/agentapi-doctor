@@ -17,7 +17,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "install.sh"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 
 class InstallScriptTests(unittest.TestCase):

@@ -6,17 +6,17 @@ Install one binary, run a credential-free demo, then check any authorized local,
 private-network, or remote endpoint. No project initialization or YAML is
 required.
 
-`v0.1.0` is the stable Doctor distribution. The project remains pre-1.0, so
+`v0.1.1` is the stable Doctor distribution. The project remains pre-1.0, so
 Go packages, experimental schemas, Registry, driver, and pack interfaces are
 not stable public APIs unless the release documentation explicitly says so.
 
-## 1. Install v0.1.0
+## 1. Install v0.1.1
 
 On Linux or macOS:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh | sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.1/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
@@ -25,14 +25,14 @@ against that release's `checksums.txt` before extraction. To inspect it first:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fSLO \
-  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.0/install.sh
+  https://raw.githubusercontent.com/whyiug/agentapi-doctor/v0.1.1/install.sh
 less install.sh
 sh install.sh
 ```
 
-Windows users can download `agentapi-doctor_0.1.0_windows_amd64.zip` or
-`agentapi-doctor_0.1.0_windows_arm64.zip` from
-[v0.1.0](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.0).
+Windows users can download `agentapi-doctor_0.1.1_windows_amd64.zip` or
+`agentapi-doctor_0.1.1_windows_arm64.zip` from
+[v0.1.1](https://github.com/whyiug/agentapi-doctor/releases/tag/v0.1.1).
 See [Installation](installation.md) for exact PowerShell checksum and extraction
 steps.
 

@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -26,6 +27,7 @@ import (
 )
 
 const secretCanary = referenceserver.SyntheticBearerToken
+const maxTerminalTraceTestEntries = 8
 
 type mutationCase struct {
 	id       mutantserver.ID
@@ -88,6 +90,9 @@ func TestRawDriverReferencePassesAndAllTargetedMutantsAreKilled(t *testing.T) {
 			}
 			if mutantOutcome.AssertionResults[0].Verdict != schema.VerdictFail || mutantOutcome.Findings[0].Category == "" {
 				t.Fatalf("mutant assertion/finding = %#v / %#v", mutantOutcome.AssertionResults[0], mutantOutcome.Findings[0])
+			}
+			if testCase.id == mutantserver.MissingTerminalEvent {
+				assertTerminalTrace(t, mutantOutcome, 0, 0, nil)
 			}
 			for _, ref := range mutantOutcome.EvidenceRefs {
 				if ref.Kind != "Evidence" || ref.ContentDigest.Validate() != nil {
@@ -366,6 +371,34 @@ func TestRawDriverOutputLimitPrerequisitesDoNotBecomeTargetFailures(t *testing.T
 		assertReasoningLimitDiagnostic(t, outcome, 64, 64, 64)
 	})
 
+	t.Run("responses incomplete without usage remains inconclusive", func(t *testing.T) {
+		response := limitedResponsesDocument("max_output_tokens")
+		var value map[string]any
+		if err := json.Unmarshal(response, &value); err != nil {
+			t.Fatal(err)
+		}
+		delete(value, "usage")
+		response, err := json.Marshal(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		server := httptest.NewServer(statusHandler(http.StatusOK, response))
+		defer server.Close()
+		scenario := scenarioFor(mutationCase{
+			protocol: rawdriver.ProtocolOpenAIResponses, path: "/v1/responses",
+			body: rawResponsesBody(t, false, false), check: rawdriver.CheckFinishReason, allowed: []string{"completed"},
+		}, "responses-output-limit-without-usage")
+		outcome, _, _ := runScenario(t, server, scenario)
+		assertOutputLimitInconclusive(t, outcome, schema.ReasonInsufficientSamples, "max_output_tokens")
+		if !slices.Equal(outcome.UnknownUsage, []string{"input_tokens", "output_tokens"}) {
+			t.Fatalf("missing Responses usage = %#v", outcome.UnknownUsage)
+		}
+		observed := outcome.AssertionResults[0].Observed.(map[string]any)
+		if _, exists := observed["output_tokens"]; exists {
+			t.Fatalf("missing usage was presented as observed: %#v", observed)
+		}
+	})
+
 	for _, test := range []struct {
 		name      string
 		reasoning *int64
@@ -474,6 +507,49 @@ func TestRawDriverOutputLimitPrerequisitesDoNotBecomeTargetFailures(t *testing.T
 		outcome, _, _ := runScenario(t, server, scenario)
 		if outcome.Verdict != schema.VerdictPass || len(outcome.Findings) != 0 {
 			t.Fatalf("output limit changed terminal-event assertion: %#v", outcome)
+		}
+	})
+
+	t.Run("responses duplicate native and sentinel terminal reports bounded trace", func(t *testing.T) {
+		stream := "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_done\",\"status\":\"completed\",\"usage\":{\"input_tokens\":4,\"output_tokens\":2,\"total_tokens\":6}}}\n\n" +
+			"data: [DONE]\n\n"
+		server := httptest.NewServer(streamHandler(http.StatusOK, []byte(stream)))
+		defer server.Close()
+		scenario := scenarioFor(mutationCase{
+			protocol: rawdriver.ProtocolOpenAIResponses, path: "/v1/responses",
+			body: rawResponsesBody(t, true, false), stream: true, check: rawdriver.CheckTerminalEvent,
+		}, "responses-native-plus-sentinel-terminal")
+		outcome, _, _ := runScenario(t, server, scenario)
+		assertTerminalTrace(t, outcome, 2, 0, []string{"response.completed", "[DONE]"})
+	})
+
+	t.Run("terminal trace is bounded without losing exact count", func(t *testing.T) {
+		stream := strings.Repeat("data: [DONE]\n\n", maxTerminalTraceTestEntries+2)
+		server := httptest.NewServer(streamHandler(http.StatusOK, []byte(stream)))
+		defer server.Close()
+		scenario := scenarioFor(mutationCase{
+			protocol: rawdriver.ProtocolOpenAIChat, path: "/v1/chat/completions",
+			body: rawChatBody(t, true, false), stream: true, check: rawdriver.CheckTerminalEvent,
+		}, "bounded-terminal-trace")
+		outcome, _, _ := runScenario(t, server, scenario)
+		markers := make([]string, maxTerminalTraceTestEntries)
+		for index := range markers {
+			markers[index] = "[DONE]"
+		}
+		assertTerminalTrace(t, outcome, maxTerminalTraceTestEntries+2, 2, markers)
+	})
+
+	t.Run("malformed Anthropic message_stop is not counted", func(t *testing.T) {
+		stream := "event: message_stop\ndata: not-json\n\n"
+		server := httptest.NewServer(streamHandler(http.StatusOK, []byte(stream)))
+		defer server.Close()
+		scenario := scenarioFor(mutationCase{
+			protocol: rawdriver.ProtocolAnthropic, path: "/v1/messages",
+			body: rawAnthropicBody(t, true, false), stream: true, check: rawdriver.CheckNoPostTerminal,
+		}, "anthropic-malformed-message-stop")
+		outcome, _, _ := runScenario(t, server, scenario)
+		if outcome.Verdict != schema.VerdictInconclusive || outcome.ReasonCode != schema.ReasonNotObserved || len(outcome.Findings) != 0 {
+			t.Fatalf("malformed message_stop changed terminal semantics: %#v", outcome)
 		}
 	})
 
@@ -990,6 +1066,28 @@ func assertReasoningLimitDiagnostic(t *testing.T, outcome executor.Outcome, requ
 		fmt.Sprint(observed["reasoning_tokens"]) != fmt.Sprint(reasoning) ||
 		observed["reasoning_tokens_reached_requested_limit"] != true {
 		t.Fatalf("reasoning saturation diagnostic = %#v", observed)
+	}
+}
+
+func assertTerminalTrace(t *testing.T, outcome executor.Outcome, count, omitted int, markers []string) {
+	t.Helper()
+	if outcome.Verdict != schema.VerdictFail || len(outcome.Findings) != 1 || len(outcome.AssertionResults) != 1 {
+		t.Fatalf("terminal trace outcome = %#v", outcome)
+	}
+	observed, ok := outcome.AssertionResults[0].Observed.(map[string]any)
+	if !ok || fmt.Sprint(observed["terminal_count"]) != fmt.Sprint(count) ||
+		fmt.Sprint(observed["trace_entries_omitted"]) != fmt.Sprint(omitted) || observed["framing_complete"] != true {
+		t.Fatalf("terminal trace summary = %#v", observed)
+	}
+	entries, ok := observed["terminal_trace"].([]any)
+	if !ok || len(entries) != len(markers) {
+		t.Fatalf("terminal trace entries = %#v, want %q", observed["terminal_trace"], markers)
+	}
+	for index, marker := range markers {
+		entry, ok := entries[index].(map[string]any)
+		if !ok || entry["marker"] != marker || fmt.Sprint(entry["event_index"]) != fmt.Sprint(index+1) {
+			t.Fatalf("terminal trace entry %d = %#v, want marker %q", index, entries[index], marker)
+		}
 	}
 }
 

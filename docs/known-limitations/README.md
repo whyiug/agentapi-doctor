@@ -1,13 +1,13 @@
 # Known Limitations
 
-`v0.1.0` is the stable AgentAPI Doctor binary distribution. The project is
+`v0.1.1` is the stable AgentAPI Doctor binary distribution. The project is
 still pre-1.0: only the documented Doctor CLI, release artifacts, and declared
 read-compatibility floor are supported contracts. These limitations prevent
 experimental source from becoming an implied compatibility claim.
 
 ## Execution and compatibility
 
-- The supported distribution is the `v0.1.0` `doctor` CLI archive for Linux,
+- The supported distribution is the `v0.1.1` `doctor` CLI archive for Linux,
   macOS, or Windows. Package-manager channels are not published.
 - Client-side execution can target an explicitly authorized local,
   private-network, or remote origin. It currently covers raw HTTP behavior for
@@ -68,7 +68,7 @@ experimental source from becoming an implied compatibility claim.
 ## Experimental Registry and Matrix
 
 - Registry and Matrix source is contributor-only and is not part of the
-  supported v0.1.0 product. The single-node candidate uses memory or SQLite
+  supported v0.1.x product. The single-node candidate uses memory or SQLite
   storage and has no clustering, managed upgrades, or production SLO.
 - Windows SQLite storage requires a local drive-letter path; UNC, device, and
   drive-relative paths are rejected.
@@ -94,11 +94,11 @@ experimental source from becoming an implied compatibility claim.
 - New baselines use `urn:agentapi-doctor:baseline:v1`. Doctor reads the legacy
   unversioned v0.1.0-rc.3 baseline shape and migrates it in memory; subsequent
   writes use baseline v1.
-- The v0.1.0 reader accepts current local run records and report bundles at
+- The v0.1.1 reader accepts current local run records and report bundles at
   v1alpha2 plus the legacy v1alpha1 forms. Current persisted plan snapshots
   remain v1alpha1. This is a read promise, not permission to emit new legacy
   artifacts or a guarantee for every development schema.
-- The v0.1.0 built-in pack/profile remains `0.1.0-candidate.3`. Its identity
+- The v0.1.1 built-in pack/profile remains `0.1.0-candidate.3`. Its identity
   differs from the rc.2 candidate because request budgets are digest-bound. An
   rc.2 baseline is intentionally incomparable and should be recaptured rather
   than relabeled.

@@ -14,7 +14,7 @@ local OS, architecture, Go runtime, and binary digest when available.
 
 ## The release download returns 404
 
-Confirm the exact `v0.1.0` entry is visible on
+Confirm the exact `v0.1.1` entry is visible on
 [GitHub Releases](https://github.com/whyiug/agentapi-doctor/releases) and use
 its exact asset name. There is no moving package-manager channel. If the release
 entry is not yet public, use the contributor source path in

@@ -2,7 +2,7 @@
 
 [Documentation home](README.md) | [Configuration](configuration.md)
 
-This page documents the supported `doctor` command surface in `v0.1.0`. It is
+This page documents the supported `doctor` command surface in `v0.1.x`. It is
 a pre-1.0 interface and may change in a later minor release with documented
 migration notes. The machine-readable contract is
 [`cli/spec.yaml`](../cli/spec.yaml).

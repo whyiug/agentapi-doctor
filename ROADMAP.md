@@ -1,6 +1,6 @@
 # Roadmap
 
-AgentAPI Doctor grows from reproducible user failures. The supported v0.1.0
+AgentAPI Doctor grows from reproducible user failures. The supported v0.1.x
 product is the local `doctor` CLI and its release archives; catalog size and
 unshipped service infrastructure are not measures of product readiness.
 
@@ -27,7 +27,7 @@ before it can become part of the product.
 
 The repository contains exploratory code and design documents for generic
 drivers, authored scenario packs, a Registry and Matrix, hosted operation, and
-additional distribution channels. These are development assets, not v0.1.0
+additional distribution channels. These are development assets, not v0.1.x
 product surfaces or compatibility promises.
 
 Possible future work, contingent on evidence and maintainer capacity, includes:
