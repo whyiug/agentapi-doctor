@@ -10,8 +10,8 @@ CLI/Core versions will follow
 
 ### Added
 
-- Added a commit-pinned llama.cpp Responses A/B case and a shorter path for
-  sharing sanitized FAIL or INCONCLUSIVE feedback in Compatibility Clinic #1.
+- Added a commit-pinned llama.cpp Responses A/B case with exact build, model,
+  test, and scope boundaries.
 
 ## [0.1.1] - 2026-07-14
 
