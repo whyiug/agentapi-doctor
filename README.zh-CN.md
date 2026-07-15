@@ -80,11 +80,6 @@ doctor test \
 保存在本地 `.agentapi/`。请把该目录视为私密本地状态，并在被测试项目的
 `.gitignore` 中加入 `.agentapi/`。
 
-如果得到可以公开的 FAIL 或 INCONCLUSIVE 结果，欢迎在
-[Compatibility Clinic #1](https://github.com/whyiug/agentapi-doctor/discussions/14)
-留下 5 行脱敏摘要。摘要已经足够；请不要提交 token、私有 URL 或未经审阅的
-payload。
-
 ## Doctor 检查什么
 
 | 基础 smoke test 能看到 | Doctor 还会检查 |

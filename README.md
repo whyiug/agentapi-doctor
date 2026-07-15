@@ -83,11 +83,6 @@ on the configured origin, redirects are not followed, and evidence remains in
 the local `.agentapi/` directory. Treat that directory as private local state
 and add `.agentapi/` to the tested project's `.gitignore`.
 
-Got a FAIL or INCONCLUSIVE result you can share? Add a five-line sanitized
-summary to [Compatibility Clinic #1](https://github.com/whyiug/agentapi-doctor/discussions/14).
-A summary is enough; leave out tokens, private URLs, and payloads you have not
-reviewed.
-
 ## What Doctor checks
 
 | A basic smoke test sees | Doctor also checks |
