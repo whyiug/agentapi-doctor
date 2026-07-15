@@ -8,7 +8,10 @@ CLI/Core versions will follow
 
 ## [Unreleased]
 
-No changes have been recorded since v0.1.1 was prepared.
+### Added
+
+- Added a commit-pinned llama.cpp Responses A/B case and a shorter path for
+  sharing sanitized FAIL or INCONCLUSIVE feedback in Compatibility Clinic #1.
 
 ## [0.1.1] - 2026-07-14
 

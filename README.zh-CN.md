@@ -4,9 +4,9 @@
 
 ### 200 OK 不等于兼容。检查协议流，把证据留下来。
 
-一个小巧、local-first 的 CLI：检查“OpenAI-compatible”或 Anthropic-compatible
-endpoint 是否真的符合 client 依赖的行为，并生成可复现、可比较、可安全审阅的
-脱敏报告。
+一个供推理服务器、API 网关和 SDK 维护者使用的本地 CLI，用来排查服务已返回
+`200 OK`、客户端却仍然失败的问题。Doctor 会检查 OpenAI Chat、Responses 和
+Anthropic Messages 的关键生命周期，并生成可复现、可比较、可审阅的脱敏报告。
 
 [![Release](https://img.shields.io/github/v/release/whyiug/agentapi-doctor?label=release)](https://github.com/whyiug/agentapi-doctor/releases)
 [![CI](https://github.com/whyiug/agentapi-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/whyiug/agentapi-doctor/actions/workflows/ci.yml)
@@ -15,8 +15,9 @@ endpoint 是否真的符合 client 依赖的行为，并生成可复现、可比
 
 [快速开始](docs/zh-CN/quick-start.md) ·
 [检查内容](#doctor-检查什么) ·
+[llama.cpp A/B 案例](docs/cases/llama-cpp-responses-pr-21174.md) ·
 [真实 SDK 案例](docs/cases/openai-python-responses-null-output.md) ·
-[离线报告源码](docs/examples/missing-terminal-event-report.html) ·
+[失败报告示例](docs/examples/missing-terminal-event-report.html) ·
 [English](README.md)
 
 </div>
@@ -79,6 +80,11 @@ doctor test \
 保存在本地 `.agentapi/`。请把该目录视为私密本地状态，并在被测试项目的
 `.gitignore` 中加入 `.agentapi/`。
 
+如果得到可以公开的 FAIL 或 INCONCLUSIVE 结果，欢迎在
+[Compatibility Clinic #1](https://github.com/whyiug/agentapi-doctor/discussions/14)
+留下 5 行脱敏摘要。摘要已经足够；请不要提交 token、私有 URL 或未经审阅的
+payload。
+
 ## Doctor 检查什么
 
 | 基础 smoke test 能看到 | Doctor 还会检查 |
@@ -96,6 +102,23 @@ doctor test \
 
 同一结果可以输出为 terminal、JSON、JUnit、SARIF、Markdown 或完全离线的 HTML。
 Named baseline 和稳定 exit code 可以直接服务 CI。
+
+## 固定到具体提交的外部 A/B 对比
+
+在 [llama.cpp PR #21174](https://github.com/ggml-org/llama.cpp/pull/21174) 中，
+PR 作者称此前的 Doctor 运行结果是有用的独立证据。新 head 更新后，我们又用
+相同的有界检查做了本地复验：
+
+| Target | 现有 OpenAI SDK smoke | 选定的 PR tests | Doctor v0.1.1 |
+| --- | ---: | ---: | ---: |
+| 测试时的 master，`f955e394` | 2/2 | 1/9 | 3 PASS + 1 FAIL |
+| PR head，`a28a6d324` | 未单独重跑 | 9/9 | 4 PASS |
+
+master 的失败来自一个缺少非负 output index 的 Responses output item；同一项
+Doctor 检查以及选定的 upstream sequence/index tests 在 PR head 上通过。精确
+commit、test blob、binary/model hash、build 边界与限制见
+[绑定提交的案例（英文）](docs/cases/llama-cpp-responses-pr-21174.md)。这个结果只支持
+上述检查，不代表 PR 已可合并，也不是完整兼容性结论。
 
 ## 不只展示成功，也展示失败
 
@@ -192,6 +215,7 @@ v0.1 的受支持范围内。
 [CLI 参考](docs/cli-reference.md) ·
 [故障排查](docs/troubleshooting.md) ·
 [已知限制](docs/known-limitations/README.md) ·
+[llama.cpp A/B 案例（英文）](docs/cases/llama-cpp-responses-pr-21174.md) ·
 [真实 SDK 案例（英文）](docs/cases/openai-python-responses-null-output.md) ·
 [Roadmap](ROADMAP.md) ·
 [全部文档](docs/README.md)
