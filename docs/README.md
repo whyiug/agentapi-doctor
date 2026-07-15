@@ -33,6 +33,7 @@ not vendor certification.
 - [Profiles and packs](concepts/profiles-and-packs.md)
 - [Protocol families](protocols/README.md)
 - [Clients](clients/README.md)
+- [Commit-pinned llama.cpp Responses A/B](cases/llama-cpp-responses-pr-21174.md)
 - [Pinned OpenAI Python SDK case](cases/openai-python-responses-null-output.md)
 - [Reference](reference/README.md)
 - [Migration and artifact compatibility](migration/README.md)

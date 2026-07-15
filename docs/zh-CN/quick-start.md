@@ -125,6 +125,12 @@ doctor report html '<run-id>' --output doctor-report.html
 分享前请人工审阅。已知 secret 会被脱敏，但结构化 model content 与 tool
 arguments 不一定匿名。
 
+如果 FAIL 或 INCONCLUSIVE 结果适合公开，可以在
+[Compatibility Clinic #1](https://github.com/whyiug/agentapi-doctor/discussions/14)
+留下 5 行脱敏摘要：Doctor version、protocol、result、失败或 inconclusive 的
+check，以及一句“什么有帮助或哪里不清楚”。完整 report 可选。请不要提交 token、
+私有 URL 或未经审阅的 payload。
+
 ## 请求与成本边界
 
 每次 endpoint run：
@@ -142,6 +148,7 @@ INCONCLUSIVE，reasoning-token usage 只用于诊断。PASS 只绑定精确 endp
 版本化 artifact 和执行的 4 个检查；它不是完整 SDK/Agent 兼容或厂商认证。
 
 后续：[CLI 参考（英文）](../cli-reference.md) ·
+[llama.cpp A/B 案例（英文）](../cases/llama-cpp-responses-pr-21174.md) ·
 [真实 SDK 案例（英文）](../cases/openai-python-responses-null-output.md) ·
 [安装（英文）](../installation.md) ·
 [故障排查（英文）](../troubleshooting.md) ·

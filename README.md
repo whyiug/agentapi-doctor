@@ -4,9 +4,10 @@
 
 ### 200 OK is not compatibility. Check the stream. Keep the evidence.
 
-A small, local-first CLI that checks whether an “OpenAI-compatible” or
-Anthropic-compatible endpoint behaves like a real client expects—and leaves a
-redacted report you can reproduce, compare, and share.
+A local CLI for inference-server, gateway, and SDK maintainers debugging the
+gap between `200 OK` and a client that still fails. Doctor runs bounded
+lifecycle checks for OpenAI Chat, Responses, and Anthropic Messages, then
+leaves a redacted report you can reproduce, compare, and share.
 
 [![Release](https://img.shields.io/github/v/release/whyiug/agentapi-doctor?label=release)](https://github.com/whyiug/agentapi-doctor/releases)
 [![CI](https://github.com/whyiug/agentapi-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/whyiug/agentapi-doctor/actions/workflows/ci.yml)
@@ -15,8 +16,9 @@ redacted report you can reproduce, compare, and share.
 
 [Quick Start](docs/quick-start.md) ·
 [What it checks](#what-doctor-checks) ·
+[llama.cpp A/B case](docs/cases/llama-cpp-responses-pr-21174.md) ·
 [Real SDK case](docs/cases/openai-python-responses-null-output.md) ·
-[Offline report source](docs/examples/missing-terminal-event-report.html) ·
+[Example failure report](docs/examples/missing-terminal-event-report.html) ·
 [简体中文](README.zh-CN.md)
 
 </div>
@@ -81,6 +83,11 @@ on the configured origin, redirects are not followed, and evidence remains in
 the local `.agentapi/` directory. Treat that directory as private local state
 and add `.agentapi/` to the tested project's `.gitignore`.
 
+Got a FAIL or INCONCLUSIVE result you can share? Add a five-line sanitized
+summary to [Compatibility Clinic #1](https://github.com/whyiug/agentapi-doctor/discussions/14).
+A summary is enough; leave out tokens, private URLs, and payloads you have not
+reviewed.
+
 ## What Doctor checks
 
 | A basic smoke test sees | Doctor also checks |
@@ -99,6 +106,25 @@ Today, each Quick Check selects four executable raw HTTP checks for one of:
 It can render the same result as terminal output, JSON, JUnit, SARIF, Markdown,
 or a self-contained offline HTML report. Named baselines and stable exit codes
 make the result usable in CI.
+
+## A commit-pinned external A/B
+
+In [llama.cpp PR #21174](https://github.com/ggml-org/llama.cpp/pull/21174), the
+PR author described an earlier Doctor run as useful independent evidence. We
+then retested the updated head locally against the same bounded checks:
+
+| Target | Existing OpenAI SDK smoke | Selected PR tests | Doctor v0.1.1 |
+| --- | ---: | ---: | ---: |
+| master at test time, `f955e394` | 2/2 | 1/9 | 3 PASS + 1 FAIL |
+| PR head, `a28a6d324` | not separately rerun | 9/9 | 4 PASS |
+
+The master failure was a Responses output item with no nonnegative output
+index. The same Doctor check and the selected upstream sequence/index tests
+passed on the PR head. See the
+[commit-pinned case](docs/cases/llama-cpp-responses-pr-21174.md) for the exact
+commits, test blob, binary and model hashes, build boundary, and limitations.
+This comparison supports those checks only; it is not a merge-readiness or
+full-compatibility claim.
 
 ## See a failure—not just a self-test
 
@@ -201,6 +227,7 @@ matrix, and hosted-service candidates remain outside the supported v0.1 scope.
 [CLI reference](docs/cli-reference.md) ·
 [Troubleshooting](docs/troubleshooting.md) ·
 [Known limitations](docs/known-limitations/README.md) ·
+[llama.cpp A/B case](docs/cases/llama-cpp-responses-pr-21174.md) ·
 [Real SDK case](docs/cases/openai-python-responses-null-output.md) ·
 [Roadmap](ROADMAP.md) ·
 [All docs](docs/README.md)

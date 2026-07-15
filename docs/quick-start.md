@@ -129,6 +129,13 @@ doctor report html '<run-id>' --output doctor-report.html
 Review an exported report before sharing it. Recognized secrets are redacted,
 but structured model content and tool arguments are not necessarily anonymous.
 
+For a FAIL or INCONCLUSIVE result that is safe to discuss, post a five-line
+sanitized summary in
+[Compatibility Clinic #1](https://github.com/whyiug/agentapi-doctor/discussions/14):
+Doctor version, protocol, result, the failing or inconclusive check, and one
+sentence about what helped or confused you. A full report is optional. Do not
+include tokens, private URLs, or payloads you have not reviewed.
+
 ## Request and cost boundary
 
 Each endpoint run:
@@ -148,6 +155,7 @@ model, versioned artifacts, and four executed checks. It is not complete
 SDK/Agent compatibility or vendor certification.
 
 Next: [CLI reference](cli-reference.md) ·
+[llama.cpp A/B case](cases/llama-cpp-responses-pr-21174.md) ·
 [Real SDK case](cases/openai-python-responses-null-output.md) ·
 [Installation](installation.md) ·
 [Troubleshooting](troubleshooting.md) ·

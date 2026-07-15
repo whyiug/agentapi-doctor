@@ -19,6 +19,7 @@ Doctor 默认把本地 run 与 evidence 写入当前目录的 `.agentapi/`。请
 - [CLI 参考（英文）](../cli-reference.md)
 - [故障排查（英文）](../troubleshooting.md)
 - [已知限制（英文）](../known-limitations/README.md)
+- [llama.cpp Responses A/B 案例（英文）](../cases/llama-cpp-responses-pr-21174.md)
 - [真实 OpenAI Python SDK 可复跑案例（英文）](../cases/openai-python-responses-null-output.md)
 
 ## 理解项目

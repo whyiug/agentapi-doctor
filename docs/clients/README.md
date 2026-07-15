@@ -10,6 +10,12 @@ four deterministic loopback fixtures. Doctor correlates the application-layer
 SSE and SDK observation in a checksummed bundle. See the
 [reproducible null-output case](../cases/openai-python-responses-null-output.md).
 
+The [llama.cpp Responses A/B](../cases/llama-cpp-responses-pr-21174.md) is a
+different kind of evidence: it compares exact upstream implementation commits
+using a selected upstream test file plus Doctor's independent raw-wire checks.
+It is useful implementation feedback, but it is not a promoted client baseline
+or a support-matrix entry.
+
 This baseline does not publish a support matrix and does not test an arbitrary
 endpoint. A mock that resembles a client does not prove that the real client
 works, while one real pinned client does not prove that other versions work.
