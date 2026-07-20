@@ -61,6 +61,19 @@ class ProductCIWorkflowTests(unittest.TestCase):
                     f"floating external action at {path}:{number}",
                 )
 
+    def test_every_codeql_action_uses_the_same_release(self) -> None:
+        action = re.compile(
+            r"^\s*uses:\s+github/codeql-action/[^@]+@([0-9a-f]{40})\s+#\s+(v\d+\.\d+\.\d+)$"
+        )
+        releases = set()
+        for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+            for line in path.read_text(encoding="utf-8").splitlines():
+                match = action.fullmatch(line)
+                if match:
+                    releases.add(match.groups())
+        self.assertTrue(releases, "no CodeQL actions found")
+        self.assertEqual(len(releases), 1, f"mixed CodeQL action releases: {releases}")
+
     def test_every_setup_go_reads_the_single_go_mod_version(self) -> None:
         setup_count = 0
         version_file_count = 0
