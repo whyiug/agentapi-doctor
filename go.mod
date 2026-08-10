@@ -6,7 +6,7 @@ require (
 	github.com/google/cel-go v0.29.2
 	github.com/gowebpki/jcs v1.0.1
 	github.com/ncruces/go-sqlite3 v0.35.2
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	google.golang.org/genproto/googleapis/api v0.0.0-20240826202546-f6391c0de4c7
 	gopkg.in/yaml.v3 v3.0.1
 )
