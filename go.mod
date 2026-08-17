@@ -3,7 +3,7 @@ module github.com/whyiug/agentapi-doctor
 go 1.26.5
 
 require (
-	github.com/google/cel-go v0.29.2
+	github.com/google/cel-go v0.31.0
 	github.com/gowebpki/jcs v1.0.1
 	github.com/ncruces/go-sqlite3 v0.35.2
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
