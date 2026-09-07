@@ -11,9 +11,7 @@ const (
 	ptrlen = sqlite3_wrap.PtrLen
 )
 
-type (
-	ptr_t = sqlite3_wrap.Ptr_t
-)
+type ptr_t = sqlite3_wrap.Ptr_t
 
 // https://sqlite.org/rescode.html
 type _ErrorCode uint32
@@ -42,6 +40,7 @@ const (
 	_IOERR_UNLOCK            _ErrorCode = sqlite3_wrap.IOERR_UNLOCK
 	_IOERR_RDLOCK            _ErrorCode = sqlite3_wrap.IOERR_RDLOCK
 	_IOERR_DELETE            _ErrorCode = sqlite3_wrap.IOERR_DELETE
+	_IOERR_NOMEM             _ErrorCode = sqlite3_wrap.IOERR_NOMEM
 	_IOERR_ACCESS            _ErrorCode = sqlite3_wrap.IOERR_ACCESS
 	_IOERR_CHECKRESERVEDLOCK _ErrorCode = sqlite3_wrap.IOERR_CHECKRESERVEDLOCK
 	_IOERR_LOCK              _ErrorCode = sqlite3_wrap.IOERR_LOCK
@@ -52,6 +51,7 @@ const (
 	_IOERR_SHMMAP            _ErrorCode = sqlite3_wrap.IOERR_SHMMAP
 	_IOERR_SEEK              _ErrorCode = sqlite3_wrap.IOERR_SEEK
 	_IOERR_DELETE_NOENT      _ErrorCode = sqlite3_wrap.IOERR_DELETE_NOENT
+	_IOERR_MMAP              _ErrorCode = sqlite3_wrap.IOERR_MMAP
 	_IOERR_GETTEMPPATH       _ErrorCode = sqlite3_wrap.IOERR_GETTEMPPATH
 	_IOERR_BEGIN_ATOMIC      _ErrorCode = sqlite3_wrap.IOERR_BEGIN_ATOMIC
 	_IOERR_COMMIT_ATOMIC     _ErrorCode = sqlite3_wrap.IOERR_COMMIT_ATOMIC

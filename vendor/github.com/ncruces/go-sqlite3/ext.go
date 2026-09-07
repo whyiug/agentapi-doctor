@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ncruces/go-sqlite3/internal/errutil"
+	"github.com/ncruces/go-sqlite3/internal/sqlite3_wrap"
 )
 
 var (
@@ -25,6 +26,7 @@ func AutoExtension(entryPoint func(*Conn) error) {
 }
 
 func initExtensions(c *Conn) error {
+	c.uuid()
 	c.base64()
 	extRegistryMtx.RLock()
 	defer extRegistryMtx.RUnlock()
@@ -86,18 +88,31 @@ type ExtensionLibrary interface {
 // ExtensionInfo returns values needed to load a dynamically linked SQLite extension.
 type ExtensionInfo func() (memorySize, memoryAlignment, tableSize, tableAlignment int64)
 
-type extEnv struct {
-	*env
+// ExtEnv is the concrete type passed to [ExtensionInit] initializers.
+//
+// ExtEnv exposes undocumented internal APIs that are subject to change without notice.
+type ExtEnv struct {
+	*sqlite3_wrap.Wrapper
 	memoryBase int32
 	tableBase  int32
 }
 
-func (e *extEnv) X__memory_base() *int32 { return &e.memoryBase }
-func (e *extEnv) X__table_base() *int32  { return &e.tableBase }
+func (e *ExtEnv) X__memory_base() *int32 { return &e.memoryBase }
+func (e *ExtEnv) X__table_base() *int32  { return &e.tableBase }
+
+// CallWithContextValues calls fn with a [Context] and [Value] arguments decoded from pointers.
+func (e *ExtEnv) CallWithContextValues(pCtx, nVal, pVal int32, fn func(Context, ...Value)) {
+	db := e.DB.(*Conn)
+	args := callbackArgs(db, nVal, ptr_t(pVal))
+	defer returnArgs(args)
+	fn(Context{db, ptr_t(pCtx)}, *args...)
+}
 
 // ExtensionInit loads an SQLite extension library.
 //
 // https://sqlite.org/loadext.html
+//
+// Deprecated: use the generic method.
 func ExtensionInit[Env any, Mod ExtensionLibrary](db *Conn, init func(env Env) Mod, info ExtensionInfo) error {
 	memSize, memAlign, tableSize, tableAlign := info()
 
@@ -120,8 +135,8 @@ func ExtensionInit[Env any, Mod ExtensionLibrary](db *Conn, init func(env Env) M
 		}
 	}
 
-	e := &extEnv{
-		env:        &env{db.wrp},
+	e := &ExtEnv{
+		Wrapper:    db.wrp,
 		memoryBase: memBase,
 		tableBase:  int32(tableBase),
 	}
