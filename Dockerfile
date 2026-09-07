@@ -1,5 +1,5 @@
 # tools/check_release_toolchain.py keeps this pinned mirror aligned with go.mod.
-FROM golang:1.26.5-alpine3.23@sha256:622e56dbc11a8cfe87cafa2331e9a201877271cbff918af53d3be315f3da88cc AS build
+FROM golang:1.27.1-alpine3.23@sha256:d9e2f2f07b10cc922da3e80e035c3058810b328d5aef82d2c63680967c5e2ec9 AS build
 
 WORKDIR /src
 COPY go.mod go.sum ./
