@@ -2,8 +2,10 @@ package vfs
 
 import (
 	"net/url"
+	"strconv"
 
 	"github.com/ncruces/go-sqlite3/internal/sqlite3_wrap"
+	"github.com/ncruces/go-sqlite3/internal/util"
 )
 
 // Filename is used by SQLite to pass filenames
@@ -155,4 +157,31 @@ func (n *Filename) URIParameters() url.Values {
 		params.Add(k, v)
 		ptr += ptr_t(len(v)) + 1
 	}
+}
+
+// URIBoolean returns the value of a URI parameter as a boolean.
+//
+// https://sqlite.org/c3ref/uri_boolean.html
+func (n *Filename) URIBoolean(key string, def bool) bool {
+	b, ok := util.ParseBool(n.URIParameter(key))
+	if ok {
+		return b
+	}
+	return def
+}
+
+// URIInt64 returns the value of a URI parameter converted
+// to a 64-bit signed integer.
+//
+// https://sqlite.org/c3ref/uri_boolean.html
+func (n *Filename) URIInt64(key string, def int64) int64 {
+	s := n.URIParameter(key)
+	if s == "" {
+		return def
+	}
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return def
+	}
+	return i
 }

@@ -3,7 +3,7 @@ package sqlite3_wrap
 import (
 	"io"
 
-	sqlite3_wasm "github.com/ncruces/go-sqlite3-wasm/v3"
+	sqlite3_wasm "github.com/ncruces/go-sqlite3-wasm/v6"
 	"github.com/ncruces/go-sqlite3/internal/errutil"
 )
 
@@ -13,7 +13,6 @@ type Wrapper struct {
 	DB       any
 	SysError error
 
-	mmapState
 	handles []any
 	deleted int
 }
@@ -77,3 +76,7 @@ func (w *Wrapper) AddHandle(a any) Ptr_t {
 	w.handles = append(w.handles, a)
 	return -Ptr_t(len(w.handles))
 }
+
+func (w *Wrapper) Xmemory() sqlite3_wasm.Memory { return w.Memory }
+
+func (w *Wrapper) Xgo_destroy(pApp int32) { w.DelHandle(Ptr_t(pApp)) }

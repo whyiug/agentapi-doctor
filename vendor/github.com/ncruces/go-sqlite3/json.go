@@ -1,4 +1,4 @@
-//go:build !(go1.27 || goexperiment.jsonv2)
+//go:build !go1.27
 
 package sqlite3
 
@@ -96,3 +96,5 @@ func (v Value) JSON(ptr any) error {
 type callbackWriter func(p []byte) (int, error)
 
 func (fn callbackWriter) Write(p []byte) (int, error) { return fn(p) }
+
+func (c *Conn) uuid() error { return nil }
