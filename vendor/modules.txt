@@ -27,8 +27,8 @@ github.com/google/cel-go/common/types/traits
 github.com/google/cel-go/interpreter
 github.com/google/cel-go/parser
 github.com/google/cel-go/parser/gen
-# github.com/gowebpki/jcs v1.0.1
-## explicit; go 1.15
+# github.com/gowebpki/jcs v1.0.2
+## explicit; go 1.21
 github.com/gowebpki/jcs
 # github.com/ncruces/go-sqlite3 v0.35.2
 ## explicit; go 1.25.0
@@ -50,7 +50,7 @@ github.com/ncruces/julianday
 ## explicit; go 1.21
 github.com/santhosh-tekuri/jsonschema/v6
 github.com/santhosh-tekuri/jsonschema/v6/kind
-# go.yaml.in/yaml/v3 v3.0.4
+# go.yaml.in/yaml/v3 v3.0.5
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
 # golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
